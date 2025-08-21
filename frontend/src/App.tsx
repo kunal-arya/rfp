@@ -8,6 +8,11 @@ import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { CreateRfpPage } from './pages/rfp/CreateRfpPage';
 import { MyRfpsPage } from './pages/rfp/MyRfpsPage';
 import { BrowseRfpsPage } from './pages/rfp/BrowseRfpsPage';
+import { CreateResponsePage } from './pages/response/CreateResponsePage';
+import { MyResponsesPage } from './pages/response/MyResponsesPage';
+import { RfpResponsesPage } from './pages/response/RfpResponsesPage';
+import { RfpDetailPage } from './pages/rfp/RfpDetailPage';
+import { ResponseDetailPage } from './pages/response/ResponseDetailPage';
 import './App.css';
 
 function App() {
@@ -52,6 +57,56 @@ function App() {
               element={
                 <ProtectedRoute requiredPermission={{ resource: 'rfp', action: 'view' }}>
                   <BrowseRfpsPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/rfps/:rfpId" 
+              element={
+                <ProtectedRoute requiredPermission={{ resource: 'rfp', action: 'view' }}>
+                  <RfpDetailPage />
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Response routes */}
+            <Route 
+              path="/responses/create" 
+              element={
+                <ProtectedRoute requiredPermission={{ resource: 'supplier_response', action: 'create' }}>
+                  <CreateResponsePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/responses/create/:rfpId" 
+              element={
+                <ProtectedRoute requiredPermission={{ resource: 'supplier_response', action: 'create' }}>
+                  <CreateResponsePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/responses/my" 
+              element={
+                <ProtectedRoute requiredPermission={{ resource: 'supplier_response', action: 'view' }}>
+                  <MyResponsesPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/rfps/:rfpId/responses" 
+              element={
+                <ProtectedRoute requiredPermission={{ resource: 'supplier_response', action: 'view' }}>
+                  <RfpResponsesPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/responses/:responseId" 
+              element={
+                <ProtectedRoute requiredPermission={{ resource: 'supplier_response', action: 'view' }}>
+                  <ResponseDetailPage />
                 </ProtectedRoute>
               } 
             />

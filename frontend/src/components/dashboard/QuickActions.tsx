@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, FileText, Users, Upload, Settings } from 'lucide-react';
+import { Plus, Search, FileText, Users, Upload, Settings, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -29,6 +29,14 @@ export const QuickActions: React.FC = () => {
     {
       title: 'Review Responses',
       description: 'Review responses to your RFPs',
+      icon: MessageSquare,
+      action: () => navigate('/responses/review'),
+      permission: permissionHelpers.canReviewResponses,
+      color: 'bg-purple-500 hover:bg-purple-600',
+    },
+    {
+      title: 'Review Responses',
+      description: 'Review responses to your RFPs',
       icon: Users,
       action: () => console.log('Review Responses'),
       permission: permissionHelpers.canReviewResponses,
@@ -52,6 +60,14 @@ export const QuickActions: React.FC = () => {
       action: () => navigate('/rfps/browse'),
       permission: permissionHelpers.canSearch,
       color: 'bg-blue-500 hover:bg-blue-600',
+    },
+    {
+      title: 'My Responses',
+      description: 'Manage your responses to RFPs',
+      icon: MessageSquare,
+      action: () => navigate('/responses/my'),
+      permission: permissionHelpers.canViewResponse,
+      color: 'bg-green-500 hover:bg-green-600',
     },
     {
       title: 'My Responses',

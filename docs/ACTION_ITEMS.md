@@ -81,15 +81,15 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [X] RFP detail view with edit capabilities.
     -   [X] RFP status management (Draft → Published).
     -   [X] Delete RFP functionality (Draft only).
--   [ ] **Document Management:**
-    -   [ ] File upload component for RFP documents.
-    -   [ ] Document list view with download links.
-    -   [ ] Document preview capabilities (if possible).
--   [ ] **Response Management:**
-    -   [ ] View all responses for an RFP.
-    -   [ ] Response detail view with supplier information.
-    -   [ ] Approve/Reject response functionality.
-    -   [ ] Response comparison view.
+-   [X] **Document Management:**
+    -   [X] File upload component for RFP documents.
+    -   [X] Document list view with download links.
+    -   [X] Document preview capabilities (if possible).
+-   [X] **Response Management:**
+    -   [X] View all responses for an RFP.
+    -   [X] Response detail view with supplier information.
+    -   [X] Approve/Reject response functionality.
+    -   [X] Response comparison view.
 
 ### Supplier Dashboard & Features
 -   [X] **Dashboard Overview:**
@@ -101,16 +101,16 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [X] Browse published RFPs with search and filtering.
     -   [X] RFP detail view with all information.
     -   [X] RFP list with pagination and sorting.
--   [ ] **Response Management:**
-    -   [ ] Create response form (budget, timeline, cover letter).
-    -   [ ] My responses list view.
-    -   [ ] Edit draft responses.
-    -   [ ] Submit response functionality.
-    -   [ ] View response status and feedback.
--   [ ] **Document Management:**
-    -   [ ] Upload documents for responses.
-    -   [ ] View and download RFP documents.
-    -   [ ] Manage response document versions.
+-   [X] **Response Management:**
+    -   [X] Create response form (budget, timeline, cover letter).
+    -   [X] My responses list view.
+    -   [X] Edit draft responses.
+    -   [X] Submit response functionality.
+    -   [X] View response status and feedback.
+-   [X] **Document Management:**
+    -   [X] Upload documents for responses.
+    -   [X] View and download RFP documents.
+    -   [X] Manage response document versions.
 
 ### Real-time Features
 -   [ ] **WebSocket Integration:**
