@@ -55,6 +55,30 @@ Represents a user of the application.
 
 ---
 
+## System Features
+
+### Authentication & Authorization
+- **JWT-based Authentication**: Secure token-based authentication
+- **Role-based Access Control (RBAC)**: Dynamic permissions stored in database
+- **Permission Middleware**: Fine-grained access control with scopes and status checks
+
+### Real-time Notifications
+- **WebSocket Integration**: Socket.IO for real-time updates
+- **Email Notifications**: SendGrid integration for email alerts
+- **Event-driven Architecture**: Automatic notifications on status changes
+
+### Document Management
+- **File Upload**: Cloudinary integration for document storage
+- **Version Control**: Document versioning and history tracking
+- **Permission-based Access**: Role-specific document access
+
+### Search & Filtering
+- **Database Search**: Full-text search across RFP content
+- **Advanced Filtering**: Multi-field filtering with pagination
+- **Role-specific Views**: Different data views for buyers and suppliers
+
+---
+
 ### `RFP`
 
 Represents a Request for Proposal.
