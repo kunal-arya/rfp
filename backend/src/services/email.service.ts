@@ -66,10 +66,10 @@ export const sendRfpPublishedNotification = async (rfpId: string) => {
                     <h2>New RFP Available</h2>
                     <p>A new Request for Proposal has been published:</p>
                     <h3>${rfp.title}</h3>
-                    <p><strong>Description:</strong> ${rfp.current_version.description}</p>
-                    <p><strong>Requirements:</strong> ${rfp.current_version.requirements}</p>
-                    <p><strong>Deadline:</strong> ${new Date(rfp.current_version.deadline).toLocaleDateString()}</p>
-                    <p><strong>Budget Range:</strong> $${rfp.current_version.budget_min || 'N/A'} - $${rfp.current_version.budget_max || 'N/A'}</p>
+                    <p><strong>Description:</strong> ${rfp.current_version?.description || 'N/A'}</p>
+                    <p><strong>Requirements:</strong> ${rfp.current_version?.requirements || 'N/A'}</p>
+                    <p><strong>Deadline:</strong> ${rfp.current_version?.deadline ? new Date(rfp.current_version.deadline).toLocaleDateString() : 'N/A'}</p>
+                    <p><strong>Budget Range:</strong> $${rfp.current_version?.budget_min || 'N/A'} - $${rfp.current_version?.budget_max || 'N/A'}</p>
                     <p>Please log in to your dashboard to view the full details and submit your response.</p>
                 `,
             };
