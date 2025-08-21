@@ -21,6 +21,14 @@ export const submitResponseSchema = z.object({
 
 export type SubmitResponseData = z.infer<typeof submitResponseSchema>
 
-export const updateResponseStatusSchema = z.object({
+export const updateRFPStatusSchema = z.object({
   status: z.string(),
+});
+
+export const getRfpResponsesSchema = z.object({
+    rfp_id: z.cuid(),
+});
+
+export const reviewResponseSchema = z.object({
+  status: z.enum(['Approved', 'Rejected']),
 });

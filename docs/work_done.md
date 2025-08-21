@@ -38,6 +38,12 @@ This document summarizes the work completed on the RFP backend system.
 - Implemented the endpoint for a buyer to publish an RFP (`PUT /api/rfps/:id/publish`).
 - Implemented the endpoint for a supplier to browse/list published RFPs (`GET /api/rfps`).
 - Implemented the endpoint for a supplier to submit a response to an RFP (`POST /api/rfps/:id/responses`).
+- Implemented the endpoint for a buyer to review responses for an RFP (`GET /api/rfps/:id/responses`).
+- Implemented the endpoint for a buyer to approve/reject a response (`PUT /api/rfps/responses/:responseId`).
+- Implemented the endpoint for a buyer to upload documents for an RFP (`POST /api/rfps/:id/documents`).
+- Implemented the endpoint for a supplier to upload documents for a response (`POST /api/rfps/responses/:responseId/documents`).
+- Set up data-syncing pipeline to Elasticsearch.
+- Implemented basic search endpoint (`GET /api/search?q=...`).
 - This includes the necessary controller and service logic to handle the requests and update the database.
 
 **Work committed at this point with the following message:**

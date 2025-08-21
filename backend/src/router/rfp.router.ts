@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import * as rfpController from '../controllers/rfp.controller';
 import { protect, hasPermission } from '../middleware/auth.middleware';
+import multer from 'multer';
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = Router();
 
@@ -22,7 +25,7 @@ router.use(protect);
  *         description: Unauthorized
  */
 router.get(
-    '/',
+    '/all',
     hasPermission('rfp', 'view'),
     rfpController.getPublishedRfps
 );
@@ -94,7 +97,7 @@ router.post(
  *         description: RFP not found
  */
 router.put(
-    '/:id/publish',
+    '/:rfp_id/publish',
     hasPermission('rfp', 'publish'),
     rfpController.publishRfp
 );
@@ -135,16 +138,46 @@ router.put(
  *         description: RFP not found
  */
 router.post(
-    '/:id/responses',
-    hasPermission('supplier_response', 'submit'),
-    rfpController.submitResponse
+    '/:rfp_id/responses',
+    hasPermission('supplier_response', 'create'),
+    rfpController.createDraftResponse
 );
 
 /**
  * @swagger
- * /rfps/responses/{responseId}:
+ * /rfps/responses/{responseId}/submit:
  *   put:
- *     summary: Update the status of a response
+ *     summary: Submit a draft response
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: responseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Response submitted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Response not found
+ */
+router.put(
+    '/responses/:responseId/submit',
+    hasPermission('supplier_response', 'submit'),
+    rfpController.submitDraftResponse
+);
+
+/**
+ * @swagger
+ * /rfps/responses/{responseId}/review:
+ *   put:
+ *     summary: Review a supplier response (Approve/Reject)
  *     tags: [RFPs]
  *     security:
  *       - bearerAuth: []
@@ -163,9 +196,10 @@ router.post(
  *             properties:
  *               status:
  *                 type: string
+ *                 enum: [Approved, Rejected]
  *     responses:
  *       200:
- *         description: Response status updated successfully
+ *         description: Response reviewed successfully
  *       401:
  *         description: Unauthorized
  *       403:
@@ -173,10 +207,122 @@ router.post(
  *       404:
  *         description: Response not found
  */
-// router.put(
-//     '/responses/:responseId',
-//     hasPermission('supplier_response', 'update_status'),
-//     rfpController.updateResponseStatus
-// );
+router.put(
+    '/responses/review/:rfp_id',
+    hasPermission('rfp', 'change_status'),
+    rfpController.reviewRfpResponse
+);
+
+/**
+ * @swagger
+ * /rfps/{rfp_id}/responses:
+ *   get:
+ *     summary: Get all responses for a specific RFP
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: A list of responses for the RFP
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: RFP not found
+ */
+router.get(
+    '/:rfp_id/responses',
+    hasPermission('rfp', 'read_responses'),
+    rfpController.getNBAResponses
+);
+
+/**
+ * @swagger
+ * /rfps/{id}/documents:
+ *   post:
+ *     summary: Upload a document for an RFP
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               document:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: Document uploaded successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: RFP not found
+ */
+router.post(
+    '/:rfp_version_id/documents',
+    hasPermission('rfp', 'manage_documents'),
+    upload.single('document'),
+    rfpController.uploadRfpDocument
+);
+
+/**
+ * @swagger
+ * /rfps/responses/{responseId}/documents:
+ *   post:
+ *     summary: Upload a document for a response
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: responseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               document:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: Document uploaded successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Response not found
+ */
+router.post(
+    '/responses/:responseId/documents',
+    hasPermission('documents', 'upload_for_response'),
+    upload.single('document'),
+    rfpController.uploadResponseDocument
+);
 
 export default router;

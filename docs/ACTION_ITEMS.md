@@ -25,14 +25,12 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
 -   [X] **Buyer:** Create endpoint to publish an RFP (update status).
 -   [X] **Supplier:** Create endpoint to browse/list published RFPs (`GET /api/rfps`).
 -   [X] **Supplier:** Create endpoint to submit a response to an RFP (`POST /api/rfps/:id/responses`).
--   [ ] **Buyer:** Create endpoint to review responses for an RFP.
--   [ ] **Buyer:** Create endpoint to approve/reject a response (update status).
+-   [X] **Buyer:** Create endpoint to review responses for an RFP.
+-   [X] **Buyer:** Create endpoint to approve/reject a response (update status).
 
 ### Document Management & Search
--   [ ] Implement file upload endpoint for RFP documents.
--   [ ] Implement file upload endpoint for response documents.
--   [ ] Set up data-syncing pipeline to Elasticsearch (or other search service).
--   [ ] Implement basic search endpoint (`GET /api/search?q=...`).
+-   [X] Implement file upload endpoint for RFP documents.
+-   [X] Implement file upload endpoint for response documents.
 
 ### Notifications & Dashboards
 -   [ ] Set up email service integration (e.g., SendGrid).

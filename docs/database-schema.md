@@ -103,7 +103,7 @@ Represents a file uploaded to the system.
 |---------------------|---------------------|-------------------------------------------------------------|
 | `id`                | `String`            | Unique identifier for the document (UUID).                  |
 | `file_name`         | `String`            | The name of the file.                                       |
-| `file_path`         | `String`            | The path where the file is stored.                          |
+| `url`         | `String`            | The path where the file is stored.                          |
 | `file_type`         | `String?`           | The MIME type of the file.                                  |
 | `version`           | `Int`               | Version number of the document.                             |
 | `created_at`        | `DateTime`          | Timestamp when uploaded.                                    |
