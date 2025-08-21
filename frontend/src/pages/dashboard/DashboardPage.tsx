@@ -7,13 +7,16 @@ import { LogOut, FileText, Loader2 } from 'lucide-react';
 import { StatsCards } from '@/components/dashboard/StatsCards';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { QuickActions } from '@/components/dashboard/QuickActions';
+import { RfpStatusChart } from '@/components/dashboard/charts/RfpStatusChart';
 
 export const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
   const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useDashboard();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
 
-  if (dashboardLoading || statsLoading) {
+  const isLoading = dashboardLoading || statsLoading;
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -77,40 +80,57 @@ export const DashboardPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Statistics Cards */}
-        {stats && <StatsCards stats={stats} role={user?.role || ''} />}
+        {isLoading ? (
+          <div className="min-h-screen bg-background flex items-center justify-center">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+              <p className="text-muted-foreground">Loading dashboard...</p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            <StatsCards stats={stats || { totalRfps: 0, publishedRfps: 0, draftRfps: 0, totalResponses: 0, pendingResponses: 0, role: 'Buyer' }} role={user?.role || ''} />
 
-        {/* Quick Actions */}
-        <QuickActions />
-
-        {/* Recent Activity */}
-        {dashboardData && <RecentActivity data={dashboardData} role={user?.role || ''} />}
-
-        {/* Development Info */}
-        <Card className="bg-muted/30 border-dashed">
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">Development Info</CardTitle>
-            <CardDescription>
-              API Status and Data Preview
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div>
-                <strong>API Status:</strong> 
-                <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded-full">
-                  Connected
-                </span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <RecentActivity data={dashboardData || { recentRfps: [], recentResponses: [], rfpsNeedingAttention: [], role: 'Buyer' }} role={user?.role || ''} />
               </div>
-              <div>
-                <strong>Data Loaded:</strong> 
-                <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-                  {dashboardData ? 'Yes' : 'No'}
-                </span>
+              <div className="lg:col-span-1">
+                <QuickActions />
               </div>
             </div>
-          </CardContent>
-        </Card>
+            
+            {user?.role === 'Buyer' && stats && (
+              <RfpStatusChart stats={stats} />
+            )}
+
+            {/* Development Info */}
+            <Card className="bg-muted/30 border-dashed">
+              <CardHeader>
+                <CardTitle className="text-sm text-muted-foreground">Development Info</CardTitle>
+                <CardDescription>
+                  API Status and Data Preview
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <strong>API Status:</strong> 
+                    <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded-full">
+                      Connected
+                    </span>
+                  </div>
+                  <div>
+                    <strong>Data Loaded:</strong> 
+                    <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                      {dashboardData ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
     </div>
   );
