@@ -88,6 +88,131 @@ export const getPublishedRfps = async (req: AuthenticatedRequest, res: Response)
     }
 };
 
+export const getMyRfps = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const user = req.user;
+        if (!user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        let { page: pageNumber, limit: limitNumber, search, ...filters } = req.query;
+
+        const page: number = pageNumber ? parseInt(pageNumber as string) : 1;
+        const limit: number = limitNumber ? parseInt(limitNumber as string) : 10;
+        const offset = (page - 1) * limit;
+
+        // Split filters for RFP vs RFPVersion fields
+        const rfpFilterKeys = ['title', 'status_id', 'buyer_id', 'created_at'];
+        const versionFilterKeys = ['budget_min', 'budget_max', 'deadline', 'description', 'requirements'];
+
+        const rfpFilters: any = {};
+        const versionFilters: any = {};
+
+        for (let key in filters) {
+            const columnKey = key.split('___')[1];
+            if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = filters[key];
+            else if (versionFilterKeys.includes(columnKey)) versionFilters[key] = filters[key];
+        }
+
+        const generalFilters = modifyGeneralFilterPrisma(rfpFilters);
+        const versionGeneralFilters = modifyGeneralFilterPrisma(versionFilters);
+
+        const rfps = await rfpService.getMyRfps(
+            user.userId,
+            generalFilters,
+            versionGeneralFilters,
+            offset,
+            limit,
+            search as string | undefined
+        );
+
+        res.json(rfps);
+    } catch (error: any) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const getRfpById = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { rfp_id } = req.params;
+        const user = req.user;
+
+        if (!user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const rfp = await rfpService.getRfpById(rfp_id, user.userId);
+        res.json(rfp);
+    } catch (error: any) {
+        if (error.message === 'RFP not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to view this RFP') {
+            return res.status(403).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const updateRfp = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { rfp_id } = req.params;
+        const user = req.user;
+
+        if (!user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const validationResult = createRfpSchema.safeParse(req.body);
+        if (!validationResult.success) {
+            return res.status(400).json({ errors: validationResult.error.issues });
+        }
+
+        const updatedRfp = await rfpService.updateRfp(rfp_id, validationResult.data, user.userId);
+        res.json(updatedRfp);
+    } catch (error: any) {
+        if (error.message === 'RFP not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to update this RFP') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'RFP cannot be updated in current status') {
+            return res.status(400).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const deleteRfp = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { rfp_id } = req.params;
+        const user = req.user;
+
+        if (!user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        await rfpService.deleteRfp(rfp_id, user.userId);
+        res.json({ message: 'RFP deleted successfully' });
+    } catch (error: any) {
+        if (error.message === 'RFP not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to delete this RFP') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'RFP cannot be deleted in current status') {
+            return res.status(400).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 export const createDraftResponse = async (req: AuthenticatedRequest, res: Response) => {
     const validationResult = submitResponseSchema.safeParse(req.body);
 
@@ -250,6 +375,105 @@ export const uploadResponseDocument = async (req: AuthenticatedRequest, res: Res
     } catch (error: any) {
         if (error.message === 'Response not found') {
             return res.status(404).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const getMyResponses = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const user = req.user;
+        if (!user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        let { page: pageNumber, limit: limitNumber, search, ...filters } = req.query;
+
+        const page: number = pageNumber ? parseInt(pageNumber as string) : 1;
+        const limit: number = limitNumber ? parseInt(limitNumber as string) : 10;
+        const offset = (page - 1) * limit;
+
+        // Split filters for response vs RFP fields
+        const responseFilterKeys = ['proposed_budget', 'timeline', 'cover_letter', 'created_at'];
+        const rfpFilterKeys = ['title', 'status_id', 'buyer_id'];
+
+        const responseFilters: any = {};
+        const rfpFilters: any = {};
+
+        for (let key in filters) {
+            const columnKey = key.split('___')[1];
+            if (responseFilterKeys.includes(columnKey)) responseFilters[key] = filters[key];
+            else if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = filters[key];
+        }
+
+        const generalFilters = modifyGeneralFilterPrisma(responseFilters);
+        const rfpGeneralFilters = modifyGeneralFilterPrisma(rfpFilters);
+
+        const responses = await rfpService.getMyResponses(
+            user.userId,
+            generalFilters,
+            rfpGeneralFilters,
+            offset,
+            limit,
+            search as string | undefined
+        );
+
+        res.json(responses);
+    } catch (error: any) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const getResponseById = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { responseId } = req.params;
+        const user = req.user;
+
+        if (!user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const response = await rfpService.getResponseById(responseId, user.userId);
+        res.json(response);
+    } catch (error: any) {
+        if (error.message === 'Response not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to view this response') {
+            return res.status(403).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const updateResponse = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { responseId } = req.params;
+        const user = req.user;
+
+        if (!user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const validationResult = submitResponseSchema.safeParse(req.body);
+        if (!validationResult.success) {
+            return res.status(400).json({ errors: validationResult.error.issues });
+        }
+
+        const updatedResponse = await rfpService.updateResponse(responseId, validationResult.data, user.userId);
+        res.json(updatedResponse);
+    } catch (error: any) {
+        if (error.message === 'Response not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to update this response') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'Response cannot be updated in current status') {
+            return res.status(400).json({ message: error.message });
         }
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });

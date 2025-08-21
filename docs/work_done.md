@@ -60,3 +60,35 @@ feat: Implement core backend, RFP lifecycle, and API docs
 - Validation Libarary Zod is introduced and validation will happen only in controllers.
 updated auth.controller.ts and rfp.controller.ts
 - created src/validations folder, which include auth.validation.ts and rfp.validation.ts
+
+## Dashboard System Implementation
+- **Dashboard Router**: Created `src/router/dashboard.router.ts` with role-specific endpoints
+- **Dashboard Controller**: Implemented `src/controllers/dashboard.controller.ts` with proper permission checks
+- **Dashboard Service**: Created `src/services/dashboard.service.ts` with role-specific business logic
+- **Buyer Dashboard**: Shows recent RFPs, responses, and RFPs needing attention
+- **Supplier Dashboard**: Shows available RFPs, recent responses, and responses needing attention
+- **Dashboard Statistics**: Role-specific statistics for both buyers and suppliers
+
+## Email Notification System
+- **Email Service**: Created `src/services/email.service.ts` using SendGrid
+- **Notification Templates**: Implemented HTML email templates for different events
+- **RFP Published**: Notifies all suppliers when a new RFP is published
+- **Response Submitted**: Notifies buyers when suppliers submit responses
+- **Status Changes**: Notifies suppliers when RFP status changes
+- **Development Mode**: Logs emails in development when SendGrid API key is not configured
+
+## Real-time WebSocket Notifications
+- **WebSocket Service**: Created `src/services/websocket.service.ts` using Socket.IO
+- **Authentication**: JWT-based authentication for WebSocket connections
+- **Role-based Rooms**: Users join role-specific and personal rooms
+- **Real-time Events**: 
+  - `rfp_published`: Notifies suppliers of new RFPs
+  - `response_submitted`: Notifies buyers of new responses
+  - `rfp_status_changed`: Notifies suppliers of status changes
+- **Integration**: WebSocket notifications integrated with email notifications
+
+## Enhanced RFP Service
+- **Notification Integration**: Added email and WebSocket notifications to RFP lifecycle
+- **Improved Error Handling**: Better error messages and validation
+- **Enhanced Security**: Proper ownership validation in all operations
+- **Status Management**: Proper state transitions with validation

@@ -12,7 +12,7 @@ router.use(protect);
 
 /**
  * @swagger
- * /rfps:
+ * /rfps/all:
  *   get:
  *     summary: Get all published RFPs
  *     tags: [RFPs]
@@ -28,6 +28,114 @@ router.get(
     '/all',
     hasPermission('rfp', 'view'),
     rfpController.getPublishedRfps
+);
+
+/**
+ * @swagger
+ * /rfps:
+ *   get:
+ *     summary: Get user's own RFPs (Buyers)
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of user's RFPs
+ *       401:
+ *         description: Unauthorized
+ */
+router.get(
+    '/',
+    hasPermission('rfp', 'view'),
+    rfpController.getMyRfps
+);
+
+/**
+ * @swagger
+ * /rfps/{id}:
+ *   get:
+ *     summary: Get specific RFP details
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: RFP details
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: RFP not found
+ */
+router.get(
+    '/:rfp_id',
+    hasPermission('rfp', 'view'),
+    rfpController.getRfpById
+);
+
+/**
+ * @swagger
+ * /rfps/{id}:
+ *   put:
+ *     summary: Update an RFP
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: RFP updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: RFP not found
+ */
+router.put(
+    '/:rfp_id',
+    hasPermission('rfp', 'edit'),
+    rfpController.updateRfp
+);
+
+/**
+ * @swagger
+ * /rfps/{id}:
+ *   delete:
+ *     summary: Delete an RFP
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: RFP deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: RFP not found
+ */
+router.delete(
+    '/:rfp_id',
+    hasPermission('rfp', 'edit'),
+    rfpController.deleteRfp
 );
 
 /**
@@ -279,7 +387,7 @@ router.get(
  */
 router.post(
     '/:rfp_version_id/documents',
-    hasPermission('rfp', 'manage_documents'),
+    hasPermission('documents', 'upload_for_rfp'),
     upload.single('document'),
     rfpController.uploadRfpDocument
 );
@@ -323,6 +431,84 @@ router.post(
     hasPermission('documents', 'upload_for_response'),
     upload.single('document'),
     rfpController.uploadResponseDocument
+);
+
+/**
+ * @swagger
+ * /rfps/my-responses:
+ *   get:
+ *     summary: Get supplier's responses
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of supplier's responses
+ *       401:
+ *         description: Unauthorized
+ */
+router.get(
+    '/my-responses',
+    hasPermission('supplier_response', 'view'),
+    rfpController.getMyResponses
+);
+
+/**
+ * @swagger
+ * /rfps/responses/{responseId}:
+ *   get:
+ *     summary: Get specific response details
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: responseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Response details
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Response not found
+ */
+router.get(
+    '/responses/:responseId',
+    hasPermission('supplier_response', 'view'),
+    rfpController.getResponseById
+);
+
+/**
+ * @swagger
+ * /rfps/responses/{responseId}:
+ *   put:
+ *     summary: Update a supplier response
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: responseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Response updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Response not found
+ */
+router.put(
+    '/responses/:responseId',
+    hasPermission('supplier_response', 'edit'),
+    rfpController.updateResponse
 );
 
 export default router;

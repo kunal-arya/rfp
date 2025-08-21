@@ -33,15 +33,15 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
 -   [X] Implement file upload endpoint for response documents.
 
 ### Notifications & Dashboards
--   [ ] Set up email service integration (e.g., SendGrid).
--   [ ] Implement logic to trigger email notifications on status changes.
--   [ ] **API:** Create endpoint for a role-specific dashboard (`GET /api/dashboard`).
+-   [X] Set up email service integration (e.g., SendGrid).
+-   [X] Implement logic to trigger email notifications on status changes.
+-   [X] **API:** Create endpoint for a role-specific dashboard (`GET /api/dashboard`).
 
 ### Real-time Notifications (WebSockets)
--   [ ] Set up WebSocket server (e.g., with Socket.IO).
--   [ ] **Notify Suppliers:** When a new RFP is published.
--   [ ] **Notify Buyer:** When a supplier submits a response.
--   [ ] **Notify Supplier:** When an RFP status changes.
+-   [X] Set up WebSocket server (e.g., with Socket.IO).
+-   [X] **Notify Suppliers:** When a new RFP is published.
+-   [X] **Notify Buyer:** When a supplier submits a response.
+-   [X] **Notify Supplier:** When an RFP status changes.
 
 ## Phase 3: Frontend
 
