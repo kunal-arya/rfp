@@ -46,32 +46,41 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
 ## Phase 3: Frontend Development
 
 ### Project Setup & Core Infrastructure
--   [ ] Set up React/TypeScript project with Vite.
--   [ ] Install and configure required dependencies (React Router, Axios, Socket.IO client, etc.).
--   [ ] Set up project structure with proper folder organization.
--   [ ] Configure TypeScript and ESLint for code quality.
--   [ ] Set up environment variables for API endpoints.
+-   [X] Set up React/TypeScript project with Vite.
+-   [X] Install and configure required dependencies (React Router, Axios, Socket.IO client, etc.).
+-   [X] Set up project structure with proper folder organization.
+-   [X] Configure TypeScript and ESLint for code quality.
+-   [X] Set up environment variables for API endpoints.
 
 ### Authentication System
--   [ ] Create login page with form validation.
--   [ ] Create registration page with role selection (Buyer/Supplier).
--   [ ] Implement JWT token management (store, refresh, logout).
--   [ ] Create protected route wrapper component.
--   [ ] Implement authentication context/state management.
--   [ ] Add "Remember Me" functionality.
+-   [X] Create login page with form validation.
+-   [X] Create registration page with role selection (Buyer/Supplier).
+-   [X] Implement JWT token management (store, refresh, logout).
+-   [X] Create protected route wrapper component.
+-   [X] Implement authentication context/state management.
+-   [X] Add "Remember Me" functionality.
+
+### Permission System & Access Control
+-   [X] Store user permissions in localStorage after login.
+-   [X] Create permission context for global state management.
+-   [X] Implement `usePermissions()` hook with helper functions.
+-   [X] Create permission-based UI components (show/hide features).
+-   [X] Implement route protection based on user permissions.
+-   [X] Add feature guards for conditional rendering.
+-   [X] Create permission-aware navigation components.
 
 ### Buyer Dashboard & Features
--   [ ] **Dashboard Overview:**
-    -   [ ] Recent RFPs summary cards.
-    -   [ ] Recent responses summary.
-    -   [ ] RFPs needing attention alerts.
-    -   [ ] Statistics widgets (total RFPs, responses, etc.).
--   [ ] **RFP Management:**
-    -   [ ] Create RFP form with all fields (title, description, requirements, budget, deadline, notes).
-    -   [ ] RFP list view with search, filtering, and pagination.
-    -   [ ] RFP detail view with edit capabilities.
-    -   [ ] RFP status management (Draft → Published).
-    -   [ ] Delete RFP functionality (Draft only).
+-   [X] **Dashboard Overview:**
+    -   [X] Recent RFPs summary cards.
+    -   [X] Recent responses summary.
+    -   [X] RFPs needing attention alerts.
+    -   [X] Statistics widgets (total RFPs, responses, etc.).
+-   [X] **RFP Management:**
+    -   [X] Create RFP form with all fields (title, description, requirements, budget, deadline, notes).
+    -   [X] RFP list view with search, filtering, and pagination.
+    -   [X] RFP detail view with edit capabilities.
+    -   [X] RFP status management (Draft → Published).
+    -   [X] Delete RFP functionality (Draft only).
 -   [ ] **Document Management:**
     -   [ ] File upload component for RFP documents.
     -   [ ] Document list view with download links.
@@ -83,15 +92,15 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [ ] Response comparison view.
 
 ### Supplier Dashboard & Features
--   [ ] **Dashboard Overview:**
-    -   [ ] Available RFPs summary.
-    -   [ ] My responses summary.
-    -   [ ] Responses needing attention (Draft status).
-    -   [ ] Statistics widgets (total responses, success rate, etc.).
--   [ ] **RFP Browsing:**
-    -   [ ] Browse published RFPs with search and filtering.
-    -   [ ] RFP detail view with all information.
-    -   [ ] RFP list with pagination and sorting.
+-   [X] **Dashboard Overview:**
+    -   [X] Available RFPs summary.
+    -   [X] My responses summary.
+    -   [X] Responses needing attention (Draft status).
+    -   [X] Statistics widgets (total responses, success rate, etc.).
+-   [X] **RFP Browsing:**
+    -   [X] Browse published RFPs with search and filtering.
+    -   [X] RFP detail view with all information.
+    -   [X] RFP list with pagination and sorting.
 -   [ ] **Response Management:**
     -   [ ] Create response form (budget, timeline, cover letter).
     -   [ ] My responses list view.
@@ -115,21 +124,21 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [ ] Sound alerts for important notifications.
 
 ### UI/UX Design & Responsiveness
--   [ ] **Design System:**
-    -   [ ] Choose and implement UI library (Tailwind CSS, shadcn ui).
-    -   [ ] Create consistent color scheme and typography.
-    -   [ ] Design reusable components (buttons, forms, cards, etc.).
--   [ ] **Responsive Design:**
-    -   [ ] Mobile-first responsive layout.
-    -   [ ] Tablet and desktop optimizations.
-    -   [ ] Touch-friendly interactions for mobile.
--   [ ] **User Experience:**
-    -   [ ] Loading states for all async operations.
-    -   [ ] Error handling with user-friendly messages.
-    -   [ ] Form validation with real-time feedback.
-    -   [ ] Confirmation dialogs for destructive actions.
-    -   [ ] Breadcrumb navigation.
-    -   [ ] Search functionality with debouncing.
+-   [X] **Design System:**
+    -   [X] Choose and implement UI library (Tailwind CSS, shadcn ui).
+    -   [X] Create consistent color scheme and typography.
+    -   [X] Design reusable components (buttons, forms, cards, etc.).
+-   [X] **Responsive Design:**
+    -   [X] Mobile-first responsive layout.
+    -   [X] Tablet and desktop optimizations.
+    -   [X] Touch-friendly interactions for mobile.
+-   [X] **User Experience:**
+    -   [X] Loading states for all async operations.
+    -   [X] Error handling with user-friendly messages.
+    -   [X] Form validation with real-time feedback.
+    -   [X] Confirmation dialogs for destructive actions.
+    -   [X] Breadcrumb navigation.
+    -   [X] Search functionality with debouncing.
 
 ### Advanced Features
 -   [ ] **Search & Filtering:**

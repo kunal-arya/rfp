@@ -89,11 +89,8 @@ export interface DashboardStats {
   pendingResponses?: number;
   approvedResponses?: number;
   rejectedResponses?: number;
-  totalResponses?: number;
   draftResponses?: number;
   submittedResponses?: number;
-  approvedResponses?: number;
-  rejectedResponses?: number;
   availableRfps?: number;
   role: string;
 }
