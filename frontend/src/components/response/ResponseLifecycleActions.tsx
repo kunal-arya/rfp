@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useApproveResponse, useRejectResponse, useAwardResponse } from '@/hooks/useResponse';
+import { useApproveResponse, useRejectResponse, useAwardResponse, useMoveResponseToReview } from '@/hooks/useResponse';
 import { useAuth } from '@/contexts/AuthContext';
 import { SupplierResponse } from '@/apis/types';
 import { toast } from 'sonner';
@@ -25,8 +25,10 @@ export const ResponseLifecycleActions: React.FC<ResponseLifecycleActionsProps> =
   const approveResponseMutation = useApproveResponse();
   const rejectResponseMutation = useRejectResponse();
   const awardResponseMutation = useAwardResponse();
+  const moveToReviewMutation = useMoveResponseToReview();
 
   const isRfpOwner = user?.id === response.rfp?.buyer?.id;
+  const canMoveToReview = isRfpOwner && permissionHelpers.hasPermission('supplier_response', 'review') && response.status.code === 'Submitted';
   const canApprove = isRfpOwner && permissionHelpers.hasPermission('supplier_response', 'approve') && response.status.code === 'Under Review';
   const canReject = isRfpOwner && permissionHelpers.hasPermission('supplier_response', 'reject') && response.status.code === 'Under Review';
   const canAward = isRfpOwner && permissionHelpers.hasPermission('supplier_response', 'award') && response.status.code === 'Approved';
@@ -62,6 +64,20 @@ export const ResponseLifecycleActions: React.FC<ResponseLifecycleActionsProps> =
     }
   };
 
+  const handleMoveToReview = async () => {
+    if (!window.confirm('Are you sure you want to move this response to review? This will allow you to approve or reject it.')) {
+      return;
+    }
+
+    try {
+      await moveToReviewMutation.mutateAsync(response.id);
+      toast.success('Response moved to review successfully');
+      onActionComplete?.();
+    } catch {
+      toast.error('Failed to move response to review');
+    }
+  };
+
   const handleAwardResponse = async () => {
     if (!window.confirm('Are you sure you want to award this response? This will award the RFP to this supplier.')) {
       return;
@@ -82,6 +98,22 @@ export const ResponseLifecycleActions: React.FC<ResponseLifecycleActionsProps> =
 
   return (
     <div className="flex flex-wrap gap-2">
+      {canMoveToReview && (
+        <Button
+          onClick={handleMoveToReview}
+          disabled={moveToReviewMutation.isPending}
+          variant="outline"
+          className="border-blue-200 text-blue-700 hover:bg-blue-50"
+        >
+          {moveToReviewMutation.isPending ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 mr-2" />
+          ) : (
+            <MessageSquare className="h-4 w-4 mr-2" />
+          )}
+          Move to Review
+        </Button>
+      )}
+
       {canApprove && (
         <Button
           onClick={handleApproveResponse}

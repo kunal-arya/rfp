@@ -318,7 +318,7 @@ export const publishRfp = async (rFPId: string, userId: string) => {
             rfp_id: rfpWithDetails.id
         });
 
-        // Send real-time notification to all suppliers
+        // Send real-time notification to all suppliers and buyer
         notifyRfpPublished(rfpWithDetails);
 
         // Create audit trail entry
@@ -683,23 +683,7 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
             },
         });
 
-        const responseSubmittedStatus = await tx.rFPStatus.findUnique({
-            where: { code: SUPPLIER_RESPONSE_STATUS.Submitted },
-        });
-
-        if (!responseSubmittedStatus) {
-            // This should not happen if the database is seeded correctly
-            throw new Error('Submitted status not found');
-        }
-        
-        const updatedRfp = await prisma.rFP.update({
-            where: { id: response.rfp_id , deleted_at: null },
-            data: {
-                status_id: responseSubmittedStatus.id,
-            },
-        });
-
-        return { updatedResponse, updatedRfp };
+        return { updatedResponse };
     });
 
     // Send email notification to buyer
@@ -737,6 +721,68 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
             new_status: 'Submitted',
         });
     }
+
+    return updatedResponse;
+};
+
+export const moveResponseToReview = async (responseId: string, buyerId: string) => {
+    const response = await prisma.supplierResponse.findUnique({
+        where: { id: responseId },
+        include: {
+            status: true,
+            supplier: true,
+            rfp: {
+                include: {
+                    buyer: true,
+                },
+            },
+        },
+    });
+
+    if (!response) {
+        throw new Error('Response not found');
+    }
+
+    if (response.rfp.buyer_id !== buyerId) {
+        throw new Error('You are not authorized to review this response');
+    }
+
+    if (response.status.code !== SUPPLIER_RESPONSE_STATUS.Submitted) {
+        throw new Error('Response cannot be moved to review in current status');
+    }
+
+    const underReviewStatus = await prisma.supplierResponseStatus.findUnique({
+        where: { code: SUPPLIER_RESPONSE_STATUS.Under_Review },
+    });
+
+    if (!underReviewStatus) {
+        throw new Error('Under Review status not found');
+    }
+
+    const updatedResponse = await prisma.supplierResponse.update({
+        where: { id: responseId },
+        data: {
+            status_id: underReviewStatus.id,
+            reviewed_at: new Date(),
+        },
+        include: {
+            status: true,
+            supplier: true,
+            rfp: {
+                include: {
+                    buyer: true,
+                },
+            },
+        },
+    });
+
+    // Create audit trail entry
+    await createAuditEntry(buyerId, AUDIT_ACTIONS.RESPONSE_MOVED_TO_REVIEW, 'SupplierResponse', responseId, {
+        rfp_id: response.rfp_id,
+        rfp_title: response.rfp.title,
+        previous_status: 'Submitted',
+        new_status: 'Under Review',
+    });
 
     return updatedResponse;
 };
@@ -953,13 +999,16 @@ export const getNBAResponses = async (rFPId: string, userId: string, user_role: 
     const isSupplier = user_role === RoleName.Supplier;
     const isBuyer = user_role === RoleName.Buyer;
 
+    console.log({isSupplier, isBuyer, user_role, userId})
+
     // Check authorization
     if (isSupplier) {
         // Suppliers can only see their own responses
+        console.log({userId, rFPId, rthis: "this is the user id"})
         const responses = await prisma.supplierResponse.findMany({
             where: {
                 rfp_id: rFPId,
-                supplier_id: userId,
+                supplier_id: userId
             },
             include: {
                 supplier: true,
@@ -967,19 +1016,15 @@ export const getNBAResponses = async (rFPId: string, userId: string, user_role: 
                 documents: true,
             },
         });
+        console.log({responses})
         return responses;
-    } else if (isBuyer) {
-        // Buyers can see all non-draft responses for their RFPs
-        if (rFP.buyer_id !== userId) {
-            throw new Error('You are not authorized to view responses for this RFP');
-        }
-        
+    } else if (isBuyer) {        
         const responses = await prisma.supplierResponse.findMany({
             where: {
                 rfp_id: rFPId,
                 status: {
                     code: {
-                        not: 'Draft'
+                        not: SUPPLIER_RESPONSE_STATUS.Draft
                     }
                 }
             },

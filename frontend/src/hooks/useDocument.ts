@@ -40,7 +40,7 @@ export const useDeleteDocument = () => {
   return useMutation({
     mutationFn: ({ documentId, type, parentId }: { documentId: string; type: 'rfp' | 'response'; parentId: string }) => 
       documentApi.deleteDocument(documentId, type, parentId),
-    onSuccess: (_, { documentId, type, parentId }) => {
+    onSuccess: (_, { documentId, type }) => {
       console.log(`Document ${documentId} deleted`);
       
       // Invalidate specific queries based on document type

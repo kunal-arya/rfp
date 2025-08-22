@@ -461,6 +461,38 @@ router.put(
 
 /**
  * @swagger
+ * /rfps/responses/{response_id}/move-to-review:
+ *   put:
+ *     summary: Move a response to review status
+ *     tags: [Responses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: response_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Response moved to review successfully
+ *       400:
+ *         description: Response cannot be moved to review in current status
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Response not found
+ */
+router.put(
+    '/responses/:response_id/move-to-review',
+    hasPermission('supplier_response', 'review'),
+    rfpController.moveResponseToReview
+);
+
+/**
+ * @swagger
  * /rfps/responses/{response_id}/reject:
  *   put:
  *     summary: Reject a response

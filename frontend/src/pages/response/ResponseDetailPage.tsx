@@ -32,7 +32,7 @@ export const ResponseDetailPage: React.FC = () => {
   const { data: response, isLoading, isError } = useResponseById(responseId || '');
   const deleteDocumentMutation = useDeleteDocument();
   const uploadDocumentMutation = useUploadResponseDocument();
-  const submitResponseMutation = useSubmitResponse();
+  const submitResponseMutation = useSubmitResponse(responseId || '');
   const [uploadingDocs, setUploadingDocs] = useState(false);
 
   const handleDelete = (docId: string) => {

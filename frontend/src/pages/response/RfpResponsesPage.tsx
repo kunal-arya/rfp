@@ -40,7 +40,7 @@ export const RfpResponsesPage: React.FC = () => {
       </div>
 
       <ResponseList
-        responses={responsesData?.data || []}
+        responses={responsesData || []}
         isLoading={isLoading}
         onViewResponse={handleViewResponse}
         onEditResponse={() => {}} // Not available for buyers

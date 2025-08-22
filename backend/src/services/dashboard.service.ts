@@ -147,10 +147,14 @@ const getBuyerStats = async (userId: string) => {
         totalRfps,
         publishedRfps,
         draftRfps,
+        closedRfps,
+        awardedRfps,
+        cancelledRfps,
         totalResponses,
         pendingResponses,
         approvedResponses,
         rejectedResponses,
+        awardedResponses,
     ] = await Promise.all([
         // Total RFPs
         prisma.rFP.count({ where: { buyer_id: userId , deleted_at: null } }),
@@ -165,9 +169,24 @@ const getBuyerStats = async (userId: string) => {
             where: { buyer_id: userId, status: { code: RFP_STATUS.Draft }, deleted_at: null },
         }),
         
+        // Closed RFPs
+        prisma.rFP.count({
+            where: { buyer_id: userId, status: { code: RFP_STATUS.Closed }, deleted_at: null },
+        }),
+        
+        // Awarded RFPs
+        prisma.rFP.count({
+            where: { buyer_id: userId, status: { code: RFP_STATUS.Awarded }, deleted_at: null },
+        }),
+        
+        // Cancelled RFPs
+        prisma.rFP.count({
+            where: { buyer_id: userId, status: { code: RFP_STATUS.Cancelled }, deleted_at: null },
+        }),
+        
         // Total responses to buyer's RFPs
         prisma.supplierResponse.count({
-            where: { rfp: { buyer_id: userId , status: { code: SUPPLIER_RESPONSE_STATUS.Submitted } , deleted_at: null } },
+            where: { rfp: { buyer_id: userId , deleted_at: null } },
         }),
         
         // Pending responses (Under Review)
@@ -193,16 +212,28 @@ const getBuyerStats = async (userId: string) => {
                 status: { code: SUPPLIER_RESPONSE_STATUS.Rejected },
             },
         }),
+        
+        // Awarded responses
+        prisma.supplierResponse.count({
+            where: {
+                rfp: { buyer_id: userId , deleted_at: null },
+                status: { code: SUPPLIER_RESPONSE_STATUS.Awarded },
+            },
+        }),
     ]);
 
     return {
         totalRfps,
         publishedRfps,
         draftRfps,
+        closedRfps,
+        awardedRfps,
+        cancelledRfps,
         totalResponses,
         pendingResponses,
         approvedResponses,
         rejectedResponses,
+        awardedResponses,
         role: RoleName.Buyer,
     };
 };
@@ -212,12 +243,14 @@ const getSupplierStats = async (userId: string) => {
         totalResponses,
         draftResponses,
         submittedResponses,
+        underReviewResponses,
         approvedResponses,
         rejectedResponses,
+        awardedResponses,
         availableRfps,
     ] = await Promise.all([
-        // Total responses submitted
-        prisma.supplierResponse.count({ where: { supplier_id: userId, status: { code: SUPPLIER_RESPONSE_STATUS.Submitted } } }),
+        // Total responses
+        prisma.supplierResponse.count({ where: { supplier_id: userId } }),
         
         // Draft responses
         prisma.supplierResponse.count({
@@ -229,6 +262,11 @@ const getSupplierStats = async (userId: string) => {
             where: { supplier_id: userId, status: { code: SUPPLIER_RESPONSE_STATUS.Submitted } },
         }),
         
+        // Under Review responses
+        prisma.supplierResponse.count({
+            where: { supplier_id: userId, status: { code: SUPPLIER_RESPONSE_STATUS.Under_Review } },
+        }),
+        
         // Approved responses
         prisma.supplierResponse.count({
             where: { supplier_id: userId, status: { code: SUPPLIER_RESPONSE_STATUS.Approved } },
@@ -237,6 +275,11 @@ const getSupplierStats = async (userId: string) => {
         // Rejected responses
         prisma.supplierResponse.count({
             where: { supplier_id: userId, status: { code: SUPPLIER_RESPONSE_STATUS.Rejected } },
+        }),
+        
+        // Awarded responses
+        prisma.supplierResponse.count({
+            where: { supplier_id: userId, status: { code: SUPPLIER_RESPONSE_STATUS.Awarded } },
         }),
         
         // Available RFPs to respond to
@@ -255,8 +298,10 @@ const getSupplierStats = async (userId: string) => {
         totalResponses,
         draftResponses,
         submittedResponses,
+        underReviewResponses,
         approvedResponses,
         rejectedResponses,
+        awardedResponses,
         availableRfps,
         role: RoleName.Supplier,
     };

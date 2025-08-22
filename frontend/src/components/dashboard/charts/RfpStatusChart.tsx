@@ -8,9 +8,13 @@ interface RfpStatusChartProps {
   stats: {
     draftRfps?: number;
     publishedRfps?: number;
+    closedRfps?: number;
+    awardedRfps?: number;
+    cancelledRfps?: number;
     pendingResponses?: number; // Representing 'Under Review'
     approvedResponses?: number;
     rejectedResponses?: number;
+    awardedResponses?: number;
   };
 }
 
@@ -18,9 +22,9 @@ export const RfpStatusChart: React.FC<RfpStatusChartProps> = ({ stats }) => {
   const data = [
     { name: 'Draft', count: stats.draftRfps || 0 },
     { name: 'Published', count: stats.publishedRfps || 0 },
-    { name: 'Review', count: stats.pendingResponses || 0 },
-    { name: 'Approved', count: stats.approvedResponses || 0 },
-    { name: 'Rejected', count: stats.rejectedResponses || 0 },
+    { name: 'Closed', count: stats.closedRfps || 0 },
+    { name: 'Awarded', count: stats.awardedRfps || 0 },
+    { name: 'Cancelled', count: stats.cancelledRfps || 0 },
   ];
 
   return (
@@ -44,7 +48,7 @@ export const RfpStatusChart: React.FC<RfpStatusChartProps> = ({ stats }) => {
               }}
             />
             <Legend />
-            <Bar dataKey="count" fill="#3b82f6" name="Number of RFPs" />
+            <Bar dataKey="count" fill="hsl(var(--primary))" name="Number of RFPs" />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

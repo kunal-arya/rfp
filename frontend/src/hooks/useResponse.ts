@@ -93,14 +93,14 @@ export const useDeleteResponse = () => {
   });
 };
 
-export const useSubmitResponse = () => {
+export const useSubmitResponse = (responseId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (responseId: string) => responseApi.submitResponse(responseId),
     onSuccess: (updatedResponse) => {
       // Update the specific response in cache
-      queryClient.setQueryData(['response', updatedResponse.id], updatedResponse);
+      queryClient.invalidateQueries({ queryKey: ['responses', responseId] });
       
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['responses', 'my'] });
@@ -172,6 +172,26 @@ export const useAwardResponse = () => {
     },
     onError: (error) => {
       console.error('Failed to award response:', error);
+    },
+  });
+};
+
+export const useMoveResponseToReview = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (responseId: string) => responseApi.moveResponseToReview(responseId),
+    onSuccess: (updatedResponse) => {
+      // Update the specific response in cache
+      queryClient.setQueryData(['response', updatedResponse.id], updatedResponse);
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['responses', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['responses', 'rfp', updatedResponse.rfp_id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+    onError: (error) => {
+      console.error('Failed to move response to review:', error);
     },
   });
 };

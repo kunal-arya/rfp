@@ -722,3 +722,11 @@ frontend/src/
 - **Page Integration**: Integrated lifecycle components into RFP and Response detail pages
 - **User Experience**: Added confirmation dialogs, loading states, and toast notifications for all lifecycle actions
 - **Status Validation**: Implemented proper status validation and permission checks in frontend components
+
+### **Phase 5: Bug Fixes Completion**
+- **Dashboard Stats Update**: Updated backend dashboard service to include all new RFP statuses (Closed, Awarded, Cancelled) and response statuses (Under Review, Awarded)
+- **Frontend Chart Update**: Updated RFP Status Distribution chart to display all new statuses and use primary color (bg-primary)
+- **Response Review Workflow**: Added "Move to Review" functionality for submitted responses, allowing buyers to move responses from "Submitted" to "Under Review" status before approving/rejecting
+- **RFP Delete Action**: Added delete button for draft RFPs on the RFP detail page with proper confirmation dialog
+- **Backend Integration**: Added moveResponseToReview service, controller, and route with proper permission checks and audit trail
+- **Frontend Integration**: Added moveResponseToReview API function, React Query hook, and UI component integration

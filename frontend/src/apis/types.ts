@@ -121,12 +121,17 @@ export interface DashboardStats {
   totalRfps?: number;
   publishedRfps?: number;
   draftRfps?: number;
+  closedRfps?: number;
+  awardedRfps?: number;
+  cancelledRfps?: number;
   totalResponses?: number;
   pendingResponses?: number;
   approvedResponses?: number;
   rejectedResponses?: number;
+  awardedResponses?: number;
   draftResponses?: number;
   submittedResponses?: number;
+  underReviewResponses?: number;
   availableRfps?: number;
   role: string;
 }

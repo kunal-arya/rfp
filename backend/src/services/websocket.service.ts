@@ -62,6 +62,11 @@ export const notifyRfpPublished = (rfpData: any) => {
         data: rfpData,
         timestamp: new Date().toISOString()
     });
+    io.to('Buyer').emit('rfp_published', {
+        type: 'RFP_PUBLISHED',
+        data: rfpData,
+        timestamp: new Date().toISOString()
+    });
 };
 
 export const notifyResponseSubmitted = (responseData: any, buyerId: string) => {

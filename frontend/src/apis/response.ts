@@ -27,8 +27,8 @@ export const responseApi = {
   },
 
   // Get all responses for an RFP (buyer)
-  getRfpResponses: async (rfpId: string, filters?: ResponseFilters): Promise<PaginatedResponse<SupplierResponse>> => {
-    const response = await apiClient.get<PaginatedResponse<SupplierResponse>>(`/rfp/${rfpId}/responses`, { params: filters });
+  getRfpResponses: async (rfpId: string, filters?: ResponseFilters): Promise<SupplierResponse[]> => {
+    const response = await apiClient.get<SupplierResponse[]>(`/rfp/${rfpId}/responses`, { params: filters });
     return response.data;
   },
 
@@ -83,6 +83,12 @@ export const responseApi = {
   // Award response (buyer only)
   awardResponse: async (responseId: string): Promise<SupplierResponse> => {
     const response = await apiClient.put<SupplierResponse>(`/rfp/responses/${responseId}/award`);
+    return response.data;
+  },
+
+  // Move response to review (buyer only)
+  moveResponseToReview: async (responseId: string): Promise<SupplierResponse> => {
+    const response = await apiClient.put<SupplierResponse>(`/rfp/responses/${responseId}/move-to-review`);
     return response.data;
   },
 };

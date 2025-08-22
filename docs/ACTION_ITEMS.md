@@ -280,6 +280,9 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [X] buyer can publish rfps from /rfps/<rfp_id> page, now this functionality is only in the "rfps/my" page.
     -   [X] same in /responses/<responseId> page, seller can change status draft responses to publish responses. and then it is available and send email to that rfp owner against which response is added, send notification and web socket event also.
     -   [X] on dashboard "RFP Status Distribution" that graph color of bars should be bg-primary do that
+      -   [X] Basically, update the "RFP Status Distribution" in dashboard frontend accordingly, with that u might need to update the dashboard/stats api as well in backend.
+      -   [X] if on page, responses/<response_id>, if the responses is submitted, then give user to review the response, according to lifecycle. most probably approve or reject actions but check it and then implement. if new is required, do it
+      -   [X] page , /rfps/<rfp_id>, if it is in draft state, give user to action to delete
     
 -   [X] **Backend Deployment:**
     -   [X] In "createRfp" service, u are not creating it correctly, read schema.prisma to get the hang of how the schema is and then implement it, for ex - current_version_id is setting as null, but that should not be the case, versions to get all the versions related to an rpf and general we will fetch only the current_version using current_version_id
@@ -291,3 +294,4 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [X] Supplier is not able to see the his responses against a rfp.. this api route is is giving empty - "/:rfp_id/responses". supplier can only see his own created rfp responses, not anybody else. buyer can see responses for the rfp that is created by him.
     -   [X] for supplier, this api is also failing, please check "/rfp/my-responses"... error - "Forbidden: You can only view published RFPs"
     -   [X] For supplier, Recent Responses in dashboard frontend should show reponses, whether draft or published.. api/dashboard check this route API
+  

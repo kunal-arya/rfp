@@ -372,7 +372,8 @@ export async function getNBAResponses(req: AuthenticatedRequest, res: Response) 
 
     try {
         const responses = await rfpService.getNBAResponses(rfp_id, user.userId, user.role);
-        res.json(responses);
+        console.log({responses})
+        return res.json(responses);
     } catch (error: any) {
         if (error.message === 'RFP not found') {
             return res.status(404).json({ message: error.message });
@@ -469,6 +470,32 @@ export const rejectResponse = async (req: AuthenticatedRequest, res: Response) =
             return res.status(403).json({ message: error.message });
         }
         if (error.message === 'Response cannot be rejected in current status') {
+            return res.status(400).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const moveResponseToReview = async (req: AuthenticatedRequest, res: Response) => {
+    const { response_id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const updatedResponse = await rfpService.moveResponseToReview(response_id, user.userId);
+        res.json(updatedResponse);
+    } catch (error: any) {
+        if (error.message === 'Response not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to review this response') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'Response cannot be moved to review in current status') {
             return res.status(400).json({ message: error.message });
         }
         console.error(error);

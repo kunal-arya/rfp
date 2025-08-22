@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useRfpById, usePublishRfp } from '@/hooks/useRfp';
+import { useRfpById, usePublishRfp, useDeleteRfp } from '@/hooks/useRfp';
 import { RfpLifecycleActions } from '@/components/rfp/RfpLifecycleActions';
 import { useRfpResponses } from '@/hooks/useResponse';
 import { useDeleteDocument, useUploadRfpDocument } from '@/hooks/useDocument';
@@ -21,7 +21,8 @@ import {
   MessageSquare,
   Edit,
   ArrowLeft,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -35,6 +36,7 @@ export const RfpDetailPage: React.FC = () => {
   const deleteDocumentMutation = useDeleteDocument();
   const uploadDocumentMutation = useUploadRfpDocument();
   const publishRfpMutation = usePublishRfp();
+  const deleteRfpMutation = useDeleteRfp();
   const [uploadingDocs, setUploadingDocs] = useState(false);
 
   const handleDelete = (docId: string) => {
@@ -176,10 +178,29 @@ export const RfpDetailPage: React.FC = () => {
               </Button>
             )}
             
+            {isOwner && isDraft && (
+              <Button 
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to delete this RFP? This action cannot be undone.')) {
+                    deleteRfpMutation.mutate(rfpId || '');
+                  }
+                }}
+                disabled={deleteRfpMutation.isPending}
+                variant="destructive"
+              >
+                {deleteRfpMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4 mr-2" />
+                )}
+                Delete RFP
+              </Button>
+            )}
+            
             {/* Lifecycle Actions */}
             <RfpLifecycleActions 
               rfp={rfp} 
-              responses={responses?.data || []}
+              responses={responses || []}
               onActionComplete={() => {
                 // Refetch data after lifecycle action
                 window.location.reload();
@@ -265,66 +286,62 @@ export const RfpDetailPage: React.FC = () => {
               </Card>
             )}
 
-            {/* Responses Section - Only show if user is owner */}
-            {isOwner && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
-                    Supplier Responses ({responses?.data?.length || 0})
-                  </CardTitle>
-                  <CardDescription>
-                    Responses submitted by suppliers for this RFP
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {responsesLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                      Loading responses...
-                    </div>
-                  ) : responses && responses.data && responses.data.length > 0 ? (
-                    <div className="space-y-4">
-                      {responses.data
-                        .filter((response: any) => response.status.code !== 'Draft') // Filter out draft responses for buyers
-                        .map((response: any) => (
-                        <div key={response.id} className="border rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4" />
-                              <span className="font-medium">{response.supplier.email}</span>
-                            </div>
-                            <Badge variant={response.status.code === 'Submitted' ? 'default' : 'secondary'}>
-                              {response.status.label}
-                            </Badge>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  Supplier Responses ({responses?.length || 0})
+                </CardTitle>
+                <CardDescription>
+                  Responses submitted by suppliers for this RFP
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {responsesLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                    Loading responses...
+                  </div>
+                ) : responses && responses && responses.length > 0 ? (
+                  <div className="space-y-4">
+                    {responses
+                      .map((response) => (
+                      <div key={response.id} className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            <span className="font-medium">{response.supplier.email}</span>
                           </div>
-                          <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground mb-3">
-                            <div>Budget: {formatCurrency(response.proposed_budget)}</div>
-                            <div>Timeline: {response.timeline || 'Not specified'}</div>
-                          </div>
-                          {response.cover_letter && (
-                            <p className="text-sm text-muted-foreground mb-3">
-                              {response.cover_letter.substring(0, 150)}...
-                            </p>
-                          )}
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => navigate(`/responses/${response.id}`)}
-                          >
-                            View Details
-                          </Button>
+                          <Badge variant={response.status.code === 'Submitted' ? 'default' : 'secondary'}>
+                            {response.status.label}
+                          </Badge>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-center py-8">
-                      No responses submitted yet.
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                        <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground mb-3">
+                          <div>Budget: {formatCurrency(response.proposed_budget)}</div>
+                          <div>Timeline: {response.timeline || 'Not specified'}</div>
+                        </div>
+                        {response.cover_letter && (
+                          <p className="text-sm text-muted-foreground mb-3">
+                            {response.cover_letter.substring(0, 150)}...
+                          </p>
+                        )}
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => navigate(`/responses/${response.id}`)}
+                        >
+                          View Details
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    No responses submitted yet.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           {/* Sidebar */}
