@@ -242,8 +242,22 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [X] In "login" and "register" Page, if token is there in the localstorage, please redirect to dashboard page and After "login"& "Register" redirect to dashboard page as well. 
     -   [X] when I am going to "/dashboard" page, why it is redirect me to login page even if token is there, fix this. this is happening for every protected page. check the logic and do it 
     -   [X] In dashboard, why we have different Upload Documents Actions for Buyer to upload documents ?? better is to make them inside "Create New RFP".. why there are two "Review Responses" actions ??? remove one if other one is redudant
+    -   [X] While uploading document "file_type" key is mandatory to send from the frontend. please do it.
+    -   [X] You have not implemented every detail in RFP details page.... Detail RFP page missing details like deadline, min & max budget etc etc.. RFP detail page should also show us the responses of the RFP given by suppliers... make the RFP detail page looks good.
+    -   [X] There is no Edit RFP Functionality, implement that, I think Edit Page is also missing, try to use Add RFP Form as a reusable component
+    -   [X] In "RFP Detail Page", If status is published, don't show the "Upload New Documents" as It can't be done in Publish state.
+    -   [X] In "My RFPs" Page
+        -   [X] Implement Pagination, send "page" and "limit" key to backend
+        -   [X] Implement Filters and search properly, to implement filters properly read - "modifyGeneralFilterPrisma" and API controller - "getMyRfps"
+        -   [X] We don't have bulk API feature as of now, delete that "Select all" for now
+    -   [X] Implement Navbar, either on the left or on the top, whatever u feel like is ideal for the application.
+    -   [X] I loggedIn as "Supplier" and in dashboard i can see "Recent RFPs" in which I can see "Draft" RFPs as well. ideally, only "Published should be shown"
+    -   [X] If user has the permission "supplier_response" -> "create" is allowed, please show way to upload the response in the "RFP Detail Page".
+    -   [X] If user has the permisison "rfp" -> "manage_documents" is allowed, please show the upload new documents, else hide it in "RFP Detail Page"
     
 -   [X] **Backend Deployment:**
     -   [X] In "createRfp" service, u are not creating it correctly, read schema.prisma to get the hang of how the schema is and then implement it, for ex - current_version_id is setting as null, but that should not be the case, versions to get all the versions related to an rpf and general we will fetch only the current_version using current_version_id
     -   [X] In "getRfpById", please all the documents that are related to this "rfp_version_id" and send them to the frontend. do it same for "getMyRfps", include documents that are related to this "rfp_version_id"
+    -   [X] Create "Delete Document API", this is not present, make the route => /api/rfp/documents/<document_id>, frontend will send u if the document related to rfp version or response, accordingly send rfp_verion_id or responseId... soft delete documents please....
+    -   [X] Why we have not implement version and parent_document_id related to Document.... if parent_document_id is not needed, delete it.... else do something about it. same for version
 

@@ -95,7 +95,9 @@ export const getMyRfps = async (
         include: {
             current_version: {
                 include: {
-                    documents: true, // Include documents for the current version
+                    documents: {
+                        where: { deleted_at: null }, // Exclude soft-deleted documents
+                    },
                 },
             },
             status: true,
@@ -122,7 +124,9 @@ export const getRfpById = async (rfpId: string, userId: string) => {
         include: {
             current_version: {
                 include: {
-                    documents: true, // Include documents for the current version
+                    documents: {
+                        where: { deleted_at: null }, // Exclude soft-deleted documents
+                    },
                 },
             },
             status: true,
@@ -202,6 +206,7 @@ export const updateRfp = async (rfpId: string, rfpData: CreateRfpData, userId: s
         include: {
             current_version: true,
             status: true,
+            buyer: true,
         },
     });
 
@@ -326,7 +331,9 @@ export const getPublishedRfps = async (
         include: {
             current_version: {
                 include: {
-                    documents: true, // Include documents for the current version
+                    documents: {
+                        where: { deleted_at: null }, // Exclude soft-deleted documents
+                    },
                 },
             },
             buyer: true,
@@ -605,7 +612,11 @@ export const uploadRfpDocument = async (rfp_version_id: string, userId: string, 
         throw new Error('You are not authorized to upload documents for this RFP');
     }
 
-    const uploadResult = await uploadToCloudinary(file.buffer);
+    if(file.buffer.length === 0) {
+        throw new Error('File buffer is empty');
+    }
+   
+    const uploadResult = await uploadToCloudinary(file.buffer,file.mimetype);
 
     const document = await prisma.document.create({
         data: {
@@ -613,6 +624,9 @@ export const uploadRfpDocument = async (rfp_version_id: string, userId: string, 
             url: uploadResult.secure_url,
             rfp_version_id: rfp_version_id,
             uploader_id: userId
+        },
+        include: {
+            rfp_version: true,
         },
     });
 
@@ -632,7 +646,7 @@ export const uploadResponseDocument = async (responseId: string, userId: string,
         throw new Error('You are not authorized to upload documents for this response');
     }
 
-    const uploadResult = await uploadToCloudinary(file.buffer);
+    const uploadResult = await uploadToCloudinary(file.buffer, file.mimetype);
 
     const document = await prisma.document.create({
         data: {
@@ -781,4 +795,69 @@ export const updateResponse = async (responseId: string, responseData: SubmitRes
     });
 
     return updatedResponse;
+};
+
+export const deleteDocument = async (documentId: string, type: string, parentId: string, userId: string) => {
+    // First, find the document
+    const document = await prisma.document.findUnique({
+        where: { 
+            id: documentId,
+            deleted_at: null, // Only find non-deleted documents
+        },
+        include: {
+            rfp_version: {
+                include: {
+                    rfp: true,
+                },
+            },
+            rfp_response: {
+                include: {
+                    rfp: true,
+                },
+            },
+        },
+    });
+
+    if (!document) {
+        throw new Error('Document not found');
+    }
+
+    // Check authorization based on document type
+    if (type === 'rfp') {
+        if (!document.rfp_version) {
+            throw new Error('Document not found');
+        }
+        
+        // Check if user owns the RFP
+        if (document.rfp_version.rfp.buyer_id !== userId) {
+            throw new Error('You are not authorized to delete this document');
+        }
+
+        // Verify parentId matches
+        if (document.rfp_version_id !== parentId) {
+            throw new Error('Document not found');
+        }
+    } else if (type === 'response') {
+        if (!document.rfp_response) {
+            throw new Error('Document not found');
+        }
+        
+        // Check if user owns the response
+        if (document.rfp_response.supplier_id !== userId) {
+            throw new Error('You are not authorized to delete this document');
+        }
+
+        // Verify parentId matches
+        if (document.rfp_response_id !== parentId) {
+            throw new Error('Document not found');
+        }
+    }
+
+    // Soft delete the document
+    await prisma.document.update({
+        where: { id: documentId },
+        data: { deleted_at: new Date() },
+    });
+
+    return { message: 'Document deleted successfully' };
 };

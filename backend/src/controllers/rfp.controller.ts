@@ -117,6 +117,8 @@ export const getMyRfps = async (req: AuthenticatedRequest, res: Response) => {
         const generalFilters = modifyGeneralFilterPrisma(rfpFilters);
         const versionGeneralFilters = modifyGeneralFilterPrisma(versionFilters);
 
+        console.log({generalFilters, versionGeneralFilters, rfpFilters, versionFilters, filters})
+
         const rfps = await rfpService.getMyRfps(
             user.userId,
             generalFilters,
@@ -474,6 +476,38 @@ export const updateResponse = async (req: AuthenticatedRequest, res: Response) =
         }
         if (error.message === 'Response cannot be updated in current status') {
             return res.status(400).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const deleteDocument = async (req: AuthenticatedRequest, res: Response) => {
+    const { documentId } = req.params;
+    const { type, parentId } = req.query;
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    if (!type || !parentId) {
+        return res.status(400).json({ message: 'Type and parentId are required query parameters' });
+    }
+
+    if (type !== 'rfp' && type !== 'response') {
+        return res.status(400).json({ message: 'Type must be either "rfp" or "response"' });
+    }
+
+    try {
+        await rfpService.deleteDocument(documentId, type as string, parentId as string, user.userId);
+        res.json({ message: 'Document deleted successfully' });
+    } catch (error: any) {
+        if (error.message === 'Document not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to delete this document') {
+            return res.status(403).json({ message: error.message });
         }
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });

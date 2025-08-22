@@ -38,14 +38,19 @@ export const useDeleteDocument = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (documentId: string) => documentApi.deleteDocument(documentId),
-    onSuccess: (_, documentId) => {
-      // Optimistically remove the document from any caches if possible
-      // or just invalidate relevant queries
+    mutationFn: ({ documentId, type, parentId }: { documentId: string; type: 'rfp' | 'response'; parentId: string }) => 
+      documentApi.deleteDocument(documentId, type, parentId),
+    onSuccess: (_, { documentId, type, parentId }) => {
       console.log(`Document ${documentId} deleted`);
-      queryClient.invalidateQueries({ queryKey: ['rfps'] });
-      queryClient.invalidateQueries({ queryKey: ['responses'] });
-      // More specific invalidations would be better here if possible
+      
+      // Invalidate specific queries based on document type
+      if (type === 'rfp') {
+        queryClient.invalidateQueries({ queryKey: ['rfps'] });
+        queryClient.invalidateQueries({ queryKey: ['rfp'] });
+      } else if (type === 'response') {
+        queryClient.invalidateQueries({ queryKey: ['responses'] });
+        queryClient.invalidateQueries({ queryKey: ['response'] });
+      }
     },
     onError: (error) => {
       console.error('Failed to delete document:', error);

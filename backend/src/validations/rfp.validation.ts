@@ -26,7 +26,7 @@ export const updateRFPStatusSchema = z.object({
 });
 
 export const getRfpResponsesSchema = z.object({
-    rfp_id: z.cuid(),
+    rfp_id: z.string(),
 });
 
 export const reviewResponseSchema = z.object({

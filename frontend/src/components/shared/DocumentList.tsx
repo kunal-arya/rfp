@@ -56,9 +56,10 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDelete,
                     <Button
                       variant="destructive"
                       size="sm"
+                      className='text-black'
                       onClick={() => onDelete(doc.id)}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <Trash2 className="h-4 w-4 ml-3 " />
                       Delete
                     </Button>
                   )}

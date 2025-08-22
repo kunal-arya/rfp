@@ -9,18 +9,21 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export const uploadToCloudinary = (fileBuffer: Buffer): Promise<any> => {
-    return new Promise((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-            { resource_type: 'auto' },
-            (error, result) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(result);
-                }
-            }
-        );
-        uploadStream.end(fileBuffer);
-    });
+export const uploadToCloudinary = async (fileBuffer: Buffer, fileType?: string): Promise<any> => {
+    try {
+        const base64String = fileBuffer.toString('base64');
+        const dataUri = `data:${fileType || 'application/octet-stream'};base64,${base64String}`;
+
+        const result = await cloudinary.uploader.upload(dataUri, {
+            resource_type: 'auto',
+            use_filename: true,
+            unique_filename: false,
+            overwrite: true
+        });
+
+        return result;
+    } catch (error: any) {
+        console.error('Cloudinary upload error:', error);
+        throw error;
+    }
 };

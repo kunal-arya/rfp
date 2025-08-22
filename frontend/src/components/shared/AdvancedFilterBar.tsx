@@ -127,7 +127,7 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
       <div className="space-y-2">
         <Label>Budget Range: ${budget[0].toLocaleString()} - ${budget[1].toLocaleString()}</Label>
         <Slider
-          defaultValue={budget}
+          value={budget}
           onValueChange={setBudget}
           max={100000}
           step={1000}

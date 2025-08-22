@@ -41,6 +41,7 @@ export interface RFP {
     deadline: string;
     notes?: string;
   };
+  current_version_id?: string;
   supplier_responses: SupplierResponse[];
   created_at: string;
   updated_at: string;

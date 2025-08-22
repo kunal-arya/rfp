@@ -511,4 +511,47 @@ router.put(
     rfpController.updateResponse
 );
 
+/**
+ * @swagger
+ * /rfps/documents/{documentId}:
+ *   delete:
+ *     summary: Delete a document (soft delete)
+ *     tags: [Documents]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: documentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [rfp, response]
+ *         description: Type of document (rfp or response)
+ *       - in: query
+ *         name: parentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: RFP version ID or response ID
+ *     responses:
+ *       200:
+ *         description: Document deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Document not found
+ */
+router.delete(
+    '/documents/:documentId',
+    protect,
+    rfpController.deleteDocument
+);
+
 export default router;

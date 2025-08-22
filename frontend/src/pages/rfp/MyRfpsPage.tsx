@@ -5,30 +5,55 @@ import { RfpList } from '@/components/rfp/RfpList';
 import { useMyRfps, useDeleteRfp, usePublishRfp } from '@/hooks/useRfp';
 import { AdvancedFilterBar, Filters } from '@/components/shared/AdvancedFilterBar';
 import { ExportActions } from '@/components/shared/ExportActions';
-import { BulkOperations, getRfpBulkActions } from '@/components/shared/BulkOperations';
-import { PrintView } from '@/components/shared/PrintView';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { format } from 'date-fns';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
 export const MyRfpsPage: React.FC = () => {
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
   const [filters, setFilters] = useState<any>({});
-  const [selectedRfpIds, setSelectedRfpIds] = useState<string[]>([]);
   const printRef = useRef<HTMLDivElement>(null);
 
-  const { data: rfpsData, isLoading } = useMyRfps(filters);
+  // Build API filters including pagination
+  const apiFilters = {
+    ...filters,
+    page: currentPage,
+    limit: pageSize,
+  };
+
+  const { data: rfpsData, isLoading } = useMyRfps(apiFilters);
   const deleteRfpMutation = useDeleteRfp();
   const publishRfpMutation = usePublishRfp();
 
   const handleFilterChange = (newFilters: Filters) => {
-    const apiFilters = {
-      ...newFilters,
-      deadline_from: newFilters.dateRange?.from ? format(newFilters.dateRange.from, 'yyyy-MM-dd') : undefined,
-      deadline_to: newFilters.dateRange?.to ? format(newFilters.dateRange.to, 'yyyy-MM-dd') : undefined,
-      budget_min: newFilters.budgetMin,
-      budget_max: newFilters.budgetMax,
-      dateRange: undefined, // Don't pass this to API
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+    
+    const processedFilters: any = {
+      search: newFilters.search,
+      status: newFilters.status,
     };
-    setFilters(apiFilters);
+
+    // Handle date range filters
+    if (newFilters.dateRange?.from) {
+      processedFilters['gte___deadline'] = format(newFilters.dateRange.from, 'yyyy-MM-dd');
+    }
+    if (newFilters.dateRange?.to) {
+      processedFilters['lte___deadline'] = format(newFilters.dateRange.to, 'yyyy-MM-dd');
+    }
+
+    // Handle budget filters
+    if (newFilters.budgetMin) {
+      processedFilters['lte___budget_min'] = newFilters.budgetMin;
+    }
+    if (newFilters.budgetMax) {
+      processedFilters['gte___budget_max'] = newFilters.budgetMax;
+    }
+
+    setFilters(processedFilters);
   };
 
   const handleViewRfp = (rfpId: string) => {
@@ -60,23 +85,15 @@ export const MyRfpsPage: React.FC = () => {
     documentTitle: 'My RFPs',
   });
 
-  const handleBulkAction = (action: string, ids: string[]) => {
-    switch (action) {
-      case 'delete':
-        ids.forEach(id => handleDeleteRfp(id));
-        break;
-      case 'publish':
-        ids.forEach(id => handlePublishRfp(id));
-        break;
-      case 'export':
-        const selectedRfps = (rfpsData?.data || []).filter(rfp => ids.includes(rfp.id));
-        if (selectedRfps.length > 0) {
-          // This would use the export utilities we created
-          console.log('Exporting RFPs:', selectedRfps);
-        }
-        break;
-      default:
-        console.log(`Bulk action ${action} not implemented yet`);
+  const handleNextPage = () => {
+    if (rfpsData && currentPage < Math.ceil(rfpsData.total / pageSize)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
     }
   };
 
@@ -110,31 +127,53 @@ export const MyRfpsPage: React.FC = () => {
 
       <AdvancedFilterBar onFilterChange={handleFilterChange} statuses={rfpStatuses} />
 
-      <BulkOperations
-        selectedIds={selectedRfpIds}
-        onSelectionChange={setSelectedRfpIds}
-        onBulkAction={handleBulkAction}
-        totalItems={rfpsData?.data?.length || 0}
-        availableActions={getRfpBulkActions()}
-      />
+      <div className="space-y-6">
+        <RfpList
+          rfps={rfpsData?.data || []}
+          isLoading={isLoading}
+          onViewRfp={handleViewRfp}
+          onEditRfp={handleEditRfp}
+          onDeleteRfp={handleDeleteRfp}
+          onPublishRfp={handlePublishRfp}
+          onCreateRfp={handleCreateRfp}
+          showCreateButton={true}
+          showActions={true}
+        />
 
-      <RfpList
-        rfps={rfpsData?.data || []}
-        isLoading={isLoading}
-        onViewRfp={handleViewRfp}
-        onEditRfp={handleEditRfp}
-        onDeleteRfp={handleDeleteRfp}
-        onPublishRfp={handlePublishRfp}
-        onCreateRfp={handleCreateRfp}
-        showCreateButton={true}
-        showActions={true}
-      />
-
-      <PrintView
-        ref={printRef}
-        type="rfp-list"
-        data={rfpsData?.data || []}
-      />
+        {/* Pagination */}
+        {rfpsData && rfpsData.total > pageSize && (
+          <Card>
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, rfpsData.total)} of {rfpsData.total} RFPs
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                <span className="text-sm font-medium px-3 py-1 bg-muted rounded">
+                  Page {currentPage} of {Math.ceil(rfpsData.total / pageSize)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextPage}
+                  disabled={currentPage >= Math.ceil(rfpsData.total / pageSize)}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };

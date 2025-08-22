@@ -88,8 +88,8 @@ model Document {
   file_name          String
   url                String
   file_type          String?   // pdf, image, docx
-  version            Int      @default(1)
   created_at         DateTime @default(now())
+  deleted_at         DateTime? // Soft delete field
 
   uploader           User     @relation("Uploader", fields: [uploader_id], references: [id])
   uploader_id        String
@@ -101,11 +101,6 @@ model Document {
   // Buyer side
   rfp_version        RFPVersion? @relation(fields: [rfp_version_id], references: [id])
   rfp_version_id     String?
-
-  // Document versioning
-  parent_document    Document? @relation("DocumentVersions", fields: [parent_document_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  parent_document_id String?
-  versions           Document[] @relation("DocumentVersions")
 }
 
 

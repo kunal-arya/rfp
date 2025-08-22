@@ -43,23 +43,24 @@ export const CreateRfpPage: React.FC = () => {
         });
         toast.success(`Document "${file.name}" uploaded successfully!`);
       } catch (error) {
+        console.error('Failed to upload document:', error);
         toast.error(`Failed to upload "${file.name}"`);
       }
     }
     setPendingFiles([]);
   };
 
-  const handleFilesSelect = (files: File[]) => {
-    if (createdRfpId) {
-      // RFP already created, upload immediately
-      // This shouldn't happen in the current flow, but handle it just in case
-      toast.info('Please create the RFP first, then upload documents');
-    } else {
-      // RFP not created yet, store files for later upload
-      setPendingFiles(files);
-      toast.success(`${files.length} file(s) selected for upload after RFP creation`);
-    }
-  };
+  // const handleFilesSelect = (files: File[]) => {
+  //   if (createdRfpId) {
+  //     // RFP already created, upload immediately
+  //     // This shouldn't happen in the current flow, but handle it just in case
+  //     toast.info('Please create the RFP first, then upload documents');
+  //   } else {
+  //     // RFP not created yet, store files for later upload
+  //     setPendingFiles(files);
+  //     toast.success(`${files.length} file(s) selected for upload after RFP creation`);
+  //   }
+  // };
 
   const isLoading = createRfpMutation.isPending || uploadDocumentMutation.isPending;
 
@@ -82,7 +83,7 @@ export const CreateRfpPage: React.FC = () => {
         />
 
         {/* Document Upload Section */}
-        <Card className="w-full max-w-4xl mx-auto">
+        {/* <Card className="w-full max-w-4xl mx-auto">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Upload className="h-5 w-5" />
@@ -114,7 +115,7 @@ export const CreateRfpPage: React.FC = () => {
               </div>
             )}
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
     </div>
   );

@@ -3,11 +3,13 @@ import { QueryProvider } from './contexts/QueryProvider';
 import { AuthProvider } from './contexts/AuthContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import { Toaster } from 'sonner';
+import { Layout } from './components/layout/Layout';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { CreateRfpPage } from './pages/rfp/CreateRfpPage';
+import { EditRfpPage } from './pages/rfp/EditRfpPage';
 import { MyRfpsPage } from './pages/rfp/MyRfpsPage';
 import { BrowseRfpsPage } from './pages/rfp/BrowseRfpsPage';
 import { CreateResponsePage } from './pages/response/CreateResponsePage';
@@ -23,7 +25,8 @@ function App() {
       <AuthProvider>
         <WebSocketProvider>
           <Router>
-            <Routes>
+            <Layout>
+              <Routes>
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
@@ -60,6 +63,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredPermission={{ resource: 'rfp', action: 'view' }}>
                     <BrowseRfpsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/rfps/:rfpId/edit" 
+                element={
+                  <ProtectedRoute requiredPermission={{ resource: 'rfp', action: 'edit' }}>
+                    <EditRfpPage />
                   </ProtectedRoute>
                 } 
               />
@@ -119,7 +130,8 @@ function App() {
               
               {/* Catch all - redirect to dashboard */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </Routes>
+              </Routes>
+            </Layout>
           </Router>
           <Toaster richColors position="top-right" />
         </WebSocketProvider>

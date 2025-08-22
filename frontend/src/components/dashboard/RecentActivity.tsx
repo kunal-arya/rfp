@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardData } from '@/apis/types';
 import { FileText, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface RecentActivityProps {
   data: DashboardData;
@@ -43,7 +44,9 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
         <FileText className="h-4 w-4 text-blue-600" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">{rfp.title}</p>
+        <Link to={`/rfps/${rfp.id}`}>
+          <p className="text-sm font-medium text-foreground truncate">{rfp.title}</p>
+        </Link>
         <p className="text-xs text-muted-foreground">
           {formatDate(rfp.created_at)}
         </p>
@@ -87,12 +90,12 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
-          {data.recentRfps && data.recentRfps.length > 0 ? (
-            data.recentRfps.slice(0, 5).map(renderRfpItem)
+          {((isBuyer ? data.recentRfps : data.availableRfps) || []).length > 0 ? (
+            (isBuyer ? data.recentRfps : data.availableRfps).slice(0, 5).map(renderRfpItem)
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No recent RFPs</p>
+              <p className="text-sm">{isBuyer ? 'No recent RFPs' : 'No available RFPs'}</p>
             </div>
           )}
         </CardContent>
