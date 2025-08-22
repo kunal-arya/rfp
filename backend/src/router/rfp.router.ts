@@ -212,6 +212,112 @@ router.put(
 
 /**
  * @swagger
+ * /rfps/{id}/close:
+ *   put:
+ *     summary: Close an RFP
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: RFP closed successfully
+ *       400:
+ *         description: RFP cannot be closed in current status
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: RFP not found
+ */
+router.put(
+    '/:rfp_id/close',
+    hasPermission('rfp', 'close'),
+    rfpController.closeRfp
+);
+
+/**
+ * @swagger
+ * /rfps/{id}/cancel:
+ *   put:
+ *     summary: Cancel an RFP
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: RFP cancelled successfully
+ *       400:
+ *         description: RFP cannot be cancelled in current status
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: RFP not found
+ */
+router.put(
+    '/:rfp_id/cancel',
+    hasPermission('rfp', 'cancel'),
+    rfpController.cancelRfp
+);
+
+/**
+ * @swagger
+ * /rfps/{id}/award:
+ *   put:
+ *     summary: Award an RFP to a response
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               response_id:
+ *                 type: string
+ *                 description: ID of the response to award
+ *     responses:
+ *       200:
+ *         description: RFP awarded successfully
+ *       400:
+ *         description: RFP cannot be awarded or response is not approved
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: RFP or response not found
+ */
+router.put(
+    '/:rfp_id/award',
+    hasPermission('rfp', 'award'),
+    rfpController.awardRfp
+);
+
+/**
+ * @swagger
  * /rfps/{id}/responses:
  *   post:
  *     summary: Submit a response to an RFP
@@ -319,6 +425,112 @@ router.put(
     '/responses/review/:rfp_id',
     hasPermission('rfp', 'change_status'),
     rfpController.reviewRfpResponse
+);
+
+/**
+ * @swagger
+ * /rfps/responses/{response_id}/approve:
+ *   put:
+ *     summary: Approve a response
+ *     tags: [Responses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: response_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Response approved successfully
+ *       400:
+ *         description: Response cannot be approved in current status
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Response not found
+ */
+router.put(
+    '/responses/:response_id/approve',
+    hasPermission('supplier_response', 'approve'),
+    rfpController.approveResponse
+);
+
+/**
+ * @swagger
+ * /rfps/responses/{response_id}/reject:
+ *   put:
+ *     summary: Reject a response
+ *     tags: [Responses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: response_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               rejection_reason:
+ *                 type: string
+ *                 description: Reason for rejection
+ *     responses:
+ *       200:
+ *         description: Response rejected successfully
+ *       400:
+ *         description: Response cannot be rejected in current status
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Response not found
+ */
+router.put(
+    '/responses/:response_id/reject',
+    hasPermission('supplier_response', 'reject'),
+    rfpController.rejectResponse
+);
+
+/**
+ * @swagger
+ * /rfps/responses/{response_id}/award:
+ *   put:
+ *     summary: Award a response
+ *     tags: [Responses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: response_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Response awarded successfully
+ *       400:
+ *         description: Response cannot be awarded in current status
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Response not found
+ */
+router.put(
+    '/responses/:response_id/award',
+    hasPermission('supplier_response', 'award'),
+    rfpController.awardResponse
 );
 
 /**

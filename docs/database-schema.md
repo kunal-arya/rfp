@@ -14,9 +14,14 @@ Represents the status of an RFP.
 | Field  | Type     | Description                                   |
 |--------|----------|-----------------------------------------------|
 | `id`   | `String` | Unique identifier (UUID).                     |
-| `code` | `String` | Unique status code (e.g., Draft, Published).  |
+| `code` | `String` | Unique status code (e.g., Draft, Published, Closed, Awarded, Cancelled).  |
 | `label`| `String` | Human-readable label for the status.          |
 | `rfps` | `RFP[]`  | RFPs associated with this status.             |
+
+**Status Lifecycle:**
+- `Draft` → `Published` → `Closed` → `Awarded`
+- `Draft`/`Published` → `Cancelled`
+- `Published`/`Closed` → `Awarded` (when response awarded)
 
 ---
 
@@ -93,6 +98,12 @@ Represents a Request for Proposal.
 | `buyer`             | `User`                | The buyer (User) who created the RFP.                       |
 | `created_at`        | `DateTime`            | Timestamp of when the RFP was created.                      |
 | `updated_at`        | `DateTime`            | Timestamp of when the RFP was last updated.                 |
+| `closed_at`         | `DateTime?`           | Timestamp of when the RFP was closed.                       |
+| `awarded_at`        | `DateTime?`           | Timestamp of when the RFP was awarded.                      |
+| `awarded_response_id`| `String?`            | Foreign key for the awarded response.                       |
+| `awarded_response`  | `SupplierResponse?`   | The response that was awarded.                              |
+| `current_version_id`| `String?`            | Foreign key for the current version.                        |
+| `current_version`   | `RFPVersion?`        | The current version of this RFP.                            |
 | `versions`          | `RFPVersion[]`        | A list of versions of this RFP.                             |
 | `supplier_responses`| `SupplierResponse[]`  | Responses submitted for this RFP.                           |
 
@@ -150,9 +161,13 @@ Represents the status of a supplier's response.
 | Field      | Type                  | Description                                   |
 |------------|-----------------------|-----------------------------------------------|
 | `id`       | `String`              | Unique identifier (UUID).                     |
-| `code`     | `String`              | Unique status code (e.g., Draft, Submitted).  |
+| `code`     | `String`              | Unique status code (e.g., Draft, Submitted, Under Review, Approved, Rejected, Awarded).  |
 | `label`    | `String`              | Human-readable label.                         |
 | `responses`| `SupplierResponse[]`  | Responses with this status.                   |
+
+**Status Lifecycle:**
+- `Draft` → `Submitted` → `Under Review` → `Approved`/`Rejected`
+- `Approved` → `Awarded` (only one per RFP)
 
 ---
 
@@ -172,9 +187,14 @@ Represents a response from a supplier to an RFP.
 | `proposed_budget`| `Float?`               | Proposed budget (optional).                                 |
 | `timeline`      | `String?`               | Proposed timeline (optional).                               |
 | `cover_letter`  | `String?`               | Optional cover letter.                                      |
+| `rejection_reason` | `String?`            | Reason for rejection (if rejected).                        |
 | `documents`     | `Document[]`            | Documents attached to the response.                         |
 | `created_at`    | `DateTime`              | When the response was created.                              |
 | `updated_at`    | `DateTime`              | When the response was last updated.                         |
+| `submitted_at`  | `DateTime?`             | When the response was submitted.                            |
+| `reviewed_at`   | `DateTime?`             | When the response was reviewed.                             |
+| `decided_at`    | `DateTime?`             | When the response was awarded.                              |
+| `awarded_for_rfp` | `RFP?`               | Reverse relation for awarded response.                      |
 
 ---
 

@@ -266,6 +266,59 @@ Publish an RFP (buyers only).
 - `403 Forbidden`: User not authorized to publish this RFP.
 - `404 Not Found`: RFP not found.
 
+#### `PUT /rfp/{rfp_id}/close`
+
+Close an RFP (buyers only).
+
+**Parameters:**
+- `rfp_id` (path): RFP ID
+
+**Responses:**
+
+- `200 OK`: RFP closed successfully.
+- `400 Bad Request`: RFP cannot be closed in current status.
+- `401 Unauthorized`: Missing or invalid JWT.
+- `403 Forbidden`: User not authorized to close this RFP.
+- `404 Not Found`: RFP not found.
+
+#### `PUT /rfp/{rfp_id}/cancel`
+
+Cancel an RFP (buyers only).
+
+**Parameters:**
+- `rfp_id` (path): RFP ID
+
+**Responses:**
+
+- `200 OK`: RFP cancelled successfully.
+- `400 Bad Request`: RFP cannot be cancelled in current status.
+- `401 Unauthorized`: Missing or invalid JWT.
+- `403 Forbidden`: User not authorized to cancel this RFP.
+- `404 Not Found`: RFP not found.
+
+#### `PUT /rfp/{rfp_id}/award`
+
+Award an RFP to a response (buyers only).
+
+**Parameters:**
+- `rfp_id` (path): RFP ID
+
+**Request Body:**
+
+```json
+{
+  "response_id": "response-uuid"
+}
+```
+
+**Responses:**
+
+- `200 OK`: RFP awarded successfully.
+- `400 Bad Request`: RFP cannot be awarded or response is not approved.
+- `401 Unauthorized`: Missing or invalid JWT.
+- `403 Forbidden`: User not authorized to award this RFP.
+- `404 Not Found`: RFP or response not found.
+
 ### Responses
 
 #### `POST /rfp/{rfp_id}/responses`
@@ -389,6 +442,59 @@ Review a supplier response (approve/reject) (buyers only).
 - `401 Unauthorized`: Missing or invalid JWT.
 - `403 Forbidden`: User not authorized to review responses for this RFP.
 - `404 Not Found`: RFP not found.
+
+#### `PUT /rfp/responses/{response_id}/approve`
+
+Approve a response (buyers only).
+
+**Parameters:**
+- `response_id` (path): Response ID
+
+**Responses:**
+
+- `200 OK`: Response approved successfully.
+- `400 Bad Request`: Response cannot be approved in current status.
+- `401 Unauthorized`: Missing or invalid JWT.
+- `403 Forbidden`: User not authorized to approve this response.
+- `404 Not Found`: Response not found.
+
+#### `PUT /rfp/responses/{response_id}/reject`
+
+Reject a response (buyers only).
+
+**Parameters:**
+- `response_id` (path): Response ID
+
+**Request Body:**
+
+```json
+{
+  "rejection_reason": "Reason for rejection"
+}
+```
+
+**Responses:**
+
+- `200 OK`: Response rejected successfully.
+- `400 Bad Request`: Response cannot be rejected in current status.
+- `401 Unauthorized`: Missing or invalid JWT.
+- `403 Forbidden`: User not authorized to reject this response.
+- `404 Not Found`: Response not found.
+
+#### `PUT /rfp/responses/{response_id}/award`
+
+Award a response (buyers only).
+
+**Parameters:**
+- `response_id` (path): Response ID
+
+**Responses:**
+
+- `200 OK`: Response awarded successfully.
+- `400 Bad Request`: Response cannot be awarded in current status.
+- `401 Unauthorized`: Missing or invalid JWT.
+- `403 Forbidden`: User not authorized to award this response.
+- `404 Not Found`: Response not found.
 
 ### Documents
 

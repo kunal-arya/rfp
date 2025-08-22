@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import { RoleName } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
@@ -24,7 +25,7 @@ export interface AuthenticatedRequest extends Request {
     };
 }
 
-export const protect = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const protect = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const bearer = req.headers.authorization;
 
     if (!bearer || !bearer.startsWith('Bearer ')) {
@@ -63,11 +64,13 @@ export const hasPermission = (resource: string, action: string) => {
 
         const { rfp_id, responseId, rfp_version_id } = req.params;
         const userId = req.user.userId;
+        const isBuyer = req.user.role === RoleName.Buyer;
+        const isSupplier = req.user.role === RoleName.Supplier;
 
         // Ownership and status checks
         try {
             if (permission.scope === 'own') {
-                if (resource === 'rfp' && rfp_id) {
+                if (resource === 'rfp' && rfp_id && isBuyer) {
                     const rfp = await prisma.rFP.findUnique({ where: { id: rfp_id } });
                     if (rfp?.buyer_id !== userId) {
                         return res.status(403).json({ message: 'Forbidden: You do not own this resource' });

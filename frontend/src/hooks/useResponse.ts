@@ -98,13 +98,13 @@ export const useSubmitResponse = () => {
 
   return useMutation({
     mutationFn: (responseId: string) => responseApi.submitResponse(responseId),
-    onSuccess: (submittedResponse) => {
+    onSuccess: (updatedResponse) => {
       // Update the specific response in cache
-      queryClient.setQueryData(['response', submittedResponse.id], submittedResponse);
+      queryClient.setQueryData(['response', updatedResponse.id], updatedResponse);
       
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['responses', 'my'] });
-      queryClient.invalidateQueries({ queryKey: ['responses', 'rfp', submittedResponse.rfp_id] });
+      queryClient.invalidateQueries({ queryKey: ['responses', 'rfp', updatedResponse.rfp_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
     onError: (error) => {
@@ -118,12 +118,13 @@ export const useApproveResponse = () => {
 
   return useMutation({
     mutationFn: (responseId: string) => responseApi.approveResponse(responseId),
-    onSuccess: (approvedResponse) => {
+    onSuccess: (updatedResponse) => {
       // Update the specific response in cache
-      queryClient.setQueryData(['response', approvedResponse.id], approvedResponse);
+      queryClient.setQueryData(['response', updatedResponse.id], updatedResponse);
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ['responses', 'rfp', approvedResponse.rfp_id] });
+      queryClient.invalidateQueries({ queryKey: ['responses', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['responses', 'rfp', updatedResponse.rfp_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
     onError: (error) => {
@@ -136,18 +137,41 @@ export const useRejectResponse = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ responseId, reason }: { responseId: string; reason?: string }) =>
-      responseApi.rejectResponse(responseId, reason),
-    onSuccess: (rejectedResponse) => {
+    mutationFn: ({ responseId, rejectionReason }: { responseId: string; rejectionReason: string }) =>
+      responseApi.rejectResponse(responseId, rejectionReason),
+    onSuccess: (updatedResponse) => {
       // Update the specific response in cache
-      queryClient.setQueryData(['response', rejectedResponse.id], rejectedResponse);
+      queryClient.setQueryData(['response', updatedResponse.id], updatedResponse);
       
       // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ['responses', 'rfp', rejectedResponse.rfp_id] });
+      queryClient.invalidateQueries({ queryKey: ['responses', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['responses', 'rfp', updatedResponse.rfp_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
     onError: (error) => {
       console.error('Failed to reject response:', error);
+    },
+  });
+};
+
+
+export const useAwardResponse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (responseId: string) => responseApi.awardResponse(responseId),
+    onSuccess: (updatedResponse) => {
+      // Update the specific response in cache
+      queryClient.setQueryData(['response', updatedResponse.id], updatedResponse);
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['responses', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['responses', 'rfp', updatedResponse.rfp_id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['rfps'] });
+    },
+    onError: (error) => {
+      console.error('Failed to award response:', error);
     },
   });
 };

@@ -5,13 +5,13 @@ export interface User {
   email: string;
   role: {
     name: string;
-    permissions: Record<string, any>;
+    permissions: Record<string, unknown>;
   };
 }
 
 export interface AuthResponse {
   token: string;
-  permissions: Record<string, any>;
+  permissions: Record<string, unknown>;
   user: {
     email: string;
     id: string;
@@ -31,6 +31,8 @@ export interface RFP {
     id: string;
     email: string;
   };
+  awarded_response_id?: string;
+  awarded_response?: SupplierResponse;
   current_version: {
     id: string;
     version_number: number;
@@ -46,6 +48,8 @@ export interface RFP {
   supplier_responses: SupplierResponse[];
   created_at: string;
   updated_at: string;
+  closed_at?: string;
+  awarded_at?: string;
 }
 
 export interface SupplierResponse {
@@ -63,6 +67,7 @@ export interface SupplierResponse {
   timeline?: string;
   cover_letter?: string;
   notes?: string;
+  rejection_reason?: string;
   documents: Document[];
   rfp?: {
     id: string;
@@ -88,6 +93,9 @@ export interface SupplierResponse {
   };
   created_at: string;
   updated_at: string;
+  submitted_at?: string;
+  reviewed_at?: string;
+  decided_at?: string;
 }
 
 export interface Document {
@@ -132,5 +140,5 @@ export interface PaginatedResponse<T> {
 
 export interface ApiError {
   message: string;
-  errors?: any[];
+  errors?: unknown[];
 }

@@ -52,12 +52,20 @@ model RFP {
   buyer_id           String
   buyer              User          @relation("BuyerRFPs", fields: [buyer_id], references: [id])
   
+  // Winner tracking
+  awarded_response_id String? @unique
+  awarded_response    SupplierResponse? @relation("AwardedResponse", fields: [awarded_response_id], references: [id])
+  
   // Current version reference
   current_version_id String?       @unique
   current_version    RFPVersion?   @relation("CurrentRFPVersion", fields: [current_version_id], references: [id])
   
+  // Timestamps
   created_at         DateTime      @default(now())
   updated_at         DateTime      @updatedAt
+  closed_at          DateTime?
+  awarded_at         DateTime?
+  
   versions           RFPVersion[]  @relation("RFPVersions")
   supplier_responses SupplierResponse[] @relation("RFPResponses")
 }
@@ -124,14 +132,22 @@ model SupplierResponse {
   proposed_budget Float?
   timeline        String?
   cover_letter    String?
+  rejection_reason String?
   documents       Document[]
 
+  // Timestamps
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
+  submitted_at    DateTime?
+  reviewed_at     DateTime?
+  decided_at      DateTime?
+
+  // Reverse relation for awarded response
+  awarded_for_rfp RFP? @relation("AwardedResponse")
 }
 
 model AuditTrail {
-  id          BigInt   @id @default(autoincrement())
+  id          String   @id @default(uuid())
   user        User?    @relation("UserActions", fields: [user_id], references: [id])
   user_id     String?
   action      String

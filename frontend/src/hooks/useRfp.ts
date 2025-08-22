@@ -99,6 +99,68 @@ export const useDeleteRfp = () => {
   });
 };
 
+export const useCloseRfp = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (rfpId: string) => rfpApi.closeRfp(rfpId),
+    onSuccess: (updatedRfp) => {
+      // Update the specific RFP in cache
+      queryClient.setQueryData(['rfp', updatedRfp.id], updatedRfp);
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['rfps', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['rfps', 'all'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+    onError: (error) => {
+      console.error('Failed to close RFP:', error);
+    },
+  });
+};
+
+export const useCancelRfp = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (rfpId: string) => rfpApi.cancelRfp(rfpId),
+    onSuccess: (updatedRfp) => {
+      // Update the specific RFP in cache
+      queryClient.setQueryData(['rfp', updatedRfp.id], updatedRfp);
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['rfps', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['rfps', 'all'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+    onError: (error) => {
+      console.error('Failed to cancel RFP:', error);
+    },
+  });
+};
+
+export const useAwardRfp = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ rfpId, responseId }: { rfpId: string; responseId: string }) =>
+      rfpApi.awardRfp(rfpId, responseId),
+    onSuccess: (updatedRfp) => {
+      // Update the specific RFP in cache
+      queryClient.setQueryData(['rfp', updatedRfp.id], updatedRfp);
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['rfps', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['rfps', 'all'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['responses'] });
+    },
+    onError: (error) => {
+      console.error('Failed to award RFP:', error);
+    },
+  });
+};
+
 export const usePublishRfp = () => {
   const queryClient = useQueryClient();
 

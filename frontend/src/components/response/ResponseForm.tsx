@@ -86,19 +86,19 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
 
           {/* RFP Selection (dropdown for published RFPs) */}
           {!rfpId && (
-            <div className="space-y-2">
+            <div className="space-y-2 w-full">
               <Label htmlFor="rfp_id">Select RFP *</Label>
               <Select
                 value={selectedRfpId}
                 onValueChange={(value) => setValue('rfp_id', value)}
               >
-                <SelectTrigger className={errors.rfp_id ? 'border-destructive' : ''}>
+                <SelectTrigger className={errors.rfp_id ? 'border-destructive w-full' : 'w-full'}>
                   <SelectValue placeholder="Choose an RFP to respond to" />
                 </SelectTrigger>
                 <SelectContent>
                   {publishedRfps?.data?.map((rfp) => (
                     <SelectItem key={rfp.id} value={rfp.id}>
-                      <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
                         <span className="font-medium">{rfp.title}</span>
                         <span className="text-sm text-muted-foreground">
                           Budget: ${rfp.current_version?.budget_min || 0} - ${rfp.current_version?.budget_max || 'N/A'}

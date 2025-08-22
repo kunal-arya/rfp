@@ -205,6 +205,23 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [X] Database migration instructions.
 
 ### Deployment & Production
+-   [X] **RFP Lifecycle Management:**
+    -   [X] Update Prisma schema with new RFP statuses (Draft, Published, Closed, Awarded, Cancelled).
+    -   [X] Update Prisma schema with new response statuses (Draft, Submitted, Under Review, Approved, Rejected, Awarded).
+    -   [X] Add winner tracking fields (awarded_response_id, awarded_at, closed_at).
+    -   [X] Add response timestamps (submitted_at, reviewed_at, decided_at, rejection_reason).
+    -   [X] Implement RFP lifecycle endpoints (close, cancel, award).
+    -   [X] Implement response lifecycle endpoints (approve, reject, award).
+    -   [X] Update permissions and seed data for new statuses.
+    -   [X] Update API documentation and database schema documentation.
+    -   [X] **Frontend Lifecycle Implementation:**
+        -   [X] Update frontend API types to include new lifecycle fields.
+        -   [X] Add lifecycle API functions (closeRfp, cancelRfp, awardRfp, approveResponse, rejectResponse, awardResponse).
+        -   [X] Create React Query hooks for lifecycle mutations.
+        -   [X] Create RfpLifecycleActions component for RFP lifecycle management.
+        -   [X] Create ResponseLifecycleActions component for response lifecycle management.
+        -   [X] Integrate lifecycle components into RFP and Response detail pages.
+        -   [X] Add proper permission checks and status validation in frontend components.
 -   [ ] **Backend Deployment:**
     -   [ ] Deploy to Railway, Heroku, or similar platform.
     -   [ ] Set up production database (PostgreSQL).
@@ -270,4 +287,7 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [X] Create "Delete Document API", this is not present, make the route => /api/rfp/documents/<document_id>, frontend will send u if the document related to rfp version or response, accordingly send rfp_verion_id or responseId... soft delete documents please....
     -   [X] Why we have not implement version and parent_document_id related to Document.... if parent_document_id is not needed, delete it.... else do something about it. same for version
     -   [X] Create more WebSocket Events, I want to make dashboard a fully functional realtime data
-    -   [ ] Implement Audit Trail feature as well, read my schema. I have created a table related to Audit and I think this is not implemented, implement this in backend and frontend is needed.
+    -   [X] Implement Audit Trail feature as well, read my schema. I have created a table related to Audit and I think this is not implemented, implement this in backend and frontend is needed.
+    -   [X] Supplier is not able to see the his responses against a rfp.. this api route is is giving empty - "/:rfp_id/responses". supplier can only see his own created rfp responses, not anybody else. buyer can see responses for the rfp that is created by him.
+    -   [X] for supplier, this api is also failing, please check "/rfp/my-responses"... error - "Forbidden: You can only view published RFPs"
+    -   [X] For supplier, Recent Responses in dashboard frontend should show reponses, whether draft or published.. api/dashboard check this route API

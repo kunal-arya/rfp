@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRfpById, usePublishRfp } from '@/hooks/useRfp';
+import { RfpLifecycleActions } from '@/components/rfp/RfpLifecycleActions';
 import { useRfpResponses } from '@/hooks/useResponse';
 import { useDeleteDocument, useUploadRfpDocument } from '@/hooks/useDocument';
 import { useAuth } from '@/contexts/AuthContext';
@@ -174,6 +175,16 @@ export const RfpDetailPage: React.FC = () => {
                 Publish RFP
               </Button>
             )}
+            
+            {/* Lifecycle Actions */}
+            <RfpLifecycleActions 
+              rfp={rfp} 
+              responses={responses?.data || []}
+              onActionComplete={() => {
+                // Refetch data after lifecycle action
+                window.location.reload();
+              }}
+            />
           </div>
         </div>
 

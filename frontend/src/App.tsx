@@ -17,6 +17,7 @@ import { MyResponsesPage } from './pages/response/MyResponsesPage';
 import { RfpResponsesPage } from './pages/response/RfpResponsesPage';
 import { RfpDetailPage } from './pages/rfp/RfpDetailPage';
 import { ResponseDetailPage } from './pages/response/ResponseDetailPage';
+import AuditTrailPage from './pages/audit/AuditTrailPage';
 import './App.css';
 
 function App() {
@@ -121,6 +122,16 @@ function App() {
                 element={
                   <ProtectedRoute requiredPermission={{ resource: 'supplier_response', action: 'view' }}>
                     <ResponseDetailPage />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Audit Trail routes */}
+              <Route 
+                path="/audit" 
+                element={
+                  <ProtectedRoute requiredPermission={{ resource: 'admin', action: 'view' }}>
+                    <AuditTrailPage />
                   </ProtectedRoute>
                 } 
               />

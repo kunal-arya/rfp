@@ -6,13 +6,16 @@ export enum RoleName {
 export enum RFP_STATUS {
     Draft = "Draft",
     Published = "Published",
-    Response_Submitted = "Response Submitted",
-    Under_Review = "Under Review",
-    Approved = "Approved",
-    Rejected = "Rejected"
+    Closed = "Closed",
+    Awarded = "Awarded",
+    Cancelled = "Cancelled"
 }
 
 export enum SUPPLIER_RESPONSE_STATUS {
     Draft = "Draft",
-    Submitted = "Submitted"
+    Submitted = "Submitted",
+    Under_Review = "Under Review",
+    Approved = "Approved",
+    Rejected = "Rejected",
+    Awarded = "Awarded"
 }

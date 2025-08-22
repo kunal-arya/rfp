@@ -19,10 +19,9 @@ describe('Enum Utilities', () => {
     it('should have all required RFP statuses', () => {
       expect(RFP_STATUS.Draft).toBe('Draft');
       expect(RFP_STATUS.Published).toBe('Published');
-      expect(RFP_STATUS.Response_Submitted).toBe('Response Submitted');
-      expect(RFP_STATUS.Under_Review).toBe('Under Review');
-      expect(RFP_STATUS.Approved).toBe('Approved');
-      expect(RFP_STATUS.Rejected).toBe('Rejected');
+      expect(RFP_STATUS.Closed).toBe('Closed');
+      expect(RFP_STATUS.Cancelled).toBe('Cancelled');
+      expect(RFP_STATUS.Awarded).toBe('Awarded');
     });
 
     it('should have exactly 6 statuses', () => {
@@ -41,13 +40,19 @@ describe('Enum Utilities', () => {
     it('should have all required supplier response statuses', () => {
       expect(SUPPLIER_RESPONSE_STATUS.Draft).toBe('Draft');
       expect(SUPPLIER_RESPONSE_STATUS.Submitted).toBe('Submitted');
-    });
+      expect(SUPPLIER_RESPONSE_STATUS.Under_Review).toBe('Under Review');
+      expect(SUPPLIER_RESPONSE_STATUS.Approved).toBe('Approved');
+      expect(SUPPLIER_RESPONSE_STATUS.Rejected).toBe('Rejected');
+    }); 
 
     it('should have exactly 2 statuses', () => {
       const statuses = Object.values(SUPPLIER_RESPONSE_STATUS);
-      expect(statuses).toHaveLength(2);
+      expect(statuses).toHaveLength(5);
       expect(statuses).toContain('Draft');
       expect(statuses).toContain('Submitted');
+      expect(statuses).toContain('Under Review');
+      expect(statuses).toContain('Approved');
+      expect(statuses).toContain('Rejected');
     });
 
     it('should be string values', () => {

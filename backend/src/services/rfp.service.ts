@@ -1,10 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import { CreateRfpData, SubmitResponseData } from '../validations/rfp.validation';
 import { uploadToCloudinary } from '../utils/cloudinary';
-import { RFP_STATUS, SUPPLIER_RESPONSE_STATUS } from '../utils/enum';
+import { RFP_STATUS, RoleName, SUPPLIER_RESPONSE_STATUS } from '../utils/enum';
 import { sendRfpPublishedNotification, sendResponseSubmittedNotification, sendRfpStatusChangeNotification } from './email.service';
 import { notificationService } from './notification.service';
 import { notifyRfpPublished, notifyResponseSubmitted, notifyRfpStatusChanged } from './websocket.service';
+import { createAuditEntry, AUDIT_ACTIONS } from './audit.service';
 
 const prisma = new PrismaClient();
 
@@ -20,7 +21,7 @@ export const createRfp = async (rFPData: CreateRfpData, buyerId: string) => {
         throw new Error('Draft status not found');
     }
 
-    let updateRfp;
+    let updateRfp: any;
 
     await prisma.$transaction(async (tx) => {
         // First create the RFP without current_version_id
@@ -58,6 +59,14 @@ export const createRfp = async (rFPData: CreateRfpData, buyerId: string) => {
             },
         });
     });
+
+    if (updateRfp) {
+        // Create audit trail entry
+        await createAuditEntry(buyerId, AUDIT_ACTIONS.RFP_CREATED, 'RFP', updateRfp.id, {
+            title: updateRfp.title,
+            status: updateRfp.status.code,
+        });
+    }
 
     return updateRfp;
 };
@@ -271,6 +280,8 @@ export const publishRfp = async (rFPId: string, userId: string) => {
         },
         include: {
             status: true,
+            buyer: true,
+            current_version: true,
         },
     });
 
@@ -297,7 +308,198 @@ export const publishRfp = async (rFPId: string, userId: string) => {
 
         // Send real-time notification to all suppliers
         notifyRfpPublished(rfpWithDetails);
+
+        // Create audit trail entry
+        await createAuditEntry(userId, AUDIT_ACTIONS.RFP_PUBLISHED, 'RFP', rFPId, {
+            title: rfpWithDetails.title,
+            previous_status: 'Draft',
+            new_status: 'Published',
+        });
     }
+
+    return updatedRfp;
+};
+
+export const closeRfp = async (rFPId: string, buyerId: string) => {
+    const rFP = await prisma.rFP.findUnique({
+        where: { id: rFPId },
+        include: {
+            status: true,
+            buyer: true,
+            current_version: true,
+        },
+    });
+
+    if (!rFP) {
+        throw new Error('RFP not found');
+    }
+
+    if (rFP.buyer_id !== buyerId) {
+        throw new Error('You are not authorized to close this RFP');
+    }
+
+    if (rFP.status.code !== 'Published') {
+        throw new Error('RFP cannot be closed in current status');
+    }
+
+    const closedStatus = await prisma.rFPStatus.findUnique({
+        where: { code: RFP_STATUS.Closed },
+    });
+
+    if (!closedStatus) {
+        throw new Error('Closed status not found');
+    }
+
+    const updatedRfp = await prisma.rFP.update({
+        where: { id: rFPId },
+        data: { 
+            status_id: closedStatus.id,
+            closed_at: new Date(),
+        },
+        include: {
+            status: true,
+            buyer: true,
+            current_version: true,
+        },
+    });
+
+    // Create audit trail entry
+    await createAuditEntry(buyerId, AUDIT_ACTIONS.RFP_STATUS_CHANGED, 'RFP', updatedRfp.id, {
+        title: updatedRfp.title,
+        previous_status: rFP.status.code,
+        new_status: updatedRfp.status.code,
+    });
+
+    return updatedRfp;
+};
+
+export const cancelRfp = async (rFPId: string, buyerId: string) => {
+    const rFP = await prisma.rFP.findUnique({
+        where: { id: rFPId },
+        include: {
+            status: true,
+            buyer: true,
+            current_version: true,
+        },
+    });
+
+    if (!rFP) {
+        throw new Error('RFP not found');
+    }
+
+    if (rFP.buyer_id !== buyerId) {
+        throw new Error('You are not authorized to cancel this RFP');
+    }
+
+    if (!['Draft', 'Published'].includes(rFP.status.code)) {
+        throw new Error('RFP cannot be cancelled in current status');
+    }
+
+    const cancelledStatus = await prisma.rFPStatus.findUnique({
+        where: { code: RFP_STATUS.Cancelled },
+    });
+
+    if (!cancelledStatus) {
+        throw new Error('Cancelled status not found');
+    }
+
+    const updatedRfp = await prisma.rFP.update({
+        where: { id: rFPId },
+        data: { status_id: cancelledStatus.id },
+        include: {
+            status: true,
+            buyer: true,
+            current_version: true,
+        },
+    });
+
+    // Create audit trail entry
+    await createAuditEntry(buyerId, AUDIT_ACTIONS.RFP_STATUS_CHANGED, 'RFP', updatedRfp.id, {
+        title: updatedRfp.title,
+        previous_status: rFP.status.code,
+        new_status: updatedRfp.status.code,
+    });
+
+    return updatedRfp;
+};
+
+export const awardRfp = async (rFPId: string, responseId: string, buyerId: string) => {
+    const rFP = await prisma.rFP.findUnique({
+        where: { id: rFPId },
+        include: {
+            status: true,
+            buyer: true,
+            current_version: true,
+        },
+    });
+
+    if (!rFP) {
+        throw new Error('RFP not found');
+    }
+
+    if (rFP.buyer_id !== buyerId) {
+        throw new Error('You are not authorized to award this RFP');
+    }
+
+    if (!['Published', 'Closed'].includes(rFP.status.code)) {
+        throw new Error('RFP cannot be awarded in current status');
+    }
+
+    const response = await prisma.supplierResponse.findUnique({
+        where: { id: responseId },
+        include: {
+            status: true,
+            supplier: true,
+        },
+    });
+
+    if (!response) {
+        throw new Error('Response not found');
+    }
+
+    if (response.rfp_id !== rFPId) {
+        throw new Error('Response does not belong to this RFP');
+    }
+
+    if (response.status.code !== SUPPLIER_RESPONSE_STATUS.Approved) {
+        throw new Error('Response is not approved');
+    }
+
+    const awardedStatus = await prisma.rFPStatus.findUnique({
+        where: { code: RFP_STATUS.Awarded },
+    });
+
+    if (!awardedStatus) {
+        throw new Error('Awarded status not found');
+    }
+
+    const updatedRfp = await prisma.rFP.update({
+        where: { id: rFPId },
+        data: { 
+            status_id: awardedStatus.id,
+            awarded_response_id: responseId,
+            awarded_at: new Date(),
+        },
+        include: {
+            status: true,
+            buyer: true,
+            current_version: true,
+            awarded_response: {
+                include: {
+                    supplier: true,
+                    status: true,
+                },
+            },
+        },
+    });
+
+    // Create audit trail entry
+    await createAuditEntry(buyerId, AUDIT_ACTIONS.RFP_STATUS_CHANGED, 'RFP', updatedRfp.id, {
+        title: updatedRfp.title,
+        previous_status: rFP.status.code,
+        new_status: updatedRfp.status.code,
+        awarded_response_id: responseId,
+    });
 
     return updatedRfp;
 };
@@ -420,6 +622,13 @@ export const createDraftResponse = async (rFPId: string, responseData: SubmitRes
         },
     });
 
+    // Create audit trail entry
+    await createAuditEntry(supplierId, AUDIT_ACTIONS.RESPONSE_CREATED, 'SupplierResponse', response.id, {
+        rfp_id: rFPId,
+        rfp_title: response.rfp.title,
+        status: response.status.code,
+    });
+
     return response;
 };
 
@@ -431,10 +640,6 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
 
     if (!response) {
         throw new Error('Response not found');
-    }
-
-    if (response.supplier_id !== userId) {
-        throw new Error('You are not authorized to submit this response');
     }
 
     const draftStatus = await prisma.supplierResponseStatus.findUnique({
@@ -465,12 +670,12 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
         });
 
         const responseSubmittedStatus = await tx.rFPStatus.findUnique({
-            where: { code: RFP_STATUS.Response_Submitted },
+            where: { code: SUPPLIER_RESPONSE_STATUS.Submitted },
         });
 
         if (!responseSubmittedStatus) {
             // This should not happen if the database is seeded correctly
-            throw new Error('Published status not found');
+            throw new Error('Submitted status not found');
         }
         
         const updatedRfp = await prisma.rFP.update({
@@ -509,12 +714,220 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
 
         // Send real-time notification to buyer
         notifyResponseSubmitted(responseWithDetails, responseWithDetails.rfp.buyer_id);
+
+        // Create audit trail entry
+        await createAuditEntry(userId, AUDIT_ACTIONS.RESPONSE_SUBMITTED, 'SupplierResponse', responseId, {
+            rfp_id: response.rfp_id,
+            rfp_title: responseWithDetails.rfp.title,
+            previous_status: 'Draft',
+            new_status: 'Submitted',
+        });
     }
 
     return updatedResponse;
 };
 
-export const getNBAResponses = async (rFPId: string, userId: string) => {
+export const approveResponse = async (responseId: string, buyerId: string) => {
+    const response = await prisma.supplierResponse.findUnique({
+        where: { id: responseId },
+        include: {
+            status: true,
+            supplier: true,
+            rfp: {
+                include: {
+                    buyer: true,
+                },
+            },
+        },
+    });
+
+    if (!response) {
+        throw new Error('Response not found');
+    }
+
+    if (response.rfp.buyer_id !== buyerId) {
+        throw new Error('You are not authorized to approve this response');
+    }
+
+    if (response.status.code !== SUPPLIER_RESPONSE_STATUS.Under_Review) {
+        throw new Error('Response cannot be approved in current status');
+    }
+
+    const approvedStatus = await prisma.supplierResponseStatus.findUnique({
+        where: { code: SUPPLIER_RESPONSE_STATUS.Approved },
+    });
+
+    if (!approvedStatus) {
+        throw new Error('Approved status not found');
+    }
+
+    const updatedResponse = await prisma.supplierResponse.update({
+        where: { id: responseId },
+        data: {
+            status_id: approvedStatus.id,
+            reviewed_at: new Date(),
+        },
+        include: {
+            status: true,
+            supplier: true,
+            rfp: {
+                include: {
+                    buyer: true,
+                },
+            },
+        },
+    });
+
+    // Create audit trail entry
+    await createAuditEntry(buyerId, AUDIT_ACTIONS.RESPONSE_APPROVED, 'SupplierResponse', responseId, {
+        rfp_id: response.rfp_id,
+        rfp_title: response.rfp.title,
+        previous_status: response.status.code,
+        new_status: updatedResponse.status.code,
+    });
+
+    return updatedResponse;
+};
+
+export const rejectResponse = async (responseId: string, rejectionReason: string, buyerId: string) => {
+    const response = await prisma.supplierResponse.findUnique({
+        where: { id: responseId },
+        include: {
+            status: true,
+            supplier: true,
+            rfp: {
+                include: {
+                    buyer: true,
+                },
+            },
+        },
+    });
+
+    if (!response) {
+        throw new Error('Response not found');
+    }
+
+    if (response.rfp.buyer_id !== buyerId) {
+        throw new Error('You are not authorized to reject this response');
+    }
+
+    if (response.status.code !== SUPPLIER_RESPONSE_STATUS.Under_Review) {
+        throw new Error('Response cannot be rejected in current status');
+    }
+
+    const rejectedStatus = await prisma.supplierResponseStatus.findUnique({
+        where: { code: SUPPLIER_RESPONSE_STATUS.Rejected },
+    });
+
+    if (!rejectedStatus) {
+        throw new Error('Rejected status not found');
+    }
+
+    const updatedResponse = await prisma.supplierResponse.update({
+        where: { id: responseId },
+        data: {
+            status_id: rejectedStatus.id,
+            rejection_reason: rejectionReason,
+            reviewed_at: new Date(),
+        },
+        include: {
+            status: true,
+            supplier: true,
+            rfp: {
+                include: {
+                    buyer: true,
+                },
+            },
+        },
+    });
+
+    // Create audit trail entry
+    await createAuditEntry(buyerId, AUDIT_ACTIONS.RESPONSE_REJECTED, 'SupplierResponse', responseId, {
+        rfp_id: response.rfp_id,
+        rfp_title: response.rfp.title,
+        previous_status: response.status.code,
+        new_status: updatedResponse.status.code,
+        rejection_reason: rejectionReason,
+    });
+
+    return updatedResponse;
+};
+
+export const awardResponse = async (responseId: string, buyerId: string) => {
+    const response = await prisma.supplierResponse.findUnique({
+        where: { id: responseId },
+        include: {
+            status: true,
+            supplier: true,
+            rfp: {
+                include: {
+                    buyer: true,
+                },
+            },
+        },
+    });
+
+    if (!response) {
+        throw new Error('Response not found');
+    }
+
+    if (response.rfp.buyer_id !== buyerId) {
+        throw new Error('You are not authorized to award this response');
+    }
+
+    if (response.status.code !== SUPPLIER_RESPONSE_STATUS.Approved) {
+        throw new Error('Response cannot be awarded in current status');
+    }
+
+    // Check if another response has already been awarded for this RFP
+    const existingAwardedResponse = await prisma.rFP.findFirst({
+        where: {
+            id: response.rfp_id,
+            awarded_response_id: { not: null },
+        },
+    });
+
+    if (existingAwardedResponse) {
+        throw new Error('Another response has already been awarded for this RFP');
+    }
+
+    const awardedStatus = await prisma.supplierResponseStatus.findUnique({
+        where: { code: SUPPLIER_RESPONSE_STATUS.Awarded },
+    });
+
+    if (!awardedStatus) {
+        throw new Error('Awarded status not found');
+    }
+
+    const updatedResponse = await prisma.supplierResponse.update({
+        where: { id: responseId },
+        data: {
+            status_id: awardedStatus.id,
+            decided_at: new Date(),
+        },
+        include: {
+            status: true,
+            supplier: true,
+            rfp: {
+                include: {
+                    buyer: true,
+                },
+            },
+        },
+    });
+
+    // Create audit trail entry
+    await createAuditEntry(buyerId, AUDIT_ACTIONS.RESPONSE_AWARDED, 'SupplierResponse', responseId, {
+        rfp_id: response.rfp_id,
+        rfp_title: response.rfp.title,
+        previous_status: response.status.code,
+        new_status: updatedResponse.status.code,
+    });
+
+    return updatedResponse;
+};
+
+export const getNBAResponses = async (rFPId: string, userId: string, user_role: string) => {
     const rFP = await prisma.rFP.findUnique({
         where: { id: rFPId },
     });
@@ -523,22 +936,49 @@ export const getNBAResponses = async (rFPId: string, userId: string) => {
         throw new Error('RFP not found');
     }
 
-    if (rFP.buyer_id !== userId) {
-        throw new Error('You are not authorized to view responses for this RFP');
+    const isSupplier = user_role === RoleName.Supplier;
+    const isBuyer = user_role === RoleName.Buyer;
+
+    // Check authorization
+    if (isSupplier) {
+        // Suppliers can only see their own responses
+        const responses = await prisma.supplierResponse.findMany({
+            where: {
+                rfp_id: rFPId,
+                supplier_id: userId,
+            },
+            include: {
+                supplier: true,
+                status: true,
+                documents: true,
+            },
+        });
+        return responses;
+    } else if (isBuyer) {
+        // Buyers can see all non-draft responses for their RFPs
+        if (rFP.buyer_id !== userId) {
+            throw new Error('You are not authorized to view responses for this RFP');
+        }
+        
+        const responses = await prisma.supplierResponse.findMany({
+            where: {
+                rfp_id: rFPId,
+                status: {
+                    code: {
+                        not: 'Draft'
+                    }
+                }
+            },
+            include: {
+                supplier: true,
+                status: true,
+                documents: true,
+            },
+        });
+        return responses;
     }
 
-    const responses = await prisma.supplierResponse.findMany({
-        where: {
-            rfp_id: rFPId,
-        },
-        include: {
-            supplier: true,
-            status: true,
-            documents: true,
-        },
-    });
-
-    return responses;
+    return [];
 };
 
 export const reviewRfpResponse = async (rfp_id: string, status: 'Approved' | 'Rejected', userId: string) => {
@@ -555,14 +995,14 @@ export const reviewRfpResponse = async (rfp_id: string, status: 'Approved' | 'Re
         throw new Error('You are not authorized to review responses for this RFP');
     }
 
-    if (rfp.status.code !== 'Under Review') {
+    if (rfp.status.code !== SUPPLIER_RESPONSE_STATUS.Under_Review) {
         throw new Error('RFP must be in Under Review status to approve/reject');
     }
 
     let updated_rfp;
-    if (status === RFP_STATUS.Approved) {
+    if (status === 'Approved') {
         const rfpApprovedStatus = await prisma.rFPStatus.findUnique({
-            where: { code: RFP_STATUS.Approved },
+            where: { code: SUPPLIER_RESPONSE_STATUS.Approved },
         });
         if (!rfpApprovedStatus) {
             throw new Error('RFP Approved status not found');
@@ -578,7 +1018,7 @@ export const reviewRfpResponse = async (rfp_id: string, status: 'Approved' | 'Re
         });
     } else { // Rejected
         const rfpRejectedStatus = await prisma.rFPStatus.findUnique({
-            where: { code: RFP_STATUS.Rejected },
+            where: { code: SUPPLIER_RESPONSE_STATUS.Rejected },
         });
         if (!rfpRejectedStatus) {
             throw new Error('RFP Rejected status not found');
@@ -649,6 +1089,13 @@ export const uploadRfpDocument = async (rfp_version_id: string, userId: string, 
         },
     });
 
+    // Create audit trail entry
+    await createAuditEntry(userId, AUDIT_ACTIONS.DOCUMENT_UPLOADED, 'Document', document.id, {
+        file_name: file.originalname,
+        target_type: 'RFP',
+        target_id: rfp_version_id,
+    });
+
     return document;
 };
 
@@ -674,6 +1121,13 @@ export const uploadResponseDocument = async (responseId: string, userId: string,
             rfp_response_id: responseId,
             uploader_id: userId
         },
+    });
+
+    // Create audit trail entry
+    await createAuditEntry(userId, AUDIT_ACTIONS.DOCUMENT_UPLOADED, 'Document', document.id, {
+        file_name: file.originalname,
+        target_type: 'Response',
+        target_id: responseId,
     });
 
     return document;
@@ -876,6 +1330,13 @@ export const deleteDocument = async (documentId: string, type: string, parentId:
     await prisma.document.update({
         where: { id: documentId },
         data: { deleted_at: new Date() },
+    });
+
+    // Create audit trail entry
+    await createAuditEntry(userId, AUDIT_ACTIONS.DOCUMENT_DELETED, 'Document', documentId, {
+        file_name: document.file_name,
+        target_type: type,
+        target_id: parentId,
     });
 
     return { message: 'Document deleted successfully' };

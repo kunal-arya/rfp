@@ -75,8 +75,14 @@ export const responseApi = {
   },
 
   // Reject response (buyer only)
-  rejectResponse: async (responseId: string, reason?: string): Promise<SupplierResponse> => {
-    const response = await apiClient.put<SupplierResponse>(`/rfp/responses/${responseId}/reject`, { reason });
+  rejectResponse: async (responseId: string, rejectionReason: string): Promise<SupplierResponse> => {
+    const response = await apiClient.put<SupplierResponse>(`/rfp/responses/${responseId}/reject`, { rejection_reason: rejectionReason });
+    return response.data;
+  },
+
+  // Award response (buyer only)
+  awardResponse: async (responseId: string): Promise<SupplierResponse> => {
+    const response = await apiClient.put<SupplierResponse>(`/rfp/responses/${responseId}/award`);
     return response.data;
   },
 };

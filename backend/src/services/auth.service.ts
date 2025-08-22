@@ -1,6 +1,7 @@
 import { PrismaClient, Role, User } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { createAuditEntry, AUDIT_ACTIONS } from './audit.service';
 
 const prisma = new PrismaClient();
 
@@ -28,6 +29,12 @@ export const register = async (email: string, password: string, roleName: 'Buyer
 
     const { password_hash: _, ...userWithoutPassword } = user;
     const token = jwtToken(user, role);
+    // Create audit trail entry for registration
+    await createAuditEntry(user.id, AUDIT_ACTIONS.USER_REGISTERED, 'User', user.id, {
+        email: user.email,
+        role: role.name,
+    });
+
     const response = {
         user: {
             ...userWithoutPassword,
@@ -73,6 +80,12 @@ export const login = async (email: string, password: string) => {
     }
 
     const token = jwtToken(user, user.role);
+
+    // Create audit trail entry for login
+    await createAuditEntry(user.id, AUDIT_ACTIONS.USER_LOGIN, 'User', user.id, {
+        email: user.email,
+        role: user.role.name,
+    });
 
     return {
         token,

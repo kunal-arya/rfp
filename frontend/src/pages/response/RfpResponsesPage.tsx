@@ -23,7 +23,7 @@ export const RfpResponsesPage: React.FC = () => {
 
   const handleRejectResponse = (responseId: string) => {
     const reason = prompt('Please provide a reason for rejection (optional):');
-    rejectResponseMutation.mutate({ responseId, reason });
+    rejectResponseMutation.mutate({ responseId, rejectionReason: reason || '' });
   };
 
   const handleCreateResponse = () => {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useResponseById, useSubmitResponse } from '@/hooks/useResponse';
+import { ResponseLifecycleActions } from '@/components/response/ResponseLifecycleActions';
 import { useDeleteDocument, useUploadResponseDocument } from '@/hooks/useDocument';
 import { useAuth } from '@/contexts/AuthContext';
 import { DocumentList } from '@/components/shared/DocumentList';
@@ -70,7 +71,6 @@ export const ResponseDetailPage: React.FC = () => {
   // Permission checks
   const canManageDocuments = permissionHelpers.hasPermission('supplier_response', 'manage_documents');
   const canSubmitResponse = permissionHelpers.hasPermission('supplier_response', 'submit');
-  const isSupplier = user?.role === 'Supplier';
   const isOwner = user?.id === response?.supplier?.id;
   const isRfpOwner = user?.id === response?.rfp?.buyer?.id;
   const canUploadDocuments = canManageDocuments && isOwner; // Only supplier can upload documents
@@ -165,6 +165,17 @@ export const ResponseDetailPage: React.FC = () => {
               )}
               Submit Response
             </Button>
+          )}
+          
+          {/* Lifecycle Actions for RFP Owner */}
+          {isRfpOwner && (
+            <ResponseLifecycleActions 
+              response={response}
+              onActionComplete={() => {
+                // Refetch data after lifecycle action
+                window.location.reload();
+              }}
+            />
           )}
         </div>
 

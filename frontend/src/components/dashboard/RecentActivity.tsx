@@ -1,8 +1,10 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardData } from '@/apis/types';
-import { FileText, Users } from 'lucide-react';
+import { FileText, Users, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useMyAuditTrails } from '@/hooks/useAudit';
+import { AuditTrailList } from '@/components/shared/AuditTrailList';
 
 interface RecentActivityProps {
   data: DashboardData;
@@ -11,6 +13,7 @@ interface RecentActivityProps {
 
 export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) => {
   const isBuyer = role === 'Buyer';
+  const { data: auditData } = useMyAuditTrails({ limit: 5 });
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -79,7 +82,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Recent RFPs */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
@@ -92,14 +95,17 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
-          {((isBuyer ? data.recentRfps : data.availableRfps) || []).length > 0 ? (
-            (isBuyer ? data.recentRfps : data.availableRfps).slice(0, 5).map(renderRfpItem)
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">{isBuyer ? 'No recent RFPs' : 'No available RFPs'}</p>
-            </div>
-          )}
+          {(() => {
+            const rfps = isBuyer ? data.recentRfps : data.availableRfps;
+            return rfps && rfps.length > 0 ? (
+              rfps.slice(0, 5).map(renderRfpItem)
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">{isBuyer ? 'No recent RFPs' : 'No available RFPs'}</p>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
@@ -115,14 +121,36 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
-          {data.recentResponses && data.recentResponses.length > 0 ? (
-            data.recentResponses.slice(0, 5).map(renderResponseItem)
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No recent responses</p>
-            </div>
-          )}
+          {(() => {
+            const responses = isBuyer ? data.recentResponses : data.myResponses;
+            return responses && responses.length > 0 ? (
+              responses.slice(0, 5).map(renderResponseItem)
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No recent responses</p>
+              </div>
+            );
+          })()}
+        </CardContent>
+      </Card>
+
+      {/* Recent Activity */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Activity className="h-5 w-5 text-green-600" />
+            Recent Activity
+          </CardTitle>
+          <CardDescription>Your recent system activity</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AuditTrailList
+            auditTrails={auditData?.data || []}
+            title=""
+            description=""
+            isLoading={false}
+          />
         </CardContent>
       </Card>
     </div>

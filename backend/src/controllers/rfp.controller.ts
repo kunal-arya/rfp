@@ -49,6 +49,95 @@ export const publishRfp = async (req: AuthenticatedRequest, res: Response) => {
     }
 };
 
+export const closeRfp = async (req: AuthenticatedRequest, res: Response) => {
+    const { rfp_id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const updatedRfp = await rfpService.closeRfp(rfp_id, user.userId);
+        res.json(updatedRfp);
+    } catch (error: any) {
+        if (error.message === 'RFP not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to close this RFP') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'RFP cannot be closed in current status') {
+            return res.status(400).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const cancelRfp = async (req: AuthenticatedRequest, res: Response) => {
+    const { rfp_id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const updatedRfp = await rfpService.cancelRfp(rfp_id, user.userId);
+        res.json(updatedRfp);
+    } catch (error: any) {
+        if (error.message === 'RFP not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to cancel this RFP') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'RFP cannot be cancelled in current status') {
+            return res.status(400).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const awardRfp = async (req: AuthenticatedRequest, res: Response) => {
+    const { rfp_id } = req.params;
+    const { response_id } = req.body;
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    if (!response_id) {
+        return res.status(400).json({ message: 'Response ID is required' });
+    }
+
+    try {
+        const updatedRfp = await rfpService.awardRfp(rfp_id, response_id, user.userId);
+        res.json(updatedRfp);
+    } catch (error: any) {
+        if (error.message === 'RFP not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'Response not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to award this RFP') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'RFP cannot be awarded in current status') {
+            return res.status(400).json({ message: error.message });
+        }
+        if (error.message === 'Response is not approved') {
+            return res.status(400).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 export const getPublishedRfps = async (req: AuthenticatedRequest, res: Response) => {
     try {
         let { page: pageNumber, limit: limitNumber, search, ...filters } = req.query;
@@ -282,7 +371,7 @@ export async function getNBAResponses(req: AuthenticatedRequest, res: Response) 
     }
 
     try {
-        const responses = await rfpService.getNBAResponses(rfp_id, user.userId);
+        const responses = await rfpService.getNBAResponses(rfp_id, user.userId, user.role);
         res.json(responses);
     } catch (error: any) {
         if (error.message === 'RFP not found') {
@@ -323,6 +412,92 @@ export const reviewRfpResponse = async (req: AuthenticatedRequest, res: Response
             return res.status(403).json({ message: error.message });
         }
         if (error.message.startsWith('Invalid status')) {
+            return res.status(400).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const approveResponse = async (req: AuthenticatedRequest, res: Response) => {
+    const { response_id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const updatedResponse = await rfpService.approveResponse(response_id, user.userId);
+        res.json(updatedResponse);
+    } catch (error: any) {
+        if (error.message === 'Response not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to approve this response') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'Response cannot be approved in current status') {
+            return res.status(400).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const rejectResponse = async (req: AuthenticatedRequest, res: Response) => {
+    const { response_id } = req.params;
+    const { rejection_reason } = req.body;
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    if (!rejection_reason) {
+        return res.status(400).json({ message: 'Rejection reason is required' });
+    }
+
+    try {
+        const updatedResponse = await rfpService.rejectResponse(response_id, rejection_reason, user.userId);
+        res.json(updatedResponse);
+    } catch (error: any) {
+        if (error.message === 'Response not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to reject this response') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'Response cannot be rejected in current status') {
+            return res.status(400).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const awardResponse = async (req: AuthenticatedRequest, res: Response) => {
+    const { response_id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const updatedResponse = await rfpService.awardResponse(response_id, user.userId);
+        res.json(updatedResponse);
+    } catch (error: any) {
+        if (error.message === 'Response not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to award this response') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'Response cannot be awarded in current status') {
+            return res.status(400).json({ message: error.message });
+        }
+        if (error.message === 'Another response has already been awarded for this RFP') {
             return res.status(400).json({ message: error.message });
         }
         console.error(error);

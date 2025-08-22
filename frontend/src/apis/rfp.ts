@@ -65,4 +65,22 @@ export const rfpApi = {
     const response = await apiClient.put<RFP>(`/rfp/${rfpId}/publish`);
     return response.data;
   },
+
+  // Close RFP
+  closeRfp: async (rfpId: string): Promise<RFP> => {
+    const response = await apiClient.put<RFP>(`/rfp/${rfpId}/close`);
+    return response.data;
+  },
+
+  // Cancel RFP
+  cancelRfp: async (rfpId: string): Promise<RFP> => {
+    const response = await apiClient.put<RFP>(`/rfp/${rfpId}/cancel`);
+    return response.data;
+  },
+
+  // Award RFP to a response
+  awardRfp: async (rfpId: string, responseId: string): Promise<RFP> => {
+    const response = await apiClient.put<RFP>(`/rfp/${rfpId}/award`, { response_id: responseId });
+    return response.data;
+  },
 };

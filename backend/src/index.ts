@@ -5,6 +5,7 @@ import authRouter from './router/auth.router';
 import rfpRouter from './router/rfp.router';
 import dashboardRouter from './router/dashboard.router';
 import notificationRouter from './router/notification.router';
+import auditRouter from './router/audit.router';
 import { setupSwagger } from './config/swagger';
 import { initializeWebSocket } from './services/websocket.service';
 
@@ -26,6 +27,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/rfp', rfpRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/notifications', notificationRouter);
+app.use('/api/audit', auditRouter);
 
 setupSwagger(app);
 

@@ -43,13 +43,20 @@ export const DashboardPage: React.FC = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Welcome Section */}
-        <div className="text-center">
-          <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Welcome back!
-          </h2>
-          <p className="text-lg text-muted-foreground">
-            Here's what's happening with your {user?.role.toLowerCase()} activities
-          </p>
+        <div className="flex justify-between items-center">
+          <div className="text-center flex-1">
+            <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Welcome back!
+            </h2>
+            <p className="text-lg text-muted-foreground text-center">
+              Here's what's happening with your {user?.role.toLowerCase()} activities
+            </p>
+          </div>
+          {!isLoading && (
+            <div className="lg:col-span-1">
+              <QuickActions />
+            </div>
+          )}
         </div>
 
         {isLoading ? (
@@ -64,11 +71,8 @@ export const DashboardPage: React.FC = () => {
             <StatsCards stats={stats || { totalRfps: 0, publishedRfps: 0, draftRfps: 0, totalResponses: 0, pendingResponses: 0, role: 'Buyer' }} role={user?.role || ''} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-3">
                 <RecentActivity data={dashboardData || { recentRfps: [], recentResponses: [], rfpsNeedingAttention: [], role: 'Buyer' }} role={user?.role || ''} />
-              </div>
-              <div className="lg:col-span-1">
-                <QuickActions />
               </div>
             </div>
             

@@ -12,7 +12,8 @@ import {
   User, 
   LogOut,
   Menu,
-  X
+  X,
+  Activity
 } from 'lucide-react';
 import { NotificationBell } from '@/components/shared/NotificationBell';
 
@@ -43,6 +44,12 @@ export const Navbar: React.FC = () => {
       icon: FileText,
       permission: () => permissionHelpers.canViewRfp,
     },
+    {
+      label: 'Audit Trail',
+      path: '/audit',
+      icon: Activity,
+      permission: () => permissionHelpers.hasPermission('admin', 'view'),
+    },
   ];
 
   const supplierNavItems = [
@@ -63,6 +70,12 @@ export const Navbar: React.FC = () => {
       path: '/responses/my',
       icon: MessageSquare,
       permission: () => permissionHelpers.canViewResponse,
+    },
+    {
+      label: 'Audit Trail',
+      path: '/audit',
+      icon: Activity,
+      permission: () => permissionHelpers.hasPermission('admin', 'view'),
     },
   ];
 

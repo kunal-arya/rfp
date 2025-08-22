@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { RFP_STATUS, SUPPLIER_RESPONSE_STATUS } from '../utils/enum';
+import { RFP_STATUS, RoleName, SUPPLIER_RESPONSE_STATUS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
@@ -45,6 +45,7 @@ const getBuyerDashboard = async (userId: string) => {
     const recentResponses = await prisma.supplierResponse.findMany({
         where: {
             rfp: { buyer_id: userId },
+            status: { code: SUPPLIER_RESPONSE_STATUS.Submitted },
         },
         include: {
             supplier: true,
@@ -155,24 +156,24 @@ const getBuyerStats = async (userId: string) => {
         
         // Published RFPs
         prisma.rFP.count({
-            where: { buyer_id: userId, status: { code: 'Published' } },
+            where: { buyer_id: userId, status: { code: RFP_STATUS.Published } },
         }),
         
         // Draft RFPs
         prisma.rFP.count({
-            where: { buyer_id: userId, status: { code: 'Draft' } },
+            where: { buyer_id: userId, status: { code: RFP_STATUS.Draft } },
         }),
         
         // Total responses to buyer's RFPs
         prisma.supplierResponse.count({
-            where: { rfp: { buyer_id: userId } },
+            where: { rfp: { buyer_id: userId , status: { code: SUPPLIER_RESPONSE_STATUS.Submitted } } },
         }),
         
         // Pending responses (Under Review)
         prisma.supplierResponse.count({
             where: {
                 rfp: { buyer_id: userId },
-                status: { code: 'Submitted' },
+                status: { code: SUPPLIER_RESPONSE_STATUS.Under_Review },
             },
         }),
         
@@ -180,7 +181,7 @@ const getBuyerStats = async (userId: string) => {
         prisma.supplierResponse.count({
             where: {
                 rfp: { buyer_id: userId },
-                status: { code: 'Approved' },
+                status: { code: SUPPLIER_RESPONSE_STATUS.Approved },
             },
         }),
         
@@ -188,7 +189,7 @@ const getBuyerStats = async (userId: string) => {
         prisma.supplierResponse.count({
             where: {
                 rfp: { buyer_id: userId },
-                status: { code: 'Rejected' },
+                status: { code: SUPPLIER_RESPONSE_STATUS.Rejected },
             },
         }),
     ]);
@@ -201,7 +202,7 @@ const getBuyerStats = async (userId: string) => {
         pendingResponses,
         approvedResponses,
         rejectedResponses,
-        role: 'Buyer',
+        role: RoleName.Buyer,
     };
 };
 
@@ -215,32 +216,32 @@ const getSupplierStats = async (userId: string) => {
         availableRfps,
     ] = await Promise.all([
         // Total responses submitted
-        prisma.supplierResponse.count({ where: { supplier_id: userId } }),
+        prisma.supplierResponse.count({ where: { supplier_id: userId, status: { code: SUPPLIER_RESPONSE_STATUS.Submitted } } }),
         
         // Draft responses
         prisma.supplierResponse.count({
-            where: { supplier_id: userId, status: { code: 'Draft' } },
+            where: { supplier_id: userId, status: { code: SUPPLIER_RESPONSE_STATUS.Draft } },
         }),
         
         // Submitted responses
         prisma.supplierResponse.count({
-            where: { supplier_id: userId, status: { code: 'Submitted' } },
+            where: { supplier_id: userId, status: { code: SUPPLIER_RESPONSE_STATUS.Submitted } },
         }),
         
         // Approved responses
         prisma.supplierResponse.count({
-            where: { supplier_id: userId, status: { code: 'Approved' } },
+            where: { supplier_id: userId, status: { code: SUPPLIER_RESPONSE_STATUS.Approved } },
         }),
         
         // Rejected responses
         prisma.supplierResponse.count({
-            where: { supplier_id: userId, status: { code: 'Rejected' } },
+            where: { supplier_id: userId, status: { code: SUPPLIER_RESPONSE_STATUS.Rejected } },
         }),
         
         // Available RFPs to respond to
         prisma.rFP.count({
             where: {
-                status: { code: 'Published' },
+                status: { code: RFP_STATUS.Published },
                 supplier_responses: {
                     none: { supplier_id: userId },
                 },
@@ -255,6 +256,6 @@ const getSupplierStats = async (userId: string) => {
         approvedResponses,
         rejectedResponses,
         availableRfps,
-        role: 'Supplier',
+        role: RoleName.Supplier,
     };
 };
