@@ -11,9 +11,11 @@ export interface User {
 
 export interface AuthResponse {
   token: string;
+  permissions: Record<string, any>;
   user: {
     email: string;
     id: string;
+    role_id: string;
   };
 }
 

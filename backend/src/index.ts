@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { createServer } from 'http';
 import authRouter from './router/auth.router';
 import rfpRouter from './router/rfp.router';
@@ -9,6 +10,14 @@ import { initializeWebSocket } from './services/websocket.service';
 const app = express();
 const server = createServer(app);
 const port = process.env.PORT || 3000;
+
+// Enable CORS for all origins
+app.use(cors({
+  origin: '*', // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true
+}));
 
 app.use(express.json());
 

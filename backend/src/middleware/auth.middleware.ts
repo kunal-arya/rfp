@@ -56,7 +56,10 @@ export const hasPermission = (resource: string, action: string) => {
         const userPermissions = req.user.permissions;
         const permission = userPermissions[resource]?.[action];
 
+        console.log(userPermissions);
+        console.log(permission);
         if (!permission?.allowed) {
+            console.log('Forbidden: You do not have permission to perform this action');
             return res.status(403).json({ message: 'Forbidden: You do not have permission to perform this action' });
         }
 
@@ -87,7 +90,7 @@ export const hasPermission = (resource: string, action: string) => {
                         return res.status(403).json({ message: 'Forbidden: You do not own this resource' });
                     }
                 }
-                        } else if (permission.scope === 'published') {
+            } else if (permission.scope === 'published') {
                 if (resource === 'rfp' && rfp_id) {
                     const rfp = await prisma.rFP.findUnique({
                         where: { id: rfp_id },

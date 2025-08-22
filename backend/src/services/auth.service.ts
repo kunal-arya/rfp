@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role, User } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -27,8 +27,32 @@ export const register = async (email: string, password: string, roleName: 'Buyer
     });
 
     const { password_hash: _, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    const token = jwtToken(user, role);
+    const response = {
+        user: {
+            ...userWithoutPassword,
+            role: role.name,
+        },
+        permissions: role.permissions,
+        token: token
+    }
+    return response;
 };
+
+const jwtToken = (user: User, role: Role) => {
+
+    const token = jwt.sign(
+        {
+            userId: user.id,
+            role: role.name,
+            permissions: role.permissions
+        },
+        process.env.JWT_SECRET as string,
+        { expiresIn: '1h' }
+    );
+
+    return token
+}
 
 export const login = async (email: string, password: string) => {
     const user = await prisma.user.findUnique({
@@ -48,21 +72,16 @@ export const login = async (email: string, password: string) => {
         throw new Error('Invalid credentials');
     }
 
-    const token = jwt.sign(
-        {
-            userId: user.id,
-            role: user.role.name,
-            permissions: user.role.permissions
-        },
-        process.env.JWT_SECRET as string,
-        { expiresIn: '1h' }
-    );
+    const token = jwtToken(user, user.role);
 
     return {
         token,
+        permissions: user.role.permissions,
         user: {
             email: user.email,
-            id: user.id
+            id: user.id,
+            role_id: user.role_id,
+            role: user.role.name,
         }
     };
 };

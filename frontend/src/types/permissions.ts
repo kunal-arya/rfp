@@ -24,7 +24,7 @@ export interface UserPermissions {
 export interface AuthUser {
   id: string;
   email: string;
-  role: string;
+  role_id: string;
 }
 
 export interface AuthState {

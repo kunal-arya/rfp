@@ -23,7 +23,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     if (user && token) {
       // Connect to the WebSocket server
-      const newSocket = io(import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000', {
+      const newSocket = io(import.meta.env.VITE_WEBSOCKET_URL || 'http://localhost:3000', {
         auth: {
           token: token,
         },
@@ -40,7 +40,8 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
 
       // --- Notification Listeners ---
-      newSocket.on('rfp_published', (data) => {
+      newSocket.on('rfp_published', (notification) => {
+        const data = notification.data;
         toast.info(`New RFP Published: ${data.title}`, {
           description: 'A new RFP is available for you to browse.',
           action: {
@@ -50,9 +51,10 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         });
       });
 
-      newSocket.on('response_submitted', (data) => {
-        toast.success(`New Response Submitted for ${data.rfp.title}`, {
-          description: `A new response was submitted by ${data.supplier.email}.`,
+      newSocket.on('response_submitted', (notification) => {
+        const data = notification.data;
+        toast.success(`New Response Submitted for ${data.rfp?.title || 'RFP'}`, {
+          description: `A new response was submitted by ${data.supplier?.email || 'a supplier'}.`,
           action: {
             label: 'Review',
             onClick: () => (window.location.href = `/responses/${data.id}`),
@@ -60,12 +62,13 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         });
       });
       
-      newSocket.on('rfp_status_changed', (data) => {
-         toast.warning(`RFP Status Updated: ${data.rfp.title}`, {
-          description: `The status of an RFP you responded to has changed to "${data.newStatus}".`,
+      newSocket.on('rfp_status_changed', (notification) => {
+        const data = notification.data;
+        toast.warning(`RFP Status Updated: ${data.title || 'RFP'}`, {
+          description: `The status of an RFP has been updated.`,
           action: {
             label: 'View RFP',
-            onClick: () => (window.location.href = `/rfps/${data.rfp.id}`),
+            onClick: () => (window.location.href = `/rfps/${data.id}`),
           },
         });
       });

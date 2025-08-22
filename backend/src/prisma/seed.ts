@@ -4,7 +4,7 @@ import { RFP_STATUS, SUPPLIER_RESPONSE_STATUS } from '../utils/enum';
 const prisma = new PrismaClient();
 
 const buyerPermissions = {
-  dashboard: { view: true },
+  dashboard: { view: {allowed: true} },
   rfp: {
     create: { allowed: true },
     view: { allowed: true, scope: 'own' },
@@ -32,7 +32,7 @@ const buyerPermissions = {
 };
 
 const supplierPermissions = {
-    dashboard: { view: true },
+    dashboard: { view: { allowed: true } },
     rfp: {
         create: { allowed: false },
         view: { allowed: true, scope: 'published' },
