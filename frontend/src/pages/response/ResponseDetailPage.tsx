@@ -38,11 +38,11 @@ export const ResponseDetailPage: React.FC = () => {
       </div>
       
       <div className="prose max-w-none">
-        <h2>Cover Letter</h2>
+        <h2 className="text-l font-bold">Cover Letter</h2>
         <p>{response.cover_letter}</p>
-        <h2>Proposed Budget</h2>
-        <p>${response.budget.toLocaleString()}</p>
-        <h2>Proposed Timeline</h2>
+        <h2 className="text-l font-bold">Proposed Budget</h2>
+        <p>{response.proposed_budget ? `$${response.proposed_budget.toLocaleString()}` : 'N/A'}</p>
+        <h2 className="text-l font-bold">Proposed Timeline</h2>
         <p>{response.timeline}</p>
       </div>
 

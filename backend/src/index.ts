@@ -4,6 +4,7 @@ import { createServer } from 'http';
 import authRouter from './router/auth.router';
 import rfpRouter from './router/rfp.router';
 import dashboardRouter from './router/dashboard.router';
+import notificationRouter from './router/notification.router';
 import { setupSwagger } from './config/swagger';
 import { initializeWebSocket } from './services/websocket.service';
 
@@ -24,6 +25,7 @@ app.use(express.json());
 app.use('/api/auth', authRouter);
 app.use('/api/rfp', rfpRouter);
 app.use('/api/dashboard', dashboardRouter);
+app.use('/api/notifications', notificationRouter);
 
 setupSwagger(app);
 

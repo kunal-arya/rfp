@@ -16,7 +16,7 @@ export type CreateRfpData = z.infer<typeof createRfpSchema>;
 export const submitResponseSchema = z.object({
   proposed_budget: z.number().optional(),
   timeline: z.string().optional(),
-  cover_letter: z.string().optional(),
+  cover_letter: z.string().optional()
 });
 
 export type SubmitResponseData = z.infer<typeof submitResponseSchema>

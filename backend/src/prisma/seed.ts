@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { RFP_STATUS, SUPPLIER_RESPONSE_STATUS } from '../utils/enum';
+import { notificationService } from '../services/notification.service';
 
 const prisma = new PrismaClient();
 
@@ -110,6 +111,10 @@ async function main() {
     });
   }
   console.log('Supplier response statuses seeded.');
+
+  // Initialize notification templates
+  await notificationService.initializeDefaultTemplates();
+  console.log('Notification templates initialized!');
 
   console.log(`Seeding finished.`);
 }

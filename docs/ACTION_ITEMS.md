@@ -254,10 +254,19 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [X] I loggedIn as "Supplier" and in dashboard i can see "Recent RFPs" in which I can see "Draft" RFPs as well. ideally, only "Published should be shown"
     -   [X] If user has the permission "supplier_response" -> "create" is allowed, please show way to upload the response in the "RFP Detail Page".
     -   [X] If user has the permisison "rfp" -> "manage_documents" is allowed, please show the upload new documents, else hide it in "RFP Detail Page"
+    -   [ ] based on new websocket implementation of event in backend, update frontend accordingly
+    -   [ ] /responses/create has RFP ID, instead of this, it should have a dropdown of all the published rfps so that user can easily select and give response
+    -   [ ] /rfps/<rfp_id> page, buyer can see responses that are in draft state as well, this should not be allowed, check permission.md file if there is some issue.
+    -   [ ] /responses/<responses_id> page, upload new document is visible to buyer too, that's not possible, check permission json, same delete can be done by supplier not buyer, check permission json and make changes 
+    -   [ ] /responses/<responses_id> page , update the UI, it is missing most of the details
+    -   [ ] supplier is not able to see draft responses, but buyer can, please check permisison json and update the code neccessary
+    -   [ ] buyer can publish rfps from /rfps/<rfp_id> page, now this functionality is only in the "rfps/my" page.
+    -   [ ] same in /responses/<responseId> page, seller can change status draft responses to publish responses. and then it is available and send email to that rfp owner against which response is added, send notification and web socket event also.
+    -   [ ] on dashboard "RFP Status Distribution" that graph color of bars should be bg-primary do that
     
 -   [X] **Backend Deployment:**
     -   [X] In "createRfp" service, u are not creating it correctly, read schema.prisma to get the hang of how the schema is and then implement it, for ex - current_version_id is setting as null, but that should not be the case, versions to get all the versions related to an rpf and general we will fetch only the current_version using current_version_id
     -   [X] In "getRfpById", please all the documents that are related to this "rfp_version_id" and send them to the frontend. do it same for "getMyRfps", include documents that are related to this "rfp_version_id"
     -   [X] Create "Delete Document API", this is not present, make the route => /api/rfp/documents/<document_id>, frontend will send u if the document related to rfp version or response, accordingly send rfp_verion_id or responseId... soft delete documents please....
     -   [X] Why we have not implement version and parent_document_id related to Document.... if parent_document_id is not needed, delete it.... else do something about it. same for version
-
+    -   [ ] Create more WebSocket Events, I want to make dashboard a fully functional realtime data

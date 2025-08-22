@@ -40,7 +40,14 @@ export const responseApi = {
 
   // Create new response
   createResponse: async (data: CreateResponseData): Promise<SupplierResponse> => {
-    const response = await apiClient.post<SupplierResponse>('/rfp/responses', data);
+    const rfp_id = data.rfp_id.toString()
+    const payload = { 
+      proposed_budget: data.budget,
+      timeline: data.timeline,
+      cover_letter: data.cover_letter,
+      notes: data.notes,
+     }
+    const response = await apiClient.post<SupplierResponse>(`/rfp/${rfp_id}/responses`, payload);
     return response.data;
   },
 

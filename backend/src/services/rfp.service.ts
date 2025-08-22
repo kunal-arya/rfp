@@ -3,6 +3,7 @@ import { CreateRfpData, SubmitResponseData } from '../validations/rfp.validation
 import { uploadToCloudinary } from '../utils/cloudinary';
 import { RFP_STATUS, SUPPLIER_RESPONSE_STATUS } from '../utils/enum';
 import { sendRfpPublishedNotification, sendResponseSubmittedNotification, sendRfpStatusChangeNotification } from './email.service';
+import { notificationService } from './notification.service';
 import { notifyRfpPublished, notifyResponseSubmitted, notifyRfpStatusChanged } from './websocket.service';
 
 const prisma = new PrismaClient();
@@ -276,7 +277,7 @@ export const publishRfp = async (rFPId: string, userId: string) => {
     // Send email notification to all suppliers
     await sendRfpPublishedNotification(rFPId);
 
-    // Send real-time notification to all suppliers
+    // Create in-app notifications for all suppliers
     const rfpWithDetails = await prisma.rFP.findUnique({
         where: { id: rFPId },
         include: {
@@ -284,7 +285,17 @@ export const publishRfp = async (rFPId: string, userId: string) => {
             buyer: true,
         },
     });
+    
     if (rfpWithDetails) {
+        // Create notifications for all suppliers
+        await notificationService.createNotificationForRole('Supplier', 'RFP_PUBLISHED', {
+            rfp_title: rfpWithDetails.title,
+            buyer_name: rfpWithDetails.buyer.email,
+            deadline: rfpWithDetails.current_version?.deadline ? new Date(rfpWithDetails.current_version.deadline).toLocaleDateString() : 'N/A',
+            rfp_id: rfpWithDetails.id
+        });
+
+        // Send real-time notification to all suppliers
         notifyRfpPublished(rfpWithDetails);
     }
 
@@ -475,7 +486,7 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
     // Send email notification to buyer
     await sendResponseSubmittedNotification(responseId);
 
-    // Send real-time notification to buyer
+    // Create in-app notification for buyer
     const responseWithDetails = await prisma.supplierResponse.findUnique({
         where: { id: responseId },
         include: {
@@ -489,6 +500,14 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
         },
     });
     if (responseWithDetails) {
+        // Create notification for the buyer
+        await notificationService.createNotificationForUser(responseWithDetails.rfp.buyer_id, 'RESPONSE_SUBMITTED', {
+            rfp_title: responseWithDetails.rfp.title,
+            supplier_name: responseWithDetails.supplier.email,
+            response_id: responseWithDetails.id
+        });
+
+        // Send real-time notification to buyer
         notifyResponseSubmitted(responseWithDetails, responseWithDetails.rfp.buyer_id);
     }
 

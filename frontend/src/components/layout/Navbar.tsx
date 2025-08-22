@@ -14,6 +14,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import { NotificationBell } from '@/components/shared/NotificationBell';
 
 export const Navbar: React.FC = () => {
   const { user, logout, permissionHelpers } = useAuth();
@@ -113,6 +114,7 @@ export const Navbar: React.FC = () => {
 
           {/* User Menu */}
           <div className="hidden md:flex items-center gap-4">
+            <NotificationBell />
             <div className="flex items-center gap-3">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{user?.email}</p>

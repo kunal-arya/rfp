@@ -177,7 +177,7 @@ export const ResponseList: React.FC<ResponseListProps> = ({
                     <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <DollarSign className="h-4 w-4" />
-                        <span>Budget: {formatBudget(response.budget)}</span>
+                        <span>Budget: {formatBudget(response.proposed_budget || 0)}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />

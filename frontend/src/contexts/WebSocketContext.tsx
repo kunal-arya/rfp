@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 interface WebSocketContextType {
@@ -17,6 +18,7 @@ export const useWebSocket = () => useContext(WebSocketContext);
 
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, token } = useAuth();
+  const queryClient = useQueryClient();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -42,6 +44,12 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // --- Notification Listeners ---
       newSocket.on('rfp_published', (notification) => {
         const data = notification.data;
+        
+        // Invalidate dashboard queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['rfps'] });
+        
         toast.info(`New RFP Published: ${data.title}`, {
           description: 'A new RFP is available for you to browse.',
           action: {
@@ -53,6 +61,12 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       newSocket.on('response_submitted', (notification) => {
         const data = notification.data;
+        
+        // Invalidate dashboard queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['responses'] });
+        
         toast.success(`New Response Submitted for ${data.rfp?.title || 'RFP'}`, {
           description: `A new response was submitted by ${data.supplier?.email || 'a supplier'}.`,
           action: {
@@ -64,6 +78,12 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       newSocket.on('rfp_status_changed', (notification) => {
         const data = notification.data;
+        
+        // Invalidate dashboard queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['rfps'] });
+        
         toast.warning(`RFP Status Updated: ${data.title || 'RFP'}`, {
           description: `The status of an RFP has been updated.`,
           action: {

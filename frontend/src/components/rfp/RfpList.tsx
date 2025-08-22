@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { RFP } from '@/apis/types';
-import { FileText, Search, Plus, Calendar, DollarSign, Eye, Edit, Trash2 } from 'lucide-react';
+import { FileText, Plus, Calendar, DollarSign, Eye, Edit, Trash2 } from 'lucide-react';
 
 interface RfpListProps {
   rfps: RFP[];
@@ -29,15 +28,8 @@ export const RfpList: React.FC<RfpListProps> = ({
   showCreateButton = true,
   showActions = true,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
 
-  const filteredRfps = rfps.filter((rfp) => {
-    const matchesSearch = rfp.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         rfp.current_version?.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || rfp.status.code === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredRfps = rfps
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -96,7 +88,7 @@ export const RfpList: React.FC<RfpListProps> = ({
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <div className="relative">
+          {/* <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search RFPs..."
@@ -115,7 +107,7 @@ export const RfpList: React.FC<RfpListProps> = ({
             <option value="Draft">Draft</option>
             <option value="Published">Published</option>
             <option value="Under Review">Under Review</option>
-          </select>
+          </select> */}
           
           {showCreateButton && (
             <Button onClick={onCreateRfp} className="whitespace-nowrap">
@@ -133,10 +125,7 @@ export const RfpList: React.FC<RfpListProps> = ({
             <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">No RFPs found</h3>
             <p className="text-muted-foreground mb-4">
-              {searchTerm || statusFilter !== 'all' 
-                ? 'Try adjusting your search or filters'
-                : 'Get started by creating your first RFP'
-              }
+              Get started by creating your first RFP
             </p>
             {showCreateButton && (
               <Button onClick={onCreateRfp}>

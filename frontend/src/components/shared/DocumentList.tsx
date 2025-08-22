@@ -40,9 +40,6 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDelete,
                     >
                       {doc.file_name}
                     </a>
-                    <p className="text-xs text-muted-foreground">
-                      Version {doc.version} - {formatFileSize(doc.size || 0)}
-                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
