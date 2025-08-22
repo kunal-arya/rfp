@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useRfpById } from '@/hooks/useRfp';
+import { useRfpById, usePublishRfp } from '@/hooks/useRfp';
 import { useRfpResponses } from '@/hooks/useResponse';
 import { useDeleteDocument, useUploadRfpDocument } from '@/hooks/useDocument';
 import { useAuth } from '@/contexts/AuthContext';
@@ -33,6 +33,7 @@ export const RfpDetailPage: React.FC = () => {
   const { data: responses, isLoading: responsesLoading } = useRfpResponses(rfpId || '');
   const deleteDocumentMutation = useDeleteDocument();
   const uploadDocumentMutation = useUploadRfpDocument();
+  const publishRfpMutation = usePublishRfp();
   const [uploadingDocs, setUploadingDocs] = useState(false);
 
   const handleDelete = (docId: string) => {
@@ -73,7 +74,8 @@ export const RfpDetailPage: React.FC = () => {
   const canManageDocuments = permissionHelpers.hasPermission('rfp', 'manage_documents');
   const canCreateResponse = permissionHelpers.hasPermission('supplier_response', 'create');
   const canEditRfp = permissionHelpers.hasPermission('rfp', 'edit');
-  const isOwner = user?.id === rfp?.buyer_id;
+  const canPublishRfp = permissionHelpers.hasPermission('rfp', 'publish');
+  const isOwner = user?.id === rfp?.buyer?.id;
   const isPublished = rfp?.status.code === 'Published';
   const isDraft = rfp?.status.code === 'Draft';
 
@@ -110,7 +112,7 @@ export const RfpDetailPage: React.FC = () => {
     );
   }
 
-  const formatCurrency = (amount: number | null) => {
+  const formatCurrency = (amount: number | null | undefined) => {
     if (!amount) return 'Not specified';
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -147,12 +149,32 @@ export const RfpDetailPage: React.FC = () => {
               </span>
             </div>
           </div>
-          {isOwner && canEditRfp && isDraft && (
-            <Button onClick={() => navigate(`/rfps/${rfpId}/edit`)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit RFP
-            </Button>
-          )}
+          <div className="flex gap-2">
+            {isOwner && canEditRfp && isDraft && (
+              <Button onClick={() => navigate(`/rfps/${rfpId}/edit`)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit RFP
+              </Button>
+            )}
+            {isOwner && canPublishRfp && isDraft && (
+              <Button 
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to publish this RFP? This will make it visible to all suppliers.')) {
+                    publishRfpMutation.mutate(rfpId || '');
+                  }
+                }}
+                disabled={publishRfpMutation.isPending}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {publishRfpMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <FileText className="h-4 w-4 mr-2" />
+                )}
+                Publish RFP
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -238,7 +260,7 @@ export const RfpDetailPage: React.FC = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MessageSquare className="h-5 w-5" />
-                    Supplier Responses ({responses?.length || 0})
+                    Supplier Responses ({responses?.data?.length || 0})
                   </CardTitle>
                   <CardDescription>
                     Responses submitted by suppliers for this RFP
@@ -250,9 +272,11 @@ export const RfpDetailPage: React.FC = () => {
                       <Loader2 className="h-6 w-6 animate-spin mr-2" />
                       Loading responses...
                     </div>
-                  ) : responses && responses.length > 0 ? (
+                  ) : responses && responses.data && responses.data.length > 0 ? (
                     <div className="space-y-4">
-                      {responses.map((response) => (
+                      {responses.data
+                        .filter((response: any) => response.status.code !== 'Draft') // Filter out draft responses for buyers
+                        .map((response: any) => (
                         <div key={response.id} className="border rounded-lg p-4">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">

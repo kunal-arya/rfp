@@ -63,9 +63,11 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
         <Users className="h-4 w-4 text-purple-600" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">
-          Response to RFP #{response.rfp_id}
-        </p>
+        <Link to={`/responses/${response.id}`}>
+          <p className="text-sm font-medium text-foreground truncate">
+            Response to RFP #{response.rfp_id}
+          </p>
+        </Link>
         <p className="text-xs text-muted-foreground">
           {formatDate(response.created_at)}
         </p>

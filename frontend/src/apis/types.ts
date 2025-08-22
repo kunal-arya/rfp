@@ -40,6 +40,7 @@ export interface RFP {
     budget_max?: number;
     deadline: string;
     notes?: string;
+    documents: Document[];
   };
   current_version_id?: string;
   supplier_responses: SupplierResponse[];
@@ -61,7 +62,30 @@ export interface SupplierResponse {
   proposed_budget?: number;
   timeline?: string;
   cover_letter?: string;
+  notes?: string;
   documents: Document[];
+  rfp?: {
+    id: string;
+    title: string;
+    buyer: {
+      id: string;
+      email: string;
+    };
+    status: {
+      code: string;
+      label: string;
+    };
+    current_version: {
+      id: string;
+      version_number: number;
+      description: string;
+      requirements: string;
+      budget_min?: number;
+      budget_max?: number;
+      deadline: string;
+      notes?: string;
+    };
+  };
   created_at: string;
   updated_at: string;
 }

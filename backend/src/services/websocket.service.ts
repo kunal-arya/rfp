@@ -91,3 +91,58 @@ export const notifyUser = (userId: string, event: string, data: any) => {
         timestamp: new Date().toISOString()
     });
 };
+
+// Additional WebSocket events for real-time dashboard updates
+export const notifyRfpCreated = (rfpData: any) => {
+    const io = getIO();
+    io.to('Buyer').emit('rfp_created', {
+        type: 'RFP_CREATED',
+        data: rfpData,
+        timestamp: new Date().toISOString()
+    });
+};
+
+export const notifyRfpUpdated = (rfpData: any) => {
+    const io = getIO();
+    io.to('Buyer').emit('rfp_updated', {
+        type: 'RFP_UPDATED',
+        data: rfpData,
+        timestamp: new Date().toISOString()
+    });
+};
+
+export const notifyResponseCreated = (responseData: any) => {
+    const io = getIO();
+    io.to('Supplier').emit('response_created', {
+        type: 'RESPONSE_CREATED',
+        data: responseData,
+        timestamp: new Date().toISOString()
+    });
+};
+
+export const notifyResponseUpdated = (responseData: any) => {
+    const io = getIO();
+    io.to('Supplier').emit('response_updated', {
+        type: 'RESPONSE_UPDATED',
+        data: responseData,
+        timestamp: new Date().toISOString()
+    });
+};
+
+export const notifyDocumentUploaded = (documentData: any, userId: string) => {
+    const io = getIO();
+    io.to(`user_${userId}`).emit('document_uploaded', {
+        type: 'DOCUMENT_UPLOADED',
+        data: documentData,
+        timestamp: new Date().toISOString()
+    });
+};
+
+export const notifyDocumentDeleted = (documentData: any, userId: string) => {
+    const io = getIO();
+    io.to(`user_${userId}`).emit('document_deleted', {
+        type: 'DOCUMENT_DELETED',
+        data: documentData,
+        timestamp: new Date().toISOString()
+    });
+};

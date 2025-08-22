@@ -10,6 +10,14 @@ export const useAllRfps = (filters?: RfpFilters) => {
   });
 };
 
+export const usePublishedRfps = (filters?: RfpFilters) => {
+  return useQuery({
+    queryKey: ['rfps', 'published', filters],
+    queryFn: () => rfpApi.getAllRfps(filters),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
 export const useMyRfps = (filters?: RfpFilters) => {
   return useQuery({
     queryKey: ['rfps', 'my', filters],

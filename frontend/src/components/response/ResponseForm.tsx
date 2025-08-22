@@ -8,8 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreateResponseData } from '@/apis/response';
 import { MessageSquare, AlertCircle } from 'lucide-react';
+import { usePublishedRfps } from '@/hooks/useRfp';
 
 const responseSchema = z.object({
   rfp_id: z.string().min(1, 'RFP is required'),
@@ -38,10 +40,13 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
   mode,
   rfpId,
 }) => {
+  const { data: publishedRfps } = usePublishedRfps();
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<ResponseFormData>({
     resolver: zodResolver(responseSchema),
     defaultValues: {
@@ -49,6 +54,8 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
       rfp_id: rfpId || initialData?.rfp_id,
     },
   });
+
+  const selectedRfpId = watch('rfp_id');
 
   const handleFormSubmit = (data: ResponseFormData) => {
     onSubmit(data as CreateResponseData);
@@ -77,16 +84,30 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
             </Alert>
           )}
 
-          {/* RFP ID (hidden if provided) */}
+          {/* RFP Selection (dropdown for published RFPs) */}
           {!rfpId && (
             <div className="space-y-2">
-              <Label htmlFor="rfp_id">RFP ID *</Label>
-              <Input
-                id="rfp_id"
-                placeholder="Enter RFP ID"
-                {...register('rfp_id')}
-                className={errors.rfp_id ? 'border-destructive' : ''}
-              />
+              <Label htmlFor="rfp_id">Select RFP *</Label>
+              <Select
+                value={selectedRfpId}
+                onValueChange={(value) => setValue('rfp_id', value)}
+              >
+                <SelectTrigger className={errors.rfp_id ? 'border-destructive' : ''}>
+                  <SelectValue placeholder="Choose an RFP to respond to" />
+                </SelectTrigger>
+                <SelectContent>
+                  {publishedRfps?.data?.map((rfp) => (
+                    <SelectItem key={rfp.id} value={rfp.id}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{rfp.title}</span>
+                        <span className="text-sm text-muted-foreground">
+                          Budget: ${rfp.current_version?.budget_min || 0} - ${rfp.current_version?.budget_max || 'N/A'}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {errors.rfp_id && (
                 <p className="text-sm text-destructive">{errors.rfp_id.message}</p>
               )}

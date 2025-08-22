@@ -49,6 +49,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
         queryClient.invalidateQueries({ queryKey: ['rfps'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
         
         toast.info(`New RFP Published: ${data.title}`, {
           description: 'A new RFP is available for you to browse.',
@@ -66,6 +67,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
         queryClient.invalidateQueries({ queryKey: ['responses'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
         
         toast.success(`New Response Submitted for ${data.rfp?.title || 'RFP'}`, {
           description: `A new response was submitted by ${data.supplier?.email || 'a supplier'}.`,
@@ -83,6 +85,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         queryClient.invalidateQueries({ queryKey: ['dashboard'] });
         queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
         queryClient.invalidateQueries({ queryKey: ['rfps'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
         
         toast.warning(`RFP Status Updated: ${data.title || 'RFP'}`, {
           description: `The status of an RFP has been updated.`,
@@ -90,6 +93,93 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             label: 'View RFP',
             onClick: () => (window.location.href = `/rfps/${data.id}`),
           },
+        });
+      });
+
+      // Additional real-time events for dashboard updates
+      newSocket.on('rfp_created', (notification) => {
+        const data = notification.data;
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['rfps'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        
+        toast.info(`New RFP Created: ${data.title}`, {
+          description: 'A new RFP has been created.',
+          action: {
+            label: 'View',
+            onClick: () => (window.location.href = `/rfps/${data.id}`),
+          },
+        });
+      });
+
+      newSocket.on('rfp_updated', (notification) => {
+        const data = notification.data;
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['rfps'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        
+        toast.info(`RFP Updated: ${data.title}`, {
+          description: 'An RFP has been updated.',
+          action: {
+            label: 'View',
+            onClick: () => (window.location.href = `/rfps/${data.id}`),
+          },
+        });
+      });
+
+      newSocket.on('response_created', (notification) => {
+        const data = notification.data;
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['responses'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        
+        toast.info(`New Response Created`, {
+          description: 'A new response has been created.',
+          action: {
+            label: 'View',
+            onClick: () => (window.location.href = `/responses/${data.id}`),
+          },
+        });
+      });
+
+      newSocket.on('response_updated', (notification) => {
+        const data = notification.data;
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['responses'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        
+        toast.info(`Response Updated`, {
+          description: 'A response has been updated.',
+          action: {
+            label: 'View',
+            onClick: () => (window.location.href = `/responses/${data.id}`),
+          },
+        });
+      });
+
+      newSocket.on('document_uploaded', (notification) => {
+        const data = notification.data;
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['rfps'] });
+        queryClient.invalidateQueries({ queryKey: ['responses'] });
+        
+        toast.success(`Document Uploaded: ${data.file_name}`, {
+          description: 'A new document has been uploaded.',
+        });
+      });
+
+      newSocket.on('document_deleted', (notification) => {
+        const data = notification.data;
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['rfps'] });
+        queryClient.invalidateQueries({ queryKey: ['responses'] });
+        
+        toast.info(`Document Deleted: ${data.file_name}`, {
+          description: 'A document has been deleted.',
         });
       });
 
