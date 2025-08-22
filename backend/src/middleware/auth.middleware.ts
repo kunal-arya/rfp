@@ -71,7 +71,7 @@ export const hasPermission = (resource: string, action: string) => {
         try {
             if (permission.scope === 'own') {
                 if (resource === 'rfp' && rfp_id && isBuyer) {
-                    const rfp = await prisma.rFP.findUnique({ where: { id: rfp_id } });
+                    const rfp = await prisma.rFP.findUnique({ where: { id: rfp_id , deleted_at: null } });
                     if (rfp?.buyer_id !== userId) {
                         return res.status(403).json({ message: 'Forbidden: You do not own this resource' });
                     }
@@ -94,7 +94,7 @@ export const hasPermission = (resource: string, action: string) => {
             } else if (permission.scope === 'published') {
                 if (resource === 'rfp' && rfp_id) {
                     const rfp = await prisma.rFP.findUnique({
-                        where: { id: rfp_id },
+                        where: { id: rfp_id , deleted_at: null },
                         include: { status: true },
                     });
                     if (rfp?.status.code !== 'Published') {
@@ -114,7 +114,7 @@ export const hasPermission = (resource: string, action: string) => {
             }
 
             if (permission.allowed_rfp_statuses && rfp_id) {
-                const rfp = await prisma.rFP.findUnique({ where: { id: rfp_id }, include: { status: true } });
+                const rfp = await prisma.rFP.findUnique({ where: { id: rfp_id , deleted_at: null }, include: { status: true } });
                 if (!rfp || !permission.allowed_rfp_statuses.includes(rfp.status.code)) {
                     return res.status(403).json({ message: `Forbidden: Action only allowed for RFPs with status: ${permission.allowed_rfp_statuses.join(', ')}` });
                 }
@@ -135,7 +135,7 @@ export const hasPermission = (resource: string, action: string) => {
 
                 if (resource === 'rfp' && rfp_id) {
                     const rfp = await prisma.rFP.findUnique({
-                        where: { id: rfp_id },
+                        where: { id: rfp_id , deleted_at: null },
                         include: { status: true },
                     });
                     if (!rfp) {

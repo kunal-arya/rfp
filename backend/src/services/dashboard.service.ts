@@ -26,7 +26,7 @@ export const getDashboardStats = async (userId: string, userRole: string) => {
 const getBuyerDashboard = async (userId: string) => {
     // Get recent RFPs created by the buyer
     const recentRfps = await prisma.rFP.findMany({
-        where: { buyer_id: userId },
+        where: { buyer_id: userId , deleted_at: null },
         include: {
             current_version: true,
             status: true,
@@ -44,7 +44,7 @@ const getBuyerDashboard = async (userId: string) => {
     // Get recent responses to buyer's RFPs
     const recentResponses = await prisma.supplierResponse.findMany({
         where: {
-            rfp: { buyer_id: userId },
+            rfp: { buyer_id: userId , deleted_at: null },
             status: { code: SUPPLIER_RESPONSE_STATUS.Submitted },
         },
         include: {
@@ -86,7 +86,8 @@ const getSupplierDashboard = async (userId: string) => {
     // Get recent RFPs the supplier can respond to
     const availableRfps = await prisma.rFP.findMany({
         where: {
-            status: { code: 'Published' },
+            deleted_at: null,
+            status: { code: RFP_STATUS.Published },
             supplier_responses: {
                 none: { supplier_id: userId },
             },
@@ -120,7 +121,7 @@ const getSupplierDashboard = async (userId: string) => {
     const responsesNeedingAttention = await prisma.supplierResponse.findMany({
         where: {
             supplier_id: userId,
-            status: { code: 'Draft' },
+            status: { code: SUPPLIER_RESPONSE_STATUS.Draft },
         },
         include: {
             rfp: {
@@ -152,27 +153,27 @@ const getBuyerStats = async (userId: string) => {
         rejectedResponses,
     ] = await Promise.all([
         // Total RFPs
-        prisma.rFP.count({ where: { buyer_id: userId } }),
+        prisma.rFP.count({ where: { buyer_id: userId , deleted_at: null } }),
         
         // Published RFPs
         prisma.rFP.count({
-            where: { buyer_id: userId, status: { code: RFP_STATUS.Published } },
+            where: { buyer_id: userId, status: { code: RFP_STATUS.Published }, deleted_at: null },
         }),
         
         // Draft RFPs
         prisma.rFP.count({
-            where: { buyer_id: userId, status: { code: RFP_STATUS.Draft } },
+            where: { buyer_id: userId, status: { code: RFP_STATUS.Draft }, deleted_at: null },
         }),
         
         // Total responses to buyer's RFPs
         prisma.supplierResponse.count({
-            where: { rfp: { buyer_id: userId , status: { code: SUPPLIER_RESPONSE_STATUS.Submitted } } },
+            where: { rfp: { buyer_id: userId , status: { code: SUPPLIER_RESPONSE_STATUS.Submitted } , deleted_at: null } },
         }),
         
         // Pending responses (Under Review)
         prisma.supplierResponse.count({
             where: {
-                rfp: { buyer_id: userId },
+                rfp: { buyer_id: userId , deleted_at: null },
                 status: { code: SUPPLIER_RESPONSE_STATUS.Under_Review },
             },
         }),
@@ -180,7 +181,7 @@ const getBuyerStats = async (userId: string) => {
         // Approved responses
         prisma.supplierResponse.count({
             where: {
-                rfp: { buyer_id: userId },
+                rfp: { buyer_id: userId , deleted_at: null },
                 status: { code: SUPPLIER_RESPONSE_STATUS.Approved },
             },
         }),
@@ -188,7 +189,7 @@ const getBuyerStats = async (userId: string) => {
         // Rejected responses
         prisma.supplierResponse.count({
             where: {
-                rfp: { buyer_id: userId },
+                rfp: { buyer_id: userId , deleted_at: null },
                 status: { code: SUPPLIER_RESPONSE_STATUS.Rejected },
             },
         }),
@@ -241,6 +242,7 @@ const getSupplierStats = async (userId: string) => {
         // Available RFPs to respond to
         prisma.rFP.count({
             where: {
+                deleted_at: null,
                 status: { code: RFP_STATUS.Published },
                 supplier_responses: {
                     none: { supplier_id: userId },

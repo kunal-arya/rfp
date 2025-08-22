@@ -40,7 +40,7 @@ export const sendEmail = async (emailData: EmailData) => {
 export const sendRfpPublishedNotification = async (rfpId: string) => {
     try {
         const rfp = await prisma.rFP.findUnique({
-            where: { id: rfpId },
+            where: { id: rfpId , deleted_at: null   },
             include: {
                 current_version: true,
                 buyer: true,
@@ -127,7 +127,7 @@ export const sendResponseSubmittedNotification = async (responseId: string) => {
 export const sendRfpStatusChangeNotification = async (rfpId: string, newStatus: string) => {
     try {
         const rfp = await prisma.rFP.findUnique({
-            where: { id: rfpId },
+            where: { id: rfpId , deleted_at: null },
             include: {
                 current_version: true,
                 buyer: true,

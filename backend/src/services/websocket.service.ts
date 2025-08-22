@@ -129,6 +129,15 @@ export const notifyResponseUpdated = (responseData: any) => {
     });
 };
 
+export const notifyRfpDeleted = (rfpData: any) => {
+    const io = getIO();
+    io.to('Buyer').emit('rfp_deleted', {
+        type: 'RFP_DELETED',
+        data: rfpData,
+        timestamp: new Date().toISOString()
+    });
+};
+
 export const notifyDocumentUploaded = (documentData: any, userId: string) => {
     const io = getIO();
     io.to(`user_${userId}`).emit('document_uploaded', {

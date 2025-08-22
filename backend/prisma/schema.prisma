@@ -63,6 +63,7 @@ model RFP {
   // Timestamps
   created_at         DateTime      @default(now())
   updated_at         DateTime      @updatedAt
+  deleted_at         DateTime?
   closed_at          DateTime?
   awarded_at         DateTime?
   

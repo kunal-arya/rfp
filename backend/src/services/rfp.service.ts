@@ -4,7 +4,7 @@ import { uploadToCloudinary } from '../utils/cloudinary';
 import { RFP_STATUS, RoleName, SUPPLIER_RESPONSE_STATUS } from '../utils/enum';
 import { sendRfpPublishedNotification, sendResponseSubmittedNotification, sendRfpStatusChangeNotification } from './email.service';
 import { notificationService } from './notification.service';
-import { notifyRfpPublished, notifyResponseSubmitted, notifyRfpStatusChanged } from './websocket.service';
+import { notifyRfpPublished, notifyResponseSubmitted, notifyRfpStatusChanged, notifyRfpCreated, notifyRfpUpdated, notifyRfpDeleted } from './websocket.service';
 import { createAuditEntry, AUDIT_ACTIONS } from './audit.service';
 
 const prisma = new PrismaClient();
@@ -66,6 +66,9 @@ export const createRfp = async (rFPData: CreateRfpData, buyerId: string) => {
             title: updateRfp.title,
             status: updateRfp.status.code,
         });
+
+        // Send real-time notification to buyer
+        notifyRfpCreated(updateRfp);
     }
 
     return updateRfp;
@@ -99,7 +102,7 @@ export const getMyRfps = async (
     }
 
     const rfps = await prisma.rFP.findMany({
-        where: whereClause,
+        where: { ...whereClause, deleted_at: null },
         skip: offset,
         take: limit,
         include: {
@@ -122,7 +125,7 @@ export const getMyRfps = async (
     });
 
     const total = await prisma.rFP.count({
-        where: whereClause,
+        where: { ...whereClause, deleted_at: null },
     });
 
     return { total, page: Math.floor(offset / limit) + 1, limit, data: rfps };
@@ -130,7 +133,7 @@ export const getMyRfps = async (
 
 export const getRfpById = async (rfpId: string, userId: string) => {
     const rfp = await prisma.rFP.findUnique({
-        where: { id: rfpId },
+        where: { id: rfpId , deleted_at: null },
         include: {
             current_version: {
                 include: {
@@ -180,7 +183,7 @@ export const getRfpById = async (rfpId: string, userId: string) => {
 
 export const updateRfp = async (rfpId: string, rfpData: CreateRfpData, userId: string) => {
     const rfp = await prisma.rFP.findUnique({
-        where: { id: rfpId },
+        where: { id: rfpId , deleted_at: null },
         include: { status: true },
     });
 
@@ -188,18 +191,10 @@ export const updateRfp = async (rfpId: string, rfpData: CreateRfpData, userId: s
         throw new Error('RFP not found');
     }
 
-    if (rfp.buyer_id !== userId) {
-        throw new Error('You are not authorized to update this RFP');
-    }
-
-    if (rfp.status.code !== 'Draft') {
-        throw new Error('RFP cannot be updated in current status');
-    }
-
     const { title, description, requirements, budget_min, budget_max, deadline, notes } = rfpData;
 
     const updatedRfp = await prisma.rFP.update({
-        where: { id: rfpId },
+        where: { id: rfpId , deleted_at: null },
         data: {
             title,
             current_version: {
@@ -219,13 +214,27 @@ export const updateRfp = async (rfpId: string, rfpData: CreateRfpData, userId: s
             buyer: true,
         },
     });
+    
+    // Send real-time notification to buyer
+    notifyRfpUpdated(updatedRfp);
+
+    // Create audit trail entry
+    await createAuditEntry(userId, AUDIT_ACTIONS.RFP_UPDATED, 'RFP', rfpId, {
+        title: updatedRfp.title,
+        description: updatedRfp.current_version?.description,
+        requirements: updatedRfp.current_version?.requirements,
+        budget_min: updatedRfp.current_version?.budget_min,
+        budget_max: updatedRfp.current_version?.budget_max,
+        deadline: updatedRfp.current_version?.deadline,
+        notes: updatedRfp.current_version?.notes,
+    });
 
     return updatedRfp;
 };
 
 export const deleteRfp = async (rfpId: string, userId: string) => {
     const rfp = await prisma.rFP.findUnique({
-        where: { id: rfpId },
+        where: { id: rfpId , deleted_at: null },
         include: { status: true },
     });
 
@@ -233,22 +242,25 @@ export const deleteRfp = async (rfpId: string, userId: string) => {
         throw new Error('RFP not found');
     }
 
-    if (rfp.buyer_id !== userId) {
-        throw new Error('You are not authorized to delete this RFP');
-    }
+    await prisma.rFP.update({
+        where: { id: rfpId , deleted_at: null   },
+        data: {
+            deleted_at: new Date(),
+        },
+    });
 
-    if (rfp.status.code !== 'Draft') {
-        throw new Error('RFP cannot be deleted in current status');
-    }
+    // Send real-time notification to buyer
+    notifyRfpDeleted(rfp);
 
-    await prisma.rFP.delete({
-        where: { id: rfpId },
+    // Create audit trail entry
+    await createAuditEntry(userId, AUDIT_ACTIONS.RFP_DELETED, 'RFP', rfpId, {
+        title: rfp.title,
     });
 };
 
 export const publishRfp = async (rFPId: string, userId: string) => {
     const rFP = await prisma.rFP.findUnique({
-        where: { id: rFPId },
+        where: { id: rFPId , deleted_at: null },
         include: { status: true },
     });
 
@@ -274,7 +286,7 @@ export const publishRfp = async (rFPId: string, userId: string) => {
     }
 
     const updatedRfp = await prisma.rFP.update({
-        where: { id: rFPId },
+        where: { id: rFPId , deleted_at: null },
         data: {
             status_id: publishedStatus.id,
         },
@@ -290,7 +302,7 @@ export const publishRfp = async (rFPId: string, userId: string) => {
 
     // Create in-app notifications for all suppliers
     const rfpWithDetails = await prisma.rFP.findUnique({
-        where: { id: rFPId },
+        where: { id: rFPId , deleted_at: null },
         include: {
             current_version: true,
             buyer: true,
@@ -322,7 +334,7 @@ export const publishRfp = async (rFPId: string, userId: string) => {
 
 export const closeRfp = async (rFPId: string, buyerId: string) => {
     const rFP = await prisma.rFP.findUnique({
-        where: { id: rFPId },
+        where: { id: rFPId , deleted_at: null },
         include: {
             status: true,
             buyer: true,
@@ -351,7 +363,7 @@ export const closeRfp = async (rFPId: string, buyerId: string) => {
     }
 
     const updatedRfp = await prisma.rFP.update({
-        where: { id: rFPId },
+        where: { id: rFPId , deleted_at: null },
         data: { 
             status_id: closedStatus.id,
             closed_at: new Date(),
@@ -375,7 +387,7 @@ export const closeRfp = async (rFPId: string, buyerId: string) => {
 
 export const cancelRfp = async (rFPId: string, buyerId: string) => {
     const rFP = await prisma.rFP.findUnique({
-        where: { id: rFPId },
+        where: { id: rFPId , deleted_at: null },
         include: {
             status: true,
             buyer: true,
@@ -404,7 +416,7 @@ export const cancelRfp = async (rFPId: string, buyerId: string) => {
     }
 
     const updatedRfp = await prisma.rFP.update({
-        where: { id: rFPId },
+        where: { id: rFPId , deleted_at: null },
         data: { status_id: cancelledStatus.id },
         include: {
             status: true,
@@ -425,7 +437,7 @@ export const cancelRfp = async (rFPId: string, buyerId: string) => {
 
 export const awardRfp = async (rFPId: string, responseId: string, buyerId: string) => {
     const rFP = await prisma.rFP.findUnique({
-        where: { id: rFPId },
+        where: { id: rFPId , deleted_at: null },
         include: {
             status: true,
             buyer: true,
@@ -474,7 +486,7 @@ export const awardRfp = async (rFPId: string, responseId: string, buyerId: strin
     }
 
     const updatedRfp = await prisma.rFP.update({
-        where: { id: rFPId },
+        where: { id: rFPId , deleted_at: null },
         data: { 
             status_id: awardedStatus.id,
             awarded_response_id: responseId,
@@ -537,6 +549,7 @@ export const getPublishedRfps = async (
     const rfps = await prisma.rFP.findMany({
         where: {
             status_id: publishedStatus.id,
+            deleted_at: null,
             ...rfpFilters
         },
         skip: offset,
@@ -558,6 +571,7 @@ export const getPublishedRfps = async (
     const total = await prisma.rFP.count({
         where: {
             status_id: publishedStatus.id,
+            deleted_at: null,
             ...rfpFilters
         }
     });
@@ -679,7 +693,7 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
         }
         
         const updatedRfp = await prisma.rFP.update({
-            where: { id: response.rfp_id },
+            where: { id: response.rfp_id , deleted_at: null },
             data: {
                 status_id: responseSubmittedStatus.id,
             },
@@ -929,7 +943,7 @@ export const awardResponse = async (responseId: string, buyerId: string) => {
 
 export const getNBAResponses = async (rFPId: string, userId: string, user_role: string) => {
     const rFP = await prisma.rFP.findUnique({
-        where: { id: rFPId },
+        where: { id: rFPId , deleted_at: null },
     });
 
     if (!rFP) {
