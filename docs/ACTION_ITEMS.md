@@ -283,15 +283,17 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
       -   [X] Basically, update the "RFP Status Distribution" in dashboard frontend accordingly, with that u might need to update the dashboard/stats api as well in backend.
       -   [X] if on page, responses/<response_id>, if the responses is submitted, then give user to review the response, according to lifecycle. most probably approve or reject actions but check it and then implement. if new is required, do it
       -   [X] page , /rfps/<rfp_id>, if it is in draft state, give user to action to delete
-    
--   [X] **Backend Deployment:**
-    -   [X] In "createRfp" service, u are not creating it correctly, read schema.prisma to get the hang of how the schema is and then implement it, for ex - current_version_id is setting as null, but that should not be the case, versions to get all the versions related to an rpf and general we will fetch only the current_version using current_version_id
-    -   [X] In "getRfpById", please all the documents that are related to this "rfp_version_id" and send them to the frontend. do it same for "getMyRfps", include documents that are related to this "rfp_version_id"
-    -   [X] Create "Delete Document API", this is not present, make the route => /api/rfp/documents/<document_id>, frontend will send u if the document related to rfp version or response, accordingly send rfp_verion_id or responseId... soft delete documents please....
-    -   [X] Why we have not implement version and parent_document_id related to Document.... if parent_document_id is not needed, delete it.... else do something about it. same for version
-    -   [X] Create more WebSocket Events, I want to make dashboard a fully functional realtime data
-    -   [X] Implement Audit Trail feature as well, read my schema. I have created a table related to Audit and I think this is not implemented, implement this in backend and frontend is needed.
-    -   [X] Supplier is not able to see the his responses against a rfp.. this api route is is giving empty - "/:rfp_id/responses". supplier can only see his own created rfp responses, not anybody else. buyer can see responses for the rfp that is created by him.
-    -   [X] for supplier, this api is also failing, please check "/rfp/my-responses"... error - "Forbidden: You can only view published RFPs"
-    -   [X] For supplier, Recent Responses in dashboard frontend should show reponses, whether draft or published.. api/dashboard check this route API
+            -   [X] in backend, I have created this "notifyResponseMovedToReview" in websocket.service.ts, please do it on frontend as well.
+      
+  -   [X] **Backend Deployment:**
+      -   [X] In "createRfp" service, u are not creating it correctly, read schema.prisma to get the hang of how the schema is and then implement it, for ex - current_version_id is setting as null, but that should not be the case, versions to get all the versions related to an rpf and general we will fetch only the current_version using current_version_id
+      -   [X] In "getRfpById", please all the documents that are related to this "rfp_version_id" and send them to the frontend. do it same for "getMyRfps", include documents that are related to this "rfp_version_id"
+      -   [X] Create "Delete Document API", this is not present, make the route => /api/rfp/documents/<document_id>, frontend will send u if the document related to rfp version or response, accordingly send rfp_verion_id or responseId... soft delete documents please....
+      -   [X] Why we have not implement version and parent_document_id related to Document.... if parent_document_id is not needed, delete it.... else do something about it. same for version
+      -   [X] Create more WebSocket Events, I want to make dashboard a fully functional realtime data
+      -   [X] Implement Audit Trail feature as well, read my schema. I have created a table related to Audit and I think this is not implemented, implement this in backend and frontend is needed.
+      -   [X] Supplier is not able to see the his responses against a rfp.. this api route is is giving empty - "/:rfp_id/responses". supplier can only see his own created rfp responses, not anybody else. buyer can see responses for the rfp that is created by him.
+      -   [X] for supplier, this api is also failing, please check "/rfp/my-responses"... error - "Forbidden: You can only view published RFPs"
+      -   [X] For supplier, Recent Responses in dashboard frontend should show reponses, whether draft or published.. api/dashboard check this route API
+      -   [X] real-time and email and notification service when buyer mark supplier response "UNDER_REVIEW", "Approved", "REJECTED", "AWARDED" and check others too.. do frontend changes to support these changes as well.
   

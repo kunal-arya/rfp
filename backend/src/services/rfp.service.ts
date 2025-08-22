@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import { CreateRfpData, SubmitResponseData } from '../validations/rfp.validation';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import { RFP_STATUS, RoleName, SUPPLIER_RESPONSE_STATUS } from '../utils/enum';
-import { sendRfpPublishedNotification, sendResponseSubmittedNotification, sendRfpStatusChangeNotification } from './email.service';
+import { sendRfpPublishedNotification, sendResponseSubmittedNotification, sendRfpStatusChangeNotification, sendResponseMovedToReviewNotification, sendResponseApprovedNotification, sendResponseRejectedNotification, sendResponseAwardedNotification } from './email.service';
 import { notificationService } from './notification.service';
-import { notifyRfpPublished, notifyResponseSubmitted, notifyRfpStatusChanged, notifyRfpCreated, notifyRfpUpdated, notifyRfpDeleted } from './websocket.service';
+import { notifyRfpPublished, notifyResponseSubmitted, notifyRfpStatusChanged, notifyRfpCreated, notifyRfpUpdated, notifyRfpDeleted, notifyResponseMovedToReview, notifyResponseApproved, notifyResponseRejected, notifyResponseAwarded } from './websocket.service';
 import { createAuditEntry, AUDIT_ACTIONS } from './audit.service';
 
 const prisma = new PrismaClient();
@@ -521,7 +521,8 @@ export const getPublishedRfps = async (
     versionFilters: any,
     offset: number,
     limit: number,
-    search?: string
+    search?: string,
+    user?: any
 ) => {
     const publishedStatus = await prisma.rFPStatus.findUnique({
         where: { code: 'Published' },
@@ -546,10 +547,21 @@ export const getPublishedRfps = async (
         ];
     }
 
+    console.log(user)
+
     const rfps = await prisma.rFP.findMany({
         where: {
             status_id: publishedStatus.id,
             deleted_at: null,
+            ...(user?.role === RoleName.Supplier
+                ? {
+                    supplier_responses: {
+                      none: {
+                        supplier_id: user.userId, // exclude RFPs that already have a response from this supplier
+                      },
+                    },
+                  }
+                : {}),
             ...rfpFilters
         },
         skip: offset,
@@ -743,10 +755,6 @@ export const moveResponseToReview = async (responseId: string, buyerId: string) 
         throw new Error('Response not found');
     }
 
-    if (response.rfp.buyer_id !== buyerId) {
-        throw new Error('You are not authorized to review this response');
-    }
-
     if (response.status.code !== SUPPLIER_RESPONSE_STATUS.Submitted) {
         throw new Error('Response cannot be moved to review in current status');
     }
@@ -782,6 +790,19 @@ export const moveResponseToReview = async (responseId: string, buyerId: string) 
         rfp_title: response.rfp.title,
         previous_status: 'Submitted',
         new_status: 'Under Review',
+    });
+
+    // Send real-time notification to the supplier
+    notifyResponseMovedToReview(updatedResponse, updatedResponse.supplier_id);
+
+    // Send email notification to supplier
+    await sendResponseMovedToReviewNotification(responseId);
+
+    // Create notification for the supplier
+    await notificationService.createNotificationForUser(updatedResponse.supplier_id, 'RESPONSE_MOVED_TO_REVIEW', {
+        rfp_title: updatedResponse.rfp.title,
+        supplier_name: updatedResponse.supplier.email,
+        response_id: updatedResponse.id
     });
 
     return updatedResponse;
@@ -846,6 +867,19 @@ export const approveResponse = async (responseId: string, buyerId: string) => {
         new_status: updatedResponse.status.code,
     });
 
+    // Send real-time notification to supplier
+    notifyResponseApproved(updatedResponse, updatedResponse.supplier_id);
+
+    // Send email notification to supplier
+    await sendResponseApprovedNotification(responseId);
+
+    // Create notification for the supplier
+    await notificationService.createNotificationForUser(updatedResponse.supplier_id, "RESPONSE_APPROVED", {
+        rfp_title: updatedResponse.rfp.title,
+        supplier_name: updatedResponse.supplier.email,
+        response_id: updatedResponse.id
+    });
+
     return updatedResponse;
 };
 
@@ -899,6 +933,20 @@ export const rejectResponse = async (responseId: string, rejectionReason: string
                 },
             },
         },
+    });
+
+    // Send real-time notification to supplier
+    notifyResponseRejected(updatedResponse, updatedResponse.supplier_id);
+
+    // Send email notification to supplier
+    await sendResponseRejectedNotification(responseId, rejectionReason);
+
+    // Create notification for the supplier
+    await notificationService.createNotificationForUser(updatedResponse.supplier_id, "RESPONSE_REJECTED", {
+        rfp_title: updatedResponse.rfp.title,
+        supplier_name: updatedResponse.supplier.email,
+        response_id: updatedResponse.id,
+        rejection_reason: rejectionReason
     });
 
     // Create audit trail entry
@@ -974,6 +1022,19 @@ export const awardResponse = async (responseId: string, buyerId: string) => {
                 },
             },
         },
+    });
+
+    // Send real-time notification to supplier
+    notifyResponseAwarded(updatedResponse, updatedResponse.supplier_id);
+
+    // Send email notification to supplier
+    await sendResponseAwardedNotification(responseId);
+
+    // Create notification for the supplier
+    await notificationService.createNotificationForUser(updatedResponse.supplier_id, "RESPONSE_AWARDED", {
+        rfp_title: updatedResponse.rfp.title,
+        supplier_name: updatedResponse.supplier.email,
+        response_id: updatedResponse.id
     });
 
     // Create audit trail entry

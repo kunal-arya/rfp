@@ -84,6 +84,169 @@ export const sendRfpPublishedNotification = async (rfpId: string) => {
     }
 };
 
+export const sendResponseMovedToReviewNotification = async (responseId: string) => {
+    try {
+        const response = await prisma.supplierResponse.findUnique({
+            where: { id: responseId },
+            include: {
+                supplier: true,
+                rfp: {
+                    include: {
+                        current_version: true,
+                        buyer: true,
+                    },
+                },
+            },
+        });
+
+        if (!response) {
+            throw new Error('Response not found');
+        }
+
+        const emailData: EmailData = {
+            to: response.supplier.email,
+            subject: `Your Response is Under Review: ${response.rfp.title}`,
+            html: `
+                <h2>Response Under Review</h2>
+                <p>Your response to the RFP "${response.rfp.title}" has been moved to review status.</p>
+                <p><strong>RFP:</strong> ${response.rfp.title}</p>
+                <p><strong>Your Proposed Budget:</strong> $${response.proposed_budget || 'N/A'}</p>
+                <p><strong>Your Timeline:</strong> ${response.timeline || 'N/A'}</p>
+                <p>The buyer is now reviewing your response. You will be notified once a decision has been made.</p>
+                <p>Please log in to your dashboard to view the current status.</p>
+            `,
+        };
+
+        return await sendEmail(emailData);
+    } catch (error) {
+        console.error('Response moved to review notification failed:', error);
+        return { success: false, message: 'Notification failed' };
+    }
+};
+
+export const sendResponseApprovedNotification = async (responseId: string) => {
+    try {
+        const response = await prisma.supplierResponse.findUnique({
+            where: { id: responseId },
+            include: {
+                supplier: true,
+                rfp: {
+                    include: {
+                        current_version: true,
+                        buyer: true,
+                    },
+                },
+            },
+        });
+
+        if (!response) {
+            throw new Error('Response not found');
+        }
+
+        const emailData: EmailData = {
+            to: response.supplier.email,
+            subject: `Response Approved: ${response.rfp.title}`,
+            html: `
+                <h2>Congratulations! Your Response Has Been Approved</h2>
+                <p>Your response to the RFP "${response.rfp.title}" has been approved by the buyer.</p>
+                <p><strong>RFP:</strong> ${response.rfp.title}</p>
+                <p><strong>Your Proposed Budget:</strong> $${response.proposed_budget || 'N/A'}</p>
+                <p><strong>Your Timeline:</strong> ${response.timeline || 'N/A'}</p>
+                <p>Your response is now in the approved status. The buyer may award the RFP to you or another approved supplier.</p>
+                <p>Please log in to your dashboard to view the current status.</p>
+            `,
+        };
+
+        return await sendEmail(emailData);
+    } catch (error) {
+        console.error('Response approved notification failed:', error);
+        return { success: false, message: 'Notification failed' };
+    }
+};
+
+export const sendResponseRejectedNotification = async (responseId: string, rejectionReason: string) => {
+    try {
+        const response = await prisma.supplierResponse.findUnique({
+            where: { id: responseId },
+            include: {
+                supplier: true,
+                rfp: {
+                    include: {
+                        current_version: true,
+                        buyer: true,
+                    },
+                },
+            },
+        });
+
+        if (!response) {
+            throw new Error('Response not found');
+        }
+
+        const emailData: EmailData = {
+            to: response.supplier.email,
+            subject: `Response Update: ${response.rfp.title}`,
+            html: `
+                <h2>Response Status Update</h2>
+                <p>Your response to the RFP "${response.rfp.title}" has been reviewed.</p>
+                <p><strong>RFP:</strong> ${response.rfp.title}</p>
+                <p><strong>Status:</strong> Rejected</p>
+                <p><strong>Reason for Rejection:</strong></p>
+                <p style="background-color: #f8f9fa; padding: 10px; border-left: 4px solid #dc3545; margin: 10px 0;">
+                    ${rejectionReason}
+                </p>
+                <p>We encourage you to review the feedback and consider submitting responses to other available RFPs.</p>
+                <p>Please log in to your dashboard to view other opportunities.</p>
+            `,
+        };
+
+        return await sendEmail(emailData);
+    } catch (error) {
+        console.error('Response rejected notification failed:', error);
+        return { success: false, message: 'Notification failed' };
+    }
+};
+
+export const sendResponseAwardedNotification = async (responseId: string) => {
+    try {
+        const response = await prisma.supplierResponse.findUnique({
+            where: { id: responseId },
+            include: {
+                supplier: true,
+                rfp: {
+                    include: {
+                        current_version: true,
+                        buyer: true,
+                    },
+                },
+            },
+        });
+
+        if (!response) {
+            throw new Error('Response not found');
+        }
+
+        const emailData: EmailData = {
+            to: response.supplier.email,
+            subject: `🎉 RFP Awarded to You: ${response.rfp.title}`,
+            html: `
+                <h2>🎉 Congratulations! You've Been Awarded the RFP</h2>
+                <p>Your response to the RFP "${response.rfp.title}" has been awarded!</p>
+                <p><strong>RFP:</strong> ${response.rfp.title}</p>
+                <p><strong>Your Proposed Budget:</strong> $${response.proposed_budget || 'N/A'}</p>
+                <p><strong>Your Timeline:</strong> ${response.timeline || 'N/A'}</p>
+                <p>This is a significant achievement! The buyer has selected your proposal as the winning response.</p>
+                <p>Please log in to your dashboard to view the details and next steps.</p>
+            `,
+        };
+
+        return await sendEmail(emailData);
+    } catch (error) {
+        console.error('Response awarded notification failed:', error);
+        return { success: false, message: 'Notification failed' };
+    }
+};
+
 export const sendResponseSubmittedNotification = async (responseId: string) => {
     try {
         const response = await prisma.supplierResponse.findUnique({

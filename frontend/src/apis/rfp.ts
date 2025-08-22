@@ -39,7 +39,7 @@ export const rfpApi = {
 
   // Get specific RFP by ID
   getRfpById: async (rfpId: string): Promise<RFP> => {
-    const response = await apiClient.get<RFP>(`/rfp/${rfpId}`);
+    const response = await apiClient.get<RFP>(`/rfp/get/${rfpId}`);
     return response.data;
   },
 

@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import * as rfpService from '../services/rfp.service';
 import { createRfpSchema, getRfpResponsesSchema, submitResponseSchema, reviewResponseSchema } from '../validations/rfp.validation';
 import { modifyGeneralFilterPrisma } from '../utils/filters';
+import { User } from '@prisma/client';
 
 export const createRfp = async (req: AuthenticatedRequest, res: Response) => {
     const validationResult = createRfpSchema.safeParse(req.body);
@@ -167,7 +168,8 @@ export const getPublishedRfps = async (req: AuthenticatedRequest, res: Response)
             versionGeneralFilters,
             offset,
             limit,
-            search as string | undefined
+            search as string | undefined,
+            req.user as any
         );
 
         res.json(rfps);

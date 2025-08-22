@@ -89,6 +89,42 @@ export const notifyRfpStatusChanged = (rfpData: any, supplierIds: string[]) => {
     });
 };
 
+export const notifyResponseMovedToReview = (responseData: any, supplierId: string) => {
+    const io = getIO();
+    io.to(`user_${supplierId}`).emit('response_moved_to_review', {
+        type: 'RESPONSE_MOVED_TO_REVIEW',
+        data: responseData,
+        timestamp: new Date().toISOString()
+    });
+};
+
+export const notifyResponseApproved = (responseData: any, supplierId: string) => {
+    const io = getIO();
+    io.to(`user_${supplierId}`).emit('response_approved', {
+        type: 'RESPONSE_APPROVED',
+        data: responseData,
+        timestamp: new Date().toISOString()
+    });
+};
+
+export const notifyResponseRejected = (responseData: any, supplierId: string) => {
+    const io = getIO();
+    io.to(`user_${supplierId}`).emit('response_rejected', {
+        type: 'RESPONSE_REJECTED',
+        data: responseData,
+        timestamp: new Date().toISOString()
+    });
+};
+
+export const notifyResponseAwarded = (responseData: any, supplierId: string) => {
+    const io = getIO();
+    io.to(`user_${supplierId}`).emit('response_awarded', {
+        type: 'RESPONSE_AWARDED',
+        data: responseData,
+        timestamp: new Date().toISOString()
+    });
+};
+
 export const notifyUser = (userId: string, event: string, data: any) => {
     const io = getIO();
     io.to(`user_${userId}`).emit(event, {

@@ -12,7 +12,7 @@ router.use(protect);
 
 /**
  * @swagger
- * /rfps/all:
+ * /rfp/all:
  *   get:
  *     summary: Get all published RFPs
  *     tags: [RFPs]
@@ -52,7 +52,7 @@ router.get(
 
 /**
  * @swagger
- * /rfps/{id}:
+ * /rfp/get/{id}:
  *   get:
  *     summary: Get specific RFP details
  *     tags: [RFPs]
@@ -73,14 +73,14 @@ router.get(
  *         description: RFP not found
  */
 router.get(
-    '/:rfp_id',
+    '/get/:rfp_id',
     hasPermission('rfp', 'view'),
     rfpController.getRfpById
 );
 
 /**
  * @swagger
- * /rfps/{id}:
+ * /rfp/{id}:
  *   put:
  *     summary: Update an RFP
  *     tags: [RFPs]
@@ -110,7 +110,7 @@ router.put(
 
 /**
  * @swagger
- * /rfps/{id}:
+ * /rfp/{id}:
  *   delete:
  *     summary: Delete an RFP
  *     tags: [RFPs]
@@ -182,7 +182,7 @@ router.post(
 
 /**
  * @swagger
- * /rfps/{id}/publish:
+ * /rfp/{id}/publish:
  *   put:
  *     summary: Publish an RFP
  *     tags: [RFPs]
@@ -212,7 +212,7 @@ router.put(
 
 /**
  * @swagger
- * /rfps/{id}/close:
+ * /rfp/{id}/close:
  *   put:
  *     summary: Close an RFP
  *     tags: [RFPs]
@@ -244,7 +244,7 @@ router.put(
 
 /**
  * @swagger
- * /rfps/{id}/cancel:
+ * /rfp/{id}/cancel:
  *   put:
  *     summary: Cancel an RFP
  *     tags: [RFPs]
@@ -276,7 +276,7 @@ router.put(
 
 /**
  * @swagger
- * /rfps/{id}/award:
+ * /rfp/{id}/award:
  *   put:
  *     summary: Award an RFP to a response
  *     tags: [RFPs]
@@ -318,7 +318,7 @@ router.put(
 
 /**
  * @swagger
- * /rfps/{id}/responses:
+ * /rfp/{id}/responses:
  *   post:
  *     summary: Submit a response to an RFP
  *     tags: [RFPs]
@@ -359,7 +359,7 @@ router.post(
 
 /**
  * @swagger
- * /rfps/responses/{responseId}/submit:
+ * /rfp/responses/{responseId}/submit:
  *   put:
  *     summary: Submit a draft response
  *     tags: [RFPs]
@@ -389,7 +389,7 @@ router.put(
 
 /**
  * @swagger
- * /rfps/responses/{responseId}/review:
+ * /rfp/responses/{responseId}/review:
  *   put:
  *     summary: Review a supplier response (Approve/Reject)
  *     tags: [RFPs]
@@ -429,7 +429,7 @@ router.put(
 
 /**
  * @swagger
- * /rfps/responses/{response_id}/approve:
+ * /rfp/responses/{response_id}/approve:
  *   put:
  *     summary: Approve a response
  *     tags: [Responses]
@@ -461,7 +461,7 @@ router.put(
 
 /**
  * @swagger
- * /rfps/responses/{response_id}/move-to-review:
+ * /rfp/responses/{response_id}/move-to-review:
  *   put:
  *     summary: Move a response to review status
  *     tags: [Responses]
@@ -493,7 +493,7 @@ router.put(
 
 /**
  * @swagger
- * /rfps/responses/{response_id}/reject:
+ * /rfp/responses/{response_id}/reject:
  *   put:
  *     summary: Reject a response
  *     tags: [Responses]
@@ -535,7 +535,7 @@ router.put(
 
 /**
  * @swagger
- * /rfps/responses/{response_id}/award:
+ * /rfp/responses/{response_id}/award:
  *   put:
  *     summary: Award a response
  *     tags: [Responses]
@@ -567,7 +567,7 @@ router.put(
 
 /**
  * @swagger
- * /rfps/{rfp_id}/responses:
+ * /rfp/{rfp_id}/responses:
  *   get:
  *     summary: Get all responses for a specific RFP
  *     tags: [RFPs]
@@ -597,7 +597,7 @@ router.get(
 
 /**
  * @swagger
- * /rfps/{id}/documents:
+ * /rfp/{id}/documents:
  *   post:
  *     summary: Upload a document for an RFP
  *     tags: [RFPs]
@@ -638,7 +638,7 @@ router.post(
 
 /**
  * @swagger
- * /rfps/responses/{responseId}/documents:
+ * /rfp/responses/{responseId}/documents:
  *   post:
  *     summary: Upload a document for a response
  *     tags: [RFPs]
@@ -679,7 +679,7 @@ router.post(
 
 /**
  * @swagger
- * /rfps/my-responses:
+ * /rfp/my-responses:
  *   get:
  *     summary: Get supplier's responses
  *     tags: [RFPs]
@@ -699,7 +699,7 @@ router.get(
 
 /**
  * @swagger
- * /rfps/responses/{responseId}:
+ * /rfp/responses/{responseId}:
  *   get:
  *     summary: Get specific response details
  *     tags: [RFPs]
@@ -727,7 +727,7 @@ router.get(
 
 /**
  * @swagger
- * /rfps/responses/{responseId}:
+ * /rfp/responses/{responseId}:
  *   put:
  *     summary: Update a supplier response
  *     tags: [RFPs]
@@ -757,7 +757,7 @@ router.put(
 
 /**
  * @swagger
- * /rfps/documents/{documentId}:
+ * /rfp/documents/{documentId}:
  *   delete:
  *     summary: Delete a document (soft delete)
  *     tags: [Documents]

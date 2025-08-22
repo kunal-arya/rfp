@@ -96,6 +96,79 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         });
       });
 
+      // Response status change notifications
+      newSocket.on('response_moved_to_review', (notification) => {
+        const data = notification.data;
+        
+        // Invalidate dashboard queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['responses'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        
+        toast.info(`Response Under Review: ${data.rfp?.title || 'RFP'}`, {
+          description: `Your response is now being reviewed by the buyer.`,
+          action: {
+            label: 'View Response',
+            onClick: () => (window.location.href = `/responses/${data.id}`),
+          },
+        });
+      });
+
+      newSocket.on('response_approved', (notification) => {
+        const data = notification.data;
+        
+        // Invalidate dashboard queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['responses'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        
+        toast.success(`Response Approved: ${data.rfp?.title || 'RFP'}`, {
+          description: `Congratulations! Your response has been approved.`,
+          action: {
+            label: 'View Response',
+            onClick: () => (window.location.href = `/responses/${data.id}`),
+          },
+        });
+      });
+
+      newSocket.on('response_rejected', (notification) => {
+        const data = notification.data;
+        
+        // Invalidate dashboard queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['responses'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        
+        toast.error(`Response Rejected: ${data.rfp?.title || 'RFP'}`, {
+          description: `Your response has been rejected. Check the details for more information.`,
+          action: {
+            label: 'View Response',
+            onClick: () => (window.location.href = `/responses/${data.id}`),
+          },
+        });
+      });
+
+      newSocket.on('response_awarded', (notification) => {
+        const data = notification.data;
+        
+        // Invalidate dashboard queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['responses'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        
+        toast.success(`🎉 Response Awarded: ${data.rfp?.title || 'RFP'}`, {
+          description: `Congratulations! Your response has been awarded!`,
+          action: {
+            label: 'View Response',
+            onClick: () => (window.location.href = `/responses/${data.id}`),
+          },
+        });
+      });
+
       // Additional real-time events for dashboard updates
       newSocket.on('rfp_created', (notification) => {
         const data = notification.data;
