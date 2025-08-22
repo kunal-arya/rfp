@@ -6,7 +6,8 @@ import { createPermissionHelpers } from '@/utils/permissions';
 type AuthAction =
   | { type: 'LOGIN'; payload: { user: AuthUser; permissions: UserPermissions; token: string } }
   | { type: 'LOGOUT' }
-  | { type: 'INITIALIZE' };
+  | { type: 'INITIALIZE' }
+  | { type: 'SET_LOADING'; payload: boolean };
 
 // Initial state
 const initialState: AuthState = {
@@ -14,6 +15,7 @@ const initialState: AuthState = {
   permissions: null,
   token: null,
   isAuthenticated: false,
+  isLoading: true, // Start as loading
 };
 
 // Reducer
@@ -26,6 +28,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         permissions: action.payload.permissions,
         token: action.payload.token,
         isAuthenticated: true,
+        isLoading: false,
       };
     case 'LOGOUT':
       return {
@@ -34,32 +37,47 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         permissions: null,
         token: null,
         isAuthenticated: false,
+        isLoading: false,
       };
     case 'INITIALIZE':
-      const token = localStorage.getItem('token');
-      const userStr = localStorage.getItem('user');
-      const permissionsStr = localStorage.getItem('permissions');
-      
-      if (token && userStr && permissionsStr) {
-        try {
-          const user = JSON.parse(userStr);
-          const permissions = JSON.parse(permissionsStr);
-          return {
-            ...state,
-            user,
-            permissions,
-            token,
-            isAuthenticated: true,
-          };
-        } catch (error) {
-          console.error('Error parsing stored auth data:', error);
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          localStorage.removeItem('permissions');
-          return initialState;
+      {
+        const token = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+        const permissionsStr = localStorage.getItem('permissions');
+        
+        if (token && userStr && permissionsStr) {
+          try {
+            const user = JSON.parse(userStr);
+            const permissions = JSON.parse(permissionsStr);
+            return {
+              ...state,
+              user,
+              permissions,
+              token,
+              isAuthenticated: true,
+              isLoading: false,
+            };
+          } catch (error) {
+            console.error('Error parsing stored auth data:', error);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('permissions');
+            return {
+              ...initialState,
+              isLoading: false,
+            };
+          }
         }
+        return {
+          ...initialState,
+          isLoading: false,
+        };
       }
-      return initialState;
+    case 'SET_LOADING':
+      return {
+        ...state,
+        isLoading: action.payload,
+      };
     default:
       return state;
   }

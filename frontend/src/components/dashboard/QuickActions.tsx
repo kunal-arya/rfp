@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, FileText, Users, Upload, Settings, MessageSquare } from 'lucide-react';
+import { Plus, Search, FileText, Settings, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,30 +26,6 @@ export const QuickActions: React.FC = () => {
       permission: permissionHelpers.canViewRfp,
       color: 'bg-green-500 hover:bg-green-600',
     },
-    {
-      title: 'Review Responses',
-      description: 'Review responses to your RFPs',
-      icon: MessageSquare,
-      action: () => navigate('/responses/review'),
-      permission: permissionHelpers.canReviewResponses,
-      color: 'bg-purple-500 hover:bg-purple-600',
-    },
-    {
-      title: 'Review Responses',
-      description: 'Review responses to your RFPs',
-      icon: Users,
-      action: () => console.log('Review Responses'),
-      permission: permissionHelpers.canReviewResponses,
-      color: 'bg-purple-500 hover:bg-purple-600',
-    },
-    {
-      title: 'Upload Documents',
-      description: 'Upload documents for your RFPs',
-      icon: Upload,
-      action: () => console.log('Upload Documents'),
-      permission: permissionHelpers.canUploadRfpDocuments,
-      color: 'bg-orange-500 hover:bg-orange-600',
-    },
   ];
 
   const supplierActions = [
@@ -68,30 +44,6 @@ export const QuickActions: React.FC = () => {
       action: () => navigate('/responses/my'),
       permission: permissionHelpers.canViewResponse,
       color: 'bg-green-500 hover:bg-green-600',
-    },
-    {
-      title: 'My Responses',
-      description: 'View and manage your responses',
-      icon: FileText,
-      action: () => console.log('My Responses'),
-      permission: permissionHelpers.canViewResponse,
-      color: 'bg-green-500 hover:bg-green-600',
-    },
-    {
-      title: 'Create Response',
-      description: 'Submit a new response',
-      icon: Plus,
-      action: () => console.log('Create Response'),
-      permission: permissionHelpers.canCreateResponse,
-      color: 'bg-purple-500 hover:bg-purple-600',
-    },
-    {
-      title: 'Upload Documents',
-      description: 'Upload documents for responses',
-      icon: Upload,
-      action: () => console.log('Upload Documents'),
-      permission: permissionHelpers.canUploadResponseDocuments,
-      color: 'bg-orange-500 hover:bg-orange-600',
     },
   ];
 
@@ -122,7 +74,7 @@ export const QuickActions: React.FC = () => {
                 <Icon className="h-5 w-5" />
                 <div className="text-center">
                   <div className="font-medium">{action.title}</div>
-                  <div className="text-xs opacity-90">{action.description}</div>
+                  <div className="text-xs opacity-90 text-wrap">{action.description}</div>
                 </div>
               </Button>
             );

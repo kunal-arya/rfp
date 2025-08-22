@@ -43,7 +43,7 @@ describe('RFP Controller', () => {
         current_version_id: 'version-1',
       };
 
-      mockRfpService.createRfp.mockResolvedValue(mockCreatedRfp);
+      mockRfpService.createRfp.mockResolvedValue(mockCreatedRfp as any);
 
       await createRfp(req as TestRequest, res as Response);
 
@@ -91,7 +91,7 @@ describe('RFP Controller', () => {
         limit: 10,
       };
 
-      mockRfpService.getMyRfps.mockResolvedValue(mockData);
+      mockRfpService.getMyRfps.mockResolvedValue(mockData as any);
 
       await getMyRfps(req as TestRequest, res as Response);
 
@@ -136,7 +136,7 @@ describe('RFP Controller', () => {
   describe('getRfpById', () => {
     it('should get RFP by ID successfully', async () => {
       req.params = { rfp_id: 'rfp-1' };
-      mockRfpService.getRfpById.mockResolvedValue(mockRfp);
+      mockRfpService.getRfpById.mockResolvedValue(mockRfp as any);
 
       await getRfpById(req as TestRequest, res as Response);
 

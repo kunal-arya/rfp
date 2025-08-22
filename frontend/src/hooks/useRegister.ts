@@ -10,11 +10,11 @@ export const useRegister = () => {
   return useMutation({
     mutationFn: (data: RegisterData) => authApi.register(data),
     onSuccess: (response) => {
-      // Extract user and permissions from JWT payload
       const user = {
         id: response.user.id,
         email: response.user.email,
-        role_id: response.user.role_id, // This should come from the backend response
+        role_id: response.user.role_id,
+        role: response.user.role,
       };
 
       login(user, response.permissions, response.token);

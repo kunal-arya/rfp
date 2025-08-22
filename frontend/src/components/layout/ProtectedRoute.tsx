@@ -14,8 +14,20 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requiredPermission 
 }) => {
-  const { isAuthenticated, permissionHelpers } = useAuth();
+  const { isAuthenticated, isLoading, permissionHelpers } = useAuth();
   const location = useLocation();
+
+  // Show loading while auth is being initialized
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {

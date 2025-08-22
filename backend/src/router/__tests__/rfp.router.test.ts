@@ -64,7 +64,7 @@ describe('RFP Router', () => {
 
     it('should create RFP successfully with authentication', async () => {
       const mockCreatedRfp = { ...mockRfp, title: validRfpData.title };
-      mockRfpService.createRfp.mockResolvedValue(mockCreatedRfp);
+      mockRfpService.createRfp.mockResolvedValue(mockCreatedRfp as any);
 
       const response = await request(app)
         .post('/api/rfp')
@@ -143,7 +143,7 @@ describe('RFP Router', () => {
 
   describe('GET /api/rfp/:rfp_id', () => {
     it('should get RFP by ID successfully with authentication', async () => {
-      mockRfpService.getRfpById.mockResolvedValue(mockRfp);
+      mockRfpService.getRfpById.mockResolvedValue(mockRfp as any);
 
       const response = await request(app)
         .get('/api/rfp/rfp-1')

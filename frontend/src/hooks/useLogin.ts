@@ -10,16 +10,14 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: (data: LoginData) => authApi.login(data),
     onSuccess: (response) => {
-      // Extract user and permissions from JWT payload
-      // Note: In a real app, you might want to decode the JWT to get user info
-      // For now, we'll use the response structure from our API
       const user = {
         id: response.user.id,
         email: response.user.email,
-        role: 'Buyer', // This should come from the backend response
+        role_id: response.user.role_id,
+        role: response.user.role,
       };
 
-      login(user, permissions, response.token);
+      login(user, response.permissions, response.token);
       navigate('/dashboard');
     },
     onError: (error) => {

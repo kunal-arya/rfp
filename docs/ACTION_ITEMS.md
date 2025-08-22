@@ -234,3 +234,16 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [ ] AI usage report.
     -   [ ] Deployment guide.
 
+## Phase 5: Bug Fixes
+
+### Bug Fixes
+-  [X] **Frontend Development:**
+    -   [X] In "Create New RFP", there is no option to add documents ??? why , while creating RFP, user will surely going to upload documents related to RFP
+    -   [X] In "login" and "register" Page, if token is there in the localstorage, please redirect to dashboard page and After "login"& "Register" redirect to dashboard page as well. 
+    -   [X] when I am going to "/dashboard" page, why it is redirect me to login page even if token is there, fix this. this is happening for every protected page. check the logic and do it 
+    -   [X] In dashboard, why we have different Upload Documents Actions for Buyer to upload documents ?? better is to make them inside "Create New RFP".. why there are two "Review Responses" actions ??? remove one if other one is redudant
+    
+-   [X] **Backend Deployment:**
+    -   [X] In "createRfp" service, u are not creating it correctly, read schema.prisma to get the hang of how the schema is and then implement it, for ex - current_version_id is setting as null, but that should not be the case, versions to get all the versions related to an rpf and general we will fetch only the current_version using current_version_id
+    -   [X] In "getRfpById", please all the documents that are related to this "rfp_version_id" and send them to the frontend. do it same for "getMyRfps", include documents that are related to this "rfp_version_id"
+

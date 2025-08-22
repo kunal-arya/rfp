@@ -19,29 +19,46 @@ export const createRfp = async (rFPData: CreateRfpData, buyerId: string) => {
         throw new Error('Draft status not found');
     }
 
-    const rFP = await prisma.rFP.create({
-        data: {
-            title,
-            status_id: draftStatus.id,
-            buyer_id: buyerId,
-            versions: {
-                create: {
-                    version_number: 1,
-                    description,
-                    requirements,
-                    budget_min,
-                    budget_max,
-                    deadline,
-                    notes,
-                },
+    let updateRfp;
+
+    await prisma.$transaction(async (tx) => {
+        // First create the RFP without current_version_id
+        const rFP = await tx.rFP.create({
+            data: {
+                title,
+                status_id: draftStatus.id,
+                buyer_id: buyerId,
             },
-        },
-        include: {
-            versions: true,
-        },
+        });
+
+        // Then create the first version
+        const version = await tx.rFPVersion.create({
+            data: {
+                rfp_id: rFP.id,
+                version_number: 1,
+                description,
+                requirements,
+                budget_min,
+                budget_max,
+                deadline,
+                notes,
+            },
+        });
+
+        // Update the RFP to set the current_version_id
+        updateRfp = await tx.rFP.update({
+            where: { id: rFP.id },
+            data: { current_version_id: version.id },
+            include: {
+                versions: true,
+                current_version: true,
+                status: true,
+                buyer: true,
+            },
+        });
     });
 
-    return rFP;
+    return updateRfp;
 };
 
 export const getMyRfps = async (
@@ -76,7 +93,11 @@ export const getMyRfps = async (
         skip: offset,
         take: limit,
         include: {
-            current_version: true,
+            current_version: {
+                include: {
+                    documents: true, // Include documents for the current version
+                },
+            },
             status: true,
             supplier_responses: {
                 include: {
@@ -99,7 +120,11 @@ export const getRfpById = async (rfpId: string, userId: string) => {
     const rfp = await prisma.rFP.findUnique({
         where: { id: rfpId },
         include: {
-            current_version: true,
+            current_version: {
+                include: {
+                    documents: true, // Include documents for the current version
+                },
+            },
             status: true,
             buyer: true,
             supplier_responses: {
@@ -299,7 +324,11 @@ export const getPublishedRfps = async (
         skip: offset,
         take: limit,
         include: {
-            current_version: true,
+            current_version: {
+                include: {
+                    documents: true, // Include documents for the current version
+                },
+            },
             buyer: true,
             supplier_responses: true
         },

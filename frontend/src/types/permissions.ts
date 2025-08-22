@@ -25,6 +25,7 @@ export interface AuthUser {
   id: string;
   email: string;
   role_id: string;
+  role: string;
 }
 
 export interface AuthState {
@@ -32,4 +33,5 @@ export interface AuthState {
   permissions: UserPermissions | null;
   token: string | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }

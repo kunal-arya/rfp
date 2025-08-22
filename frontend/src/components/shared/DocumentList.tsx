@@ -15,7 +15,7 @@ interface DocumentListProps {
 export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDelete, title = "Documents" }) => {
   const { permissionHelpers } = useAuth();
   
-  const canDelete = permissionHelpers.canManageDocuments(); // Assuming a general permission
+  const canDelete = permissionHelpers.canManageRfpDocuments;
 
   return (
     <Card>
