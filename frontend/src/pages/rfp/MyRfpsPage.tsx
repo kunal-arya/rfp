@@ -6,9 +6,9 @@ import { useMyRfps, useDeleteRfp, usePublishRfp } from '@/hooks/useRfp';
 import { AdvancedFilterBar, Filters } from '@/components/shared/AdvancedFilterBar';
 import { ExportActions } from '@/components/shared/ExportActions';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const MyRfpsPage: React.FC = () => {
   const navigate = useNavigate();

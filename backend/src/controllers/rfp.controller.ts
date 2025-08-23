@@ -208,8 +208,6 @@ export const getMyRfps = async (req: AuthenticatedRequest, res: Response) => {
         const generalFilters = modifyGeneralFilterPrisma(rfpFilters);
         const versionGeneralFilters = modifyGeneralFilterPrisma(versionFilters);
 
-        console.log({generalFilters, versionGeneralFilters, rfpFilters, versionFilters, filters})
-
         const rfps = await rfpService.getMyRfps(
             user.userId,
             generalFilters,

@@ -297,4 +297,5 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
       -   [X] For supplier, Recent Responses in dashboard frontend should show reponses, whether draft or published.. api/dashboard check this route API
       -   [X] real-time and email and notification service when buyer mark supplier response "UNDER_REVIEW", "Approved", "REJECTED", "AWARDED" and check others too.. do frontend changes to support these changes as well.
       -   [X] Fix RFP awarding bug: when awarding an RFP, the selected response status should change from "Approved" to "Awarded" along with RFP status change to "Awarded", and send proper notifications (email, WebSocket, in-app) to all suppliers who responded.
+      -   [ ] We forget the Versioning flow of FRP completely, read "requirements.md" file and implement versioning flow. Our schema at schema.prisma actually supports RFP versioning. Implement Backend and frontend completely and then test it if it's working or not, whether your implementation after done is right or not.
   
