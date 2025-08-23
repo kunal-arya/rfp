@@ -20,7 +20,7 @@ import {
 
 interface ExportActionsProps {
   type: 'rfp' | 'rfp-list' | 'responses';
-  data: RFP | RFP[] | SupplierResponse[];
+  data: any;
   rfpTitle?: string;
   onPrint?: () => void;
 }

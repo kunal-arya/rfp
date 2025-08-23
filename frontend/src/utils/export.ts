@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import autoTable, { RowInput } from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { RFP, SupplierResponse } from '@/apis/types';
 
@@ -16,28 +16,28 @@ export const exportRfpToPdf = (rfp: RFP) => {
   doc.text(`Title: ${rfp.title}`, 20, 50);
   doc.text(`Status: ${rfp.status}`, 20, 60);
   doc.text(`Created: ${new Date(rfp.created_at).toLocaleDateString()}`, 20, 70);
-  doc.text(`Deadline: ${new Date(rfp.deadline).toLocaleDateString()}`, 20, 80);
+  doc.text(`Deadline: ${new Date(rfp.current_version.deadline).toLocaleDateString()}`, 20, 80);
   
-  if (rfp.budget_min && rfp.budget_max) {
-    doc.text(`Budget: $${rfp.budget_min.toLocaleString()} - $${rfp.budget_max.toLocaleString()}`, 20, 90);
+  if (rfp.current_version.budget_min && rfp.current_version.budget_max) {
+    doc.text(`Budget: $${rfp.current_version.budget_min.toLocaleString()} - $${rfp.current_version.budget_max.toLocaleString()}`, 20, 90);
   }
   
   // Description
   doc.text('Description:', 20, 110);
-  const splitDescription = doc.splitTextToSize(rfp.description, 170);
+  const splitDescription = doc.splitTextToSize(rfp.current_version.description, 170);
   doc.text(splitDescription, 20, 120);
   
   // Requirements
   const descriptionHeight = splitDescription.length * 5;
   doc.text('Requirements:', 20, 130 + descriptionHeight);
-  const splitRequirements = doc.splitTextToSize(rfp.requirements, 170);
+  const splitRequirements = doc.splitTextToSize(rfp.current_version.requirements, 170);
   doc.text(splitRequirements, 20, 140 + descriptionHeight);
   
   // Notes if available
-  if (rfp.notes) {
+  if (rfp.current_version.notes) {
     const requirementsHeight = splitRequirements.length * 5;
     doc.text('Notes:', 20, 160 + descriptionHeight + requirementsHeight);
-    const splitNotes = doc.splitTextToSize(rfp.notes, 170);
+    const splitNotes = doc.splitTextToSize(rfp.current_version.notes, 170);
     doc.text(splitNotes, 20, 170 + descriptionHeight + requirementsHeight);
   }
   
@@ -57,15 +57,15 @@ export const exportRfpListToPdf = (rfps: RFP[]) => {
     rfp.title,
     rfp.status,
     new Date(rfp.created_at).toLocaleDateString(),
-    new Date(rfp.deadline).toLocaleDateString(),
-    rfp.budget_min && rfp.budget_max 
-      ? `$${rfp.budget_min.toLocaleString()} - $${rfp.budget_max.toLocaleString()}`
+    new Date(rfp.current_version.deadline).toLocaleDateString(),
+    rfp.current_version.budget_min && rfp.current_version.budget_max 
+      ? `$${rfp.current_version.budget_min.toLocaleString()} - $${rfp.current_version.budget_max.toLocaleString()}`
       : 'Not specified'
   ]);
   
   autoTable(doc, {
     head: [['Title', 'Status', 'Created', 'Deadline', 'Budget']],
-    body: tableData,
+    body: tableData as RowInput[],
     startY: 30,
   });
   
@@ -90,7 +90,7 @@ export const exportResponsesToPdf = (responses: SupplierResponse[], rfpTitle?: s
   
   autoTable(doc, {
     head: [['Supplier', 'Status', 'Budget', 'Timeline', 'Submitted']],
-    body: tableData,
+    body: tableData as RowInput[],
     startY: 30,
   });
   
@@ -102,12 +102,12 @@ export const exportRfpToExcel = (rfp: RFP) => {
   const data = [{
     Title: rfp.title,
     Status: rfp.status,
-    Description: rfp.description,
-    Requirements: rfp.requirements,
-    'Budget Min': rfp.budget_min,
-    'Budget Max': rfp.budget_max,
-    Deadline: new Date(rfp.deadline).toLocaleDateString(),
-    Notes: rfp.notes || '',
+    Description: rfp.current_version.description,
+    Requirements: rfp.current_version.requirements,
+    'Budget Min': rfp.current_version.budget_min,
+    'Budget Max': rfp.current_version.budget_max,
+    Deadline: new Date(rfp.current_version.deadline).toLocaleDateString(),
+    Notes: rfp.current_version.notes || '',
     Created: new Date(rfp.created_at).toLocaleDateString(),
     Updated: new Date(rfp.updated_at).toLocaleDateString()
   }];
@@ -123,12 +123,12 @@ export const exportRfpListToExcel = (rfps: RFP[]) => {
   const data = rfps.map(rfp => ({
     Title: rfp.title,
     Status: rfp.status,
-    Description: rfp.description,
-    Requirements: rfp.requirements,
-    'Budget Min': rfp.budget_min,
-    'Budget Max': rfp.budget_max,
-    Deadline: new Date(rfp.deadline).toLocaleDateString(),
-    Notes: rfp.notes || '',
+    Description: rfp.current_version.description,
+    Requirements: rfp.current_version.requirements,
+    'Budget Min': rfp.current_version.budget_min,
+    'Budget Max': rfp.current_version.budget_max,
+    Deadline: new Date(rfp.current_version.deadline).toLocaleDateString(),
+    Notes: rfp.current_version.notes || '',
     Created: new Date(rfp.created_at).toLocaleDateString(),
     Updated: new Date(rfp.updated_at).toLocaleDateString()
   }));

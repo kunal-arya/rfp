@@ -9,7 +9,7 @@ export const useUploadRfpDocument = () => {
       documentApi.uploadForRfp(rfpVersionId, file),
     onSuccess: (data) => {
       // Invalidate queries related to the RFP to refetch documents
-      queryClient.invalidateQueries({ queryKey: ['rfp', data.rfp_version?.rfp_id] });
+      queryClient.invalidateQueries({ queryKey: ['rfp', (data as any).rfp_version?.rfp_id] });
     },
     onError: (error) => {
       console.error('Failed to upload RFP document:', error);
@@ -26,7 +26,7 @@ export const useUploadResponseDocument = () => {
       documentApi.uploadForResponse(responseId, file),
     onSuccess: (data) => {
       // Invalidate queries related to the response to refetch documents
-      queryClient.invalidateQueries({ queryKey: ['response', data.rfp_response_id] });
+      queryClient.invalidateQueries({ queryKey: ['response', (data as any).rfp_response_id] });
     },
     onError: (error) => {
       console.error('Failed to upload response document:', error);

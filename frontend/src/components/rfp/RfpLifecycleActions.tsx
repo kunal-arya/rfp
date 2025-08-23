@@ -140,7 +140,7 @@ export const RfpLifecycleActions: React.FC<RfpLifecycleActionsProps> = ({
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="response-select">Select Response</Label>
-                <Select value={selectedResponseId} onValueChange={setSelectedResponseId} className="w-full">
+                <Select value={selectedResponseId} onValueChange={setSelectedResponseId}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Choose an approved response" />
                   </SelectTrigger>

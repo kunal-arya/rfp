@@ -23,7 +23,7 @@ export const PrintView = forwardRef<HTMLDivElement, PrintViewProps>(
           </div>
           <div>
             <h3 className="font-semibold text-gray-700">Status</h3>
-            <p>{rfp.status}</p>
+            <p>{rfp.status.label}</p>
           </div>
           <div>
             <h3 className="font-semibold text-gray-700">Created Date</h3>
@@ -31,30 +31,30 @@ export const PrintView = forwardRef<HTMLDivElement, PrintViewProps>(
           </div>
           <div>
             <h3 className="font-semibold text-gray-700">Deadline</h3>
-            <p>{new Date(rfp.deadline).toLocaleDateString()}</p>
+            <p>{new Date(rfp.current_version.deadline).toLocaleDateString()}</p>
           </div>
-          {rfp.budget_min && rfp.budget_max && (
+          {rfp.current_version.budget_min && rfp.current_version.budget_max && (
             <div className="col-span-2">
               <h3 className="font-semibold text-gray-700">Budget Range</h3>
-              <p>${rfp.budget_min.toLocaleString()} - ${rfp.budget_max.toLocaleString()}</p>
+              <p>${rfp.current_version.budget_min.toLocaleString()} - ${rfp.current_version .budget_max.toLocaleString()}</p>
             </div>
           )}
         </div>
 
         <div>
           <h3 className="font-semibold text-gray-700 mb-2">Description</h3>
-          <p className="whitespace-pre-wrap">{rfp.description}</p>
+          <p className="whitespace-pre-wrap">{rfp.current_version.description}</p>
         </div>
 
         <div>
           <h3 className="font-semibold text-gray-700 mb-2">Requirements</h3>
-          <p className="whitespace-pre-wrap">{rfp.requirements}</p>
+          <p className="whitespace-pre-wrap">{rfp.current_version.requirements}</p>
         </div>
 
-        {rfp.notes && (
+        {rfp.current_version.notes && (
           <div>
             <h3 className="font-semibold text-gray-700 mb-2">Notes</h3>
-            <p className="whitespace-pre-wrap">{rfp.notes}</p>
+            <p className="whitespace-pre-wrap">{rfp.current_version.notes}</p>
           </div>
         )}
       </div>
@@ -82,16 +82,16 @@ export const PrintView = forwardRef<HTMLDivElement, PrintViewProps>(
             {rfps.map((rfp) => (
               <tr key={rfp.id}>
                 <td className="border border-gray-300 px-4 py-2">{rfp.title}</td>
-                <td className="border border-gray-300 px-4 py-2">{rfp.status}</td>
+                <td className="border border-gray-300 px-4 py-2">{rfp.status.label}</td>
                 <td className="border border-gray-300 px-4 py-2">
                   {new Date(rfp.created_at).toLocaleDateString()}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
-                  {new Date(rfp.deadline).toLocaleDateString()}
+                  {new Date(rfp.current_version.deadline).toLocaleDateString()}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
-                  {rfp.budget_min && rfp.budget_max
-                    ? `$${rfp.budget_min.toLocaleString()} - $${rfp.budget_max.toLocaleString()}`
+                  {rfp.current_version.budget_min && rfp.current_version.budget_max
+                    ? `$${rfp.current_version.budget_min.toLocaleString()} - $${rfp.current_version.budget_max.toLocaleString()}`
                     : 'Not specified'
                   }
                 </td>
@@ -128,7 +128,7 @@ export const PrintView = forwardRef<HTMLDivElement, PrintViewProps>(
                 <td className="border border-gray-300 px-4 py-2">
                   {response.supplier?.email || 'N/A'}
                 </td>
-                <td className="border border-gray-300 px-4 py-2">{response.status}</td>
+                <td className="border border-gray-300 px-4 py-2">{response.status.label}</td>
                 <td className="border border-gray-300 px-4 py-2">
                   {response.proposed_budget 
                     ? `$${response.proposed_budget.toLocaleString()}`

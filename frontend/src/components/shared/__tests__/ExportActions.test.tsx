@@ -25,7 +25,7 @@ describe('ExportActions', () => {
     render(
       <ExportActions
         type="rfp"
-        data={mockRfp}
+        data={mockRfp as any}
       />
     );
 
@@ -36,7 +36,7 @@ describe('ExportActions', () => {
     render(
       <ExportActions
         type="rfp"
-        data={mockRfp}
+        data={mockRfp as any}
       />
     );
 
@@ -53,7 +53,7 @@ describe('ExportActions', () => {
     render(
       <ExportActions
         type="rfp"
-        data={mockRfp}
+        data={mockRfp as any}
         onPrint={mockPrint}
       />
     );
@@ -68,7 +68,7 @@ describe('ExportActions', () => {
     render(
       <ExportActions
         type="rfp"
-        data={mockRfp}
+        data={mockRfp as any}
       />
     );
 
@@ -84,7 +84,7 @@ describe('ExportActions', () => {
     render(
       <ExportActions
         type="rfp"
-        data={mockRfp}
+        data={mockRfp as any}
         onPrint={mockPrint}
       />
     );

@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { RFP, PaginatedResponse } from './types';
+import { RFP, PaginatedResponse, RFPVersion } from './types';
 
 export interface CreateRfpData {
   title: string;
@@ -11,7 +11,9 @@ export interface CreateRfpData {
   notes?: string;
 }
 
-export interface UpdateRfpData extends Partial<CreateRfpData> {}
+export interface UpdateRfpData extends Partial<CreateRfpData> {
+  version_id?: string;
+}
 
 export interface RfpFilters {
   status?: string;
