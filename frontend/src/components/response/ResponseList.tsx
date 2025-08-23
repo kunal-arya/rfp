@@ -35,15 +35,7 @@ export const ResponseList: React.FC<ResponseListProps> = ({
   showActions = true,
   showBuyerActions = false,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-
-  const filteredResponses = responses.filter((response) => {
-    const matchesSearch = response.rfp?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         response.cover_letter.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || response.status.code === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredResponses = responses
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -96,13 +88,10 @@ export const ResponseList: React.FC<ResponseListProps> = ({
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Responses</h2>
-          <p className="text-muted-foreground">
-            {filteredResponses.length} of {responses.length} responses
-          </p>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          <div className="relative">
+          {/* <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search responses..."
@@ -123,7 +112,7 @@ export const ResponseList: React.FC<ResponseListProps> = ({
             <option value="Under Review">Under Review</option>
             <option value="Approved">Approved</option>
             <option value="Rejected">Rejected</option>
-          </select>
+          </select> */}
           
           {showCreateButton && (
             <Button onClick={onCreateResponse} className="whitespace-nowrap">
@@ -152,15 +141,15 @@ export const ResponseList: React.FC<ResponseListProps> = ({
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {filteredResponses.map((response) => (
-            <Card key={response.id} className="hover:shadow-md transition-shadow">
+            <Card key={response.id} className="hover:shadow-md transition-shadow h-fit">
               <CardContent className="p-4 sm:p-6">
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 h-full">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <h3 
-                        className="text-base sm:text-lg font-semibold line-clamp-1 cursor-pointer hover:text-primary transition-colors"
+                        className="text-left sm:text-lg font-semibold line-clamp-1 cursor-pointer hover:text-primary transition-colors"
                         onClick={() => onViewResponse(response.id)}
                       >
                         Response to {response.rfp?.title}
@@ -171,11 +160,11 @@ export const ResponseList: React.FC<ResponseListProps> = ({
                     </Badge>
                   </div>
                   
-                  <p className="text-muted-foreground line-clamp-2 text-sm sm:text-base">
+                  <p className="text-muted-foreground line-clamp-3 text-sm sm:text-base flex-1">
                     {response.cover_letter}
                   </p>
                   
-                  <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-sm text-muted-foreground">
+                  <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4 flex-shrink-0" />
                       <span>Submitted: {formatDate(response.created_at)}</span>
@@ -191,7 +180,7 @@ export const ResponseList: React.FC<ResponseListProps> = ({
                   </div>
                   
                   {showActions && (
-                    <div className="flex flex-wrap gap-2 pt-2">
+                    <div className="flex flex-wrap gap-2 pt-2 border-t">
                       <Button
                         variant="outline"
                         size="sm"

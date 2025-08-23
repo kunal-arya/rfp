@@ -281,7 +281,7 @@ export const RfpDetailPage: React.FC = () => {
             </Card>
 
             {/* Upload Documents - Only show if user has permission and RFP is not published */}
-            {canManageDocuments && isOwner && !isPublished && (
+            {canManageDocuments && isOwner && isDraft && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">

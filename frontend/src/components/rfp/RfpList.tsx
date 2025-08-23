@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RFP } from '@/apis/types';
 import { FileText, Plus, Calendar, DollarSign, Eye, Edit, Trash2 } from 'lucide-react';
+import { AdvancedFilterBar, Filters } from '../shared/AdvancedFilterBar';
 
 interface RfpListProps {
   rfps: RFP[];
@@ -15,6 +16,8 @@ interface RfpListProps {
   onCreateRfp: () => void;
   showCreateButton?: boolean;
   showActions?: boolean;
+  handleFilterChange: (filters: Filters) => void;
+  rfpStatuses: { value: string; label: string }[];
 }
 
 export const RfpList: React.FC<RfpListProps> = ({
@@ -27,6 +30,8 @@ export const RfpList: React.FC<RfpListProps> = ({
   onCreateRfp,
   showCreateButton = true,
   showActions = true,
+  handleFilterChange,
+  rfpStatuses,
 }) => {
 
   const filteredRfps = rfps
@@ -80,11 +85,9 @@ export const RfpList: React.FC<RfpListProps> = ({
     <div className="space-y-6">
       {/* Header and Search */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div>
+        <div className="flex gap-2 items-center">
           <h2 className="text-2xl font-bold">RFPs</h2>
-          <p className="text-muted-foreground">
-            {filteredRfps.length} of {rfps.length} RFPs
-          </p>
+          <AdvancedFilterBar onFilterChange={handleFilterChange} statuses={rfpStatuses} />
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -136,15 +139,15 @@ export const RfpList: React.FC<RfpListProps> = ({
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {filteredRfps.map((rfp) => (
-            <Card key={rfp.id} className="hover:shadow-md transition-shadow">
+            <Card key={rfp.id} className="hover:shadow-md transition-shadow h-fit">
               <CardContent className="p-4 sm:p-6">
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 h-full">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <h3 
-                        className="text-base sm:text-lg font-semibold line-clamp-1 cursor-pointer hover:text-primary transition-colors"
+                        className="text-left sm:text-lg font-semibold line-clamp-1 cursor-pointer hover:text-primary transition-colors"
                         onClick={() => onViewRfp(rfp.id)}
                       >
                         {rfp.title}
@@ -155,11 +158,11 @@ export const RfpList: React.FC<RfpListProps> = ({
                     </Badge>
                   </div>
                   
-                  <p className="text-muted-foreground line-clamp-2 text-sm sm:text-base">
+                  <p className="text-muted-foreground line-clamp-3 text-sm sm:text-base flex-1">
                     {rfp.current_version?.description}
                   </p>
                   
-                  <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-sm text-muted-foreground">
+                  <div className="flex flex-col gap-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4 flex-shrink-0" />
                       <span>Deadline: {formatDate(rfp.current_version?.deadline || '')}</span>
@@ -177,7 +180,7 @@ export const RfpList: React.FC<RfpListProps> = ({
                   </div>
                   
                   {showActions && (
-                    <div className="flex flex-wrap gap-2 pt-2">
+                    <div className="flex flex-wrap gap-2 pt-2 border-t">
                       <Button
                         variant="outline"
                         size="sm"

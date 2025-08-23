@@ -1519,6 +1519,7 @@ export const getMyResponses = async (
             },
             status: true,
             documents: true,
+            supplier: true,
         },
         orderBy: { created_at: 'desc' },
     });

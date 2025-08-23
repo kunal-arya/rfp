@@ -51,6 +51,15 @@ export const ExportActions: React.FC<ExportActionsProps> = ({
     }
   };
 
+  const handlePrint = () => {
+    if (onPrint) {
+      onPrint();
+    } else {
+      // Fallback: print the current page
+      window.print();
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -68,15 +77,11 @@ export const ExportActions: React.FC<ExportActionsProps> = ({
           <FileSpreadsheet className="mr-2 h-4 w-4" />
           Export as Excel
         </DropdownMenuItem>
-        {onPrint && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={onPrint}>
-              <Printer className="mr-2 h-4 w-4" />
-              Print
-            </DropdownMenuItem>
-          </>
-        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handlePrint}>
+          <Printer className="mr-2 h-4 w-4" />
+          Print
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

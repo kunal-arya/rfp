@@ -14,7 +14,7 @@ export const exportRfpToPdf = (rfp: RFP) => {
   // RFP Information
   doc.setFontSize(12);
   doc.text(`Title: ${rfp.title}`, 20, 50);
-  doc.text(`Status: ${rfp.status}`, 20, 60);
+  doc.text(`Status: ${rfp.status.label || rfp.status.code}`, 20, 60);
   doc.text(`Created: ${new Date(rfp.created_at).toLocaleDateString()}`, 20, 70);
   doc.text(`Deadline: ${new Date(rfp.current_version.deadline).toLocaleDateString()}`, 20, 80);
   
@@ -55,7 +55,7 @@ export const exportRfpListToPdf = (rfps: RFP[]) => {
   // Table data
   const tableData = rfps.map(rfp => [
     rfp.title,
-    rfp.status,
+    rfp.status.label || rfp.status.code,
     new Date(rfp.created_at).toLocaleDateString(),
     new Date(rfp.current_version.deadline).toLocaleDateString(),
     rfp.current_version.budget_min && rfp.current_version.budget_max 
@@ -82,7 +82,7 @@ export const exportResponsesToPdf = (responses: SupplierResponse[], rfpTitle?: s
   // Table data
   const tableData = responses.map(response => [
     response.supplier?.email || 'N/A',
-    response.status,
+    response.status.label || response.status.code,
     response.proposed_budget ? `$${response.proposed_budget.toLocaleString()}` : 'N/A',
     response.timeline || 'N/A',
     new Date(response.created_at).toLocaleDateString()
@@ -101,7 +101,7 @@ export const exportResponsesToPdf = (responses: SupplierResponse[], rfpTitle?: s
 export const exportRfpToExcel = (rfp: RFP) => {
   const data = [{
     Title: rfp.title,
-    Status: rfp.status,
+    Status: rfp.status.label || rfp.status.code,
     Description: rfp.current_version.description,
     Requirements: rfp.current_version.requirements,
     'Budget Min': rfp.current_version.budget_min,
@@ -122,7 +122,7 @@ export const exportRfpToExcel = (rfp: RFP) => {
 export const exportRfpListToExcel = (rfps: RFP[]) => {
   const data = rfps.map(rfp => ({
     Title: rfp.title,
-    Status: rfp.status,
+    Status: rfp.status.label || rfp.status.code,
     Description: rfp.current_version.description,
     Requirements: rfp.current_version.requirements,
     'Budget Min': rfp.current_version.budget_min,
@@ -143,7 +143,7 @@ export const exportRfpListToExcel = (rfps: RFP[]) => {
 export const exportResponsesToExcel = (responses: SupplierResponse[], rfpTitle?: string) => {
   const data = responses.map(response => ({
     'Supplier Email': response.supplier?.email || 'N/A',
-    Status: response.status,
+    Status: response.status.label || response.status.code,
     'Proposed Budget': response.proposed_budget,
     Timeline: response.timeline || '',
     'Cover Letter': response.cover_letter || '',

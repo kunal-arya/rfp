@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import { RfpList } from '@/components/rfp/RfpList';
 import { useMyRfps, useDeleteRfp, usePublishRfp } from '@/hooks/useRfp';
-import { AdvancedFilterBar, Filters } from '@/components/shared/AdvancedFilterBar';
+import { Filters } from '@/components/shared/AdvancedFilterBar';
 import { ExportActions } from '@/components/shared/ExportActions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +13,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 export const MyRfpsPage: React.FC = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize] = useState(15);
   const [filters, setFilters] = useState<any>({});
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -125,10 +125,10 @@ export const MyRfpsPage: React.FC = () => {
         </div>
       </div>
 
-      <AdvancedFilterBar onFilterChange={handleFilterChange} statuses={rfpStatuses} />
-
       <div className="space-y-6">
         <RfpList
+          handleFilterChange={handleFilterChange}
+          rfpStatuses={rfpStatuses}
           rfps={rfpsData?.data || []}
           isLoading={isLoading}
           onViewRfp={handleViewRfp}
@@ -145,7 +145,7 @@ export const MyRfpsPage: React.FC = () => {
           <Card>
             <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
               <div className="text-sm text-muted-foreground text-center sm:text-left">
-                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, rfpsData.total)} of {rfpsData.total} RFPs
+                Showing {((currentPage - 1) * pageSize) + 1} - {Math.min(currentPage * pageSize, rfpsData.total)} of {rfpsData.total} RFPs
               </div>
               <div className="flex items-center justify-center gap-2">
                 <Button

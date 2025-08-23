@@ -21,7 +21,7 @@ interface AuditFilters {
 
 const AuditTrailPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize] = useState<number>(10);
+  const [pageSize] = useState<number>(15);
   const [filters, setFilters] = useState<AuditFilters>({});
   const [localSearch, setLocalSearch] = useState<string>('');
 
@@ -109,88 +109,86 @@ const AuditTrailPage: React.FC = () => {
           <CardDescription>Filter your audit trail entries</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Search Input */}
-              <div className="sm:col-span-2">
-                <Label htmlFor="search">Search</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="search"
-                    placeholder="Search in details..."
-                    value={localSearch}
-                    onChange={(e) => setLocalSearch(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  />
-                  <Button
-                    onClick={handleSearch}
-                    disabled={myAuditTrails.isLoading}
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Action Type Select */}
-              <div>
-                <Label htmlFor="action">Action Type</Label>
-                <Select 
-                  value={filters.action || 'all'} 
-                  onValueChange={(value) => handleFilterChange({ ...filters, action: value === 'all' ? undefined : value })}
+          <div className="flex items-center gap-4">
+            {/* Search Input */}
+            <div className="flex-1">
+              <Label htmlFor="search">Search</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="search"
+                  placeholder="Search in details..."
+                  value={localSearch}
+                  onChange={(e) => setLocalSearch(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                />
+                <Button
+                  onClick={handleSearch}
+                  disabled={myAuditTrails.isLoading}
                 >
-                  <SelectTrigger id="action">
-                    <SelectValue placeholder="Select action" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Actions</SelectItem>
-                    {auditActions.map((action) => (
-                      <SelectItem key={action.value} value={action.value}>
-                        {action.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Date Range Popover */}
-              <div>
-                <Label>Date Range</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={'outline'}
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {filters.dateRange?.from ? (
-                        filters.dateRange.to ? (
-                          <>
-                            {format(filters.dateRange.from, 'LLL dd, y')} - {format(filters.dateRange.to, 'LLL dd, y')}
-                          </>
-                        ) : (
-                          format(filters.dateRange.from, 'LLL dd, y')
-                        )
-                      ) : (
-                        <span>Pick a date range</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      initialFocus
-                      mode="range"
-                      defaultMonth={filters.dateRange?.from}
-                      selected={filters.dateRange}
-                      onSelect={(range) => handleFilterChange({ ...filters, dateRange: range })}
-                      numberOfMonths={2}
-                    />
-                  </PopoverContent>
-                </Popover>
+                  <Search className="h-4 w-4" />
+                </Button>
               </div>
             </div>
 
+            {/* Action Type Select */}
+            <div className="w-48">
+              <Label htmlFor="action">Action Type</Label>
+              <Select 
+                value={filters.action || 'all'} 
+                onValueChange={(value) => handleFilterChange({ ...filters, action: value === 'all' ? undefined : value })}
+              >
+                <SelectTrigger id="action">
+                  <SelectValue placeholder="Select action" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Actions</SelectItem>
+                  {auditActions.map((action) => (
+                    <SelectItem key={action.value} value={action.value}>
+                      {action.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date Range Popover */}
+            <div className="w-48">
+              <Label>Date Range</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={'outline'}
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {filters.dateRange?.from ? (
+                      filters.dateRange.to ? (
+                        <>
+                          {format(filters.dateRange.from, 'LLL dd, y')} - {format(filters.dateRange.to, 'LLL dd, y')}
+                        </>
+                      ) : (
+                        format(filters.dateRange.from, 'LLL dd, y')
+                      )
+                    ) : (
+                      <span>Pick a date range</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    initialFocus
+                    mode="range"
+                    defaultMonth={filters.dateRange?.from}
+                    selected={filters.dateRange}
+                    onSelect={(range) => handleFilterChange({ ...filters, dateRange: range })}
+                    numberOfMonths={2}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
             {/* Action Buttons */}
-            <div className="flex justify-end gap-2">
+            <div className="flex items-end">
               <Button variant="ghost" onClick={handleClearFilters}>
                 <X className="mr-2 h-4 w-4" />
                 Clear Filters
