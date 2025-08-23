@@ -1,75 +1,84 @@
 # RFPFlow - Request for Proposal Management System
 
-A comprehensive full-stack RFP (Request for Proposal) management system built with modern technologies and AI assistance.
+A comprehensive full-stack RFP (Request for Proposal) contract management system built with modern technologies and AI assistance, demonstrating production-ready application development capabilities.
 
 ## 🌟 Overview
 
-RFPFlow streamlines the entire RFP lifecycle from creation to completion, enabling seamless collaboration between buyers and suppliers with role-based access control, real-time notifications, and comprehensive document management.
+RFPFlow streamlines the entire RFP lifecycle from creation to completion, enabling seamless collaboration between buyers and suppliers with role-based access control, real-time notifications, and comprehensive document management. This project showcases modern web development practices, AI-assisted development, and enterprise-level application architecture.
 
-## ✨ Key Features
+## ✨ Core Features
 
-### 🔐 Authentication & Authorization
+### 🔐 User Management & Authentication
+- **User Registration**: Role selection (Buyer/Supplier) with validation
 - **JWT-based Authentication**: Secure token-based authentication system
-- **Dynamic RBAC**: Database-driven role-based access control
-- **Fine-grained Permissions**: Granular control over user actions and resource access
+- **Dynamic RBAC**: Database-driven role-based access control with granular permissions
+- **Session Management**: Secure session handling with proper token validation
 
 ### 📋 RFP Lifecycle Management
-- **Complete CRUD Operations**: Create, read, update, delete RFPs
-- **Status Workflow**: Draft → Published → Under Review → Approved/Rejected
-- **Version Control**: Track RFP changes and iterations
+- **Complete CRUD Operations**: Create, read, update, delete RFPs with validation
+- **Status Workflow**: `Draft → Published → Response Submitted → Under Review → Approved/Rejected → Awarded`
+- **Version Control**: Track RFP changes and iterations with full versioning support
 - **Deadline Management**: Automated deadline tracking and notifications
+- **Award Management**: Complete awarding workflow with winner tracking
 
 ### 🔍 Advanced Search & Filtering
-- **Full-text Search**: Database-driven search across RFP content
-- **Multi-faceted Filtering**: Filter by status, date range, budget, keywords
-- **Real-time Results**: Instant search with debounced queries
+- **Full-text Search**: Database-driven search across RFP content and metadata
+- **Multi-faceted Filtering**: Filter by status, date range, budget, keywords, and more
+- **Real-time Results**: Instant search with debounced queries and pagination
+- **Advanced Query Builder**: Complex filtering with multiple criteria
 
 ### 📄 Document Management
 - **File Upload/Download**: Cloudinary integration for secure file storage
-- **Multiple Format Support**: PDF, Word, Excel, images
+- **Multiple Format Support**: PDF, Word, Excel, images with preview
 - **Document Versioning**: Track document changes and history
+- **File Validation**: Type checking, size limits, and security validation
 
 ### 🔔 Real-time Notifications
-- **WebSocket Integration**: Socket.IO for instant updates
-- **Email Notifications**: SendGrid for automated email alerts
-- **Event-driven Architecture**: Automatic notifications on status changes
+- **WebSocket Integration**: Socket.IO for instant updates across all users
+- **Email Notifications**: SendGrid for automated email alerts with HTML templates
+- **Event-driven Architecture**: Automatic notifications on all status changes
+- **In-app Notifications**: Real-time notification system with read/unread tracking
 
 ### 📊 Data Visualization & Analytics
-- **Interactive Charts**: RFP status distribution and analytics
+- **Interactive Charts**: RFP status distribution and analytics with Recharts
 - **Role-specific Dashboards**: Customized views for buyers and suppliers
 - **Export Capabilities**: PDF/Excel export with print-friendly views
+- **Statistics Tracking**: Comprehensive metrics and reporting
 
 ### 🚀 Modern UI/UX
 - **Responsive Design**: Mobile-first approach with Tailwind CSS v4
 - **Component Library**: shadcn/ui for consistent design system
 - **Real-time Updates**: Live UI updates via WebSocket integration
 - **Bulk Operations**: Multi-select actions with confirmation dialogs
+- **Professional Landing Page**: Marketing page with Aceternity UI components
 
 ## 🛠 Technology Stack
 
 ### Backend
-- **Runtime**: Node.js with TypeScript
-- **Framework**: Express.js
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: JSON Web Tokens (JWT)
-- **File Storage**: Cloudinary
-- **Email Service**: SendGrid
-- **Real-time**: Socket.IO
-- **Validation**: Zod schema validation
-- **Testing**: Jest with Supertest
+- **Runtime**: Node.js 18+ with TypeScript
+- **Framework**: Express.js with middleware architecture
+- **Database**: PostgreSQL with Prisma ORM and migrations
+- **Authentication**: JSON Web Tokens (JWT) with refresh tokens
+- **File Storage**: Cloudinary for secure cloud file management
+- **Email Service**: SendGrid with HTML templates
+- **Real-time**: Socket.IO for WebSocket communication
+- **Validation**: Zod schema validation with custom error handling
+- **Testing**: Jest with Supertest for comprehensive testing
+- **Documentation**: Swagger/OpenAPI with JSDoc comments
 
 ### Frontend
-- **Framework**: React 18 with TypeScript
-- **Build Tool**: Vite
-- **Routing**: React Router DOM
-- **State Management**: React Query (TanStack Query)
-- **Styling**: Tailwind CSS v4
-- **UI Components**: shadcn/ui
+- **Framework**: React 18 with TypeScript and modern hooks
+- **Build Tool**: Vite for fast development and optimized builds
+- **Routing**: React Router DOM with protected routes
+- **State Management**: React Query (TanStack Query) for server state
+- **Styling**: Tailwind CSS v4 with custom design system
+- **UI Components**: shadcn/ui with custom components
 - **Forms**: React Hook Form with Zod validation
-- **Charts**: Recharts
-- **Icons**: Lucide React
-- **Notifications**: Sonner
+- **Charts**: Recharts for data visualization
+- **Icons**: Lucide React for consistent iconography
+- **Notifications**: Sonner for toast notifications
 - **Testing**: Vitest with React Testing Library
+- **Animations**: Framer Motion for smooth interactions
 
 ## 🚀 Quick Start
 
@@ -183,25 +192,61 @@ The API documentation is available at:
 ### Key Endpoints
 
 #### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration with role selection
+- `POST /api/auth/login` - User login with JWT
 
 #### RFPs
-- `GET /api/rfp` - Get user's RFPs
-- `POST /api/rfp` - Create new RFP
-- `GET /api/rfp/:id` - Get RFP details
-- `PUT /api/rfp/:id` - Update RFP
-- `DELETE /api/rfp/:id` - Delete RFP
+- `GET /api/rfp` - Get published RFPs (suppliers) or user's RFPs (buyers)
+- `GET /api/rfp/my` - Get user's own RFPs (buyers)
+- `POST /api/rfp` - Create new RFP with validation
+- `GET /api/rfp/:id` - Get RFP details with permissions
+- `PUT /api/rfp/:id` - Update RFP with status validation
+- `DELETE /api/rfp/:id` - Delete RFP (draft only)
 - `PUT /api/rfp/:id/publish` - Publish RFP
+- `PUT /api/rfp/:id/close` - Close RFP
+- `PUT /api/rfp/:id/cancel` - Cancel RFP
+- `PUT /api/rfp/:id/award` - Award RFP to response
+
+#### RFP Versions
+- `POST /api/rfp/:id/versions` - Create new RFP version
+- `GET /api/rfp/:id/versions` - Get all versions
+- `PUT /api/rfp/:id/versions/:versionId` - Update version
+- `DELETE /api/rfp/:id/versions/:versionId` - Delete version
 
 #### Responses
+- `GET /api/rfp/my-responses` - Get user's responses (suppliers)
+- `GET /api/rfp/:id/responses` - Get responses for RFP (buyers)
 - `POST /api/rfp/:id/responses` - Submit response to RFP
-- `GET /api/rfp/my-responses` - Get user's responses
-- `GET /api/rfp/:id/responses` - Get responses for RFP
+- `GET /api/rfp/responses/:responseId` - Get response details
+- `PUT /api/rfp/responses/:responseId` - Update response
+- `DELETE /api/rfp/responses/:responseId` - Delete response
+- `PUT /api/rfp/responses/:responseId/submit` - Submit response
+- `PUT /api/rfp/responses/:responseId/approve` - Approve response
+- `PUT /api/rfp/responses/:responseId/reject` - Reject response
+- `PUT /api/rfp/responses/:responseId/award` - Award response
+- `PUT /api/rfp/responses/:responseId/move-to-review` - Move to review
 
 #### Dashboard
-- `GET /api/dashboard` - Get dashboard data
-- `GET /api/dashboard/stats` - Get dashboard statistics
+- `GET /api/dashboard` - Get role-specific dashboard data
+- `GET /api/dashboard/stats` - Get detailed statistics
+
+#### Documents
+- `POST /api/rfp/documents` - Upload RFP documents
+- `POST /api/rfp/responses/:responseId/documents` - Upload response documents
+- `DELETE /api/rfp/documents/:documentId` - Delete documents
+
+#### Notifications
+- `GET /api/notifications` - Get user notifications
+- `PUT /api/notifications/:id/read` - Mark notification as read
+- `PUT /api/notifications/read-all` - Mark all as read
+
+#### Audit Trail
+- `GET /api/audit/my` - Get user's audit trail
+- `GET /api/audit/target/:targetType/:targetId` - Get target audit trail
+- `GET /api/audit/all` - Get all audit trails (admin)
+
+#### Health Check
+- `GET /api/health` - Application health status
 
 For complete API documentation, see [docs/api-docs.md](./docs/api-docs.md)
 
@@ -209,13 +254,14 @@ For complete API documentation, see [docs/api-docs.md](./docs/api-docs.md)
 
 The system uses PostgreSQL with the following key entities:
 
-- **Users**: Authentication and profile information
+- **Users**: Authentication and profile information with role relationships
 - **Roles**: Dynamic role definitions with JSON permissions
-- **RFPs**: Request for proposal records
-- **RFPVersions**: Versioned RFP content
-- **SupplierResponses**: Supplier responses to RFPs
-- **Documents**: File attachments and metadata
-- **Notifications**: System notifications and templates
+- **RFPs**: Request for proposal records with status tracking
+- **RFPVersions**: Versioned RFP content with document attachments
+- **SupplierResponses**: Supplier responses to RFPs with status workflow
+- **Documents**: File attachments and metadata with Cloudinary integration
+- **Notifications**: System notifications and templates with read tracking
+- **AuditTrail**: Comprehensive activity logging for all user actions
 
 For detailed schema information, see [docs/database-schema.md](./docs/database-schema.md)
 
@@ -224,8 +270,8 @@ For detailed schema information, see [docs/database-schema.md](./docs/database-s
 The system implements a flexible RBAC model with:
 
 ### Default Roles
-- **Buyer**: Can create/manage RFPs, review responses
-- **Supplier**: Can view published RFPs, submit responses
+- **Buyer**: Can create/manage RFPs, review responses, award contracts
+- **Supplier**: Can view published RFPs, submit responses, manage documents
 
 ### Permission Structure
 ```json
@@ -248,12 +294,16 @@ For complete permissions documentation, see [docs/permissions.md](./docs/permiss
 - `rfp_published` - New RFP published (to suppliers)
 - `response_submitted` - New response submitted (to buyers)
 - `rfp_status_changed` - RFP status updated (to relevant users)
+- `response_status_changed` - Response status updated (to relevant users)
+- `rfp_awarded` - RFP awarded (to winner and buyer)
+- `notification` - New notification received
 
 ### Email Notifications
-- RFP published notifications
-- Response submission alerts
-- Status change notifications
-- Deadline reminders
+- RFP published notifications with HTML templates
+- Response submission alerts with detailed information
+- Status change notifications with context
+- Deadline reminders with action links
+- Award notifications with celebration messaging
 
 ## 📁 Project Structure
 
@@ -261,69 +311,37 @@ For complete permissions documentation, see [docs/permissions.md](./docs/permiss
 rfp/
 ├── backend/                 # Node.js/Express backend
 │   ├── src/
-│   │   ├── controllers/     # Request handlers
-│   │   ├── services/        # Business logic
-│   │   ├── middleware/      # Custom middleware
-│   │   ├── utils/           # Utility functions
-│   │   ├── validations/     # Zod schemas
-│   │   └── __tests__/       # Test files
+│   │   ├── controllers/     # Request handlers with validation
+│   │   ├── services/        # Business logic and data access
+│   │   ├── middleware/      # Custom middleware (auth, permissions)
+│   │   ├── utils/           # Utility functions and helpers
+│   │   ├── validations/     # Zod schemas for validation
+│   │   ├── config/          # Configuration files
+│   │   └── __tests__/       # Comprehensive test suite
 │   ├── prisma/              # Database schema and migrations
 │   └── docs/                # Backend documentation
 ├── frontend/                # React frontend
 │   ├── src/
-│   │   ├── components/      # React components
-│   │   ├── pages/           # Page components
-│   │   ├── hooks/           # Custom hooks
-│   │   ├── contexts/        # React contexts
-│   │   ├── apis/            # API layer
+│   │   ├── components/      # Reusable React components
+│   │   ├── pages/           # Page components with routing
+│   │   ├── hooks/           # Custom hooks for data fetching
+│   │   ├── contexts/        # React contexts for state management
+│   │   ├── apis/            # API layer with Axios
 │   │   ├── utils/           # Utility functions
-│   │   └── test/            # Test utilities
+│   │   └── test/            # Test utilities and setup
 ├── docs/                    # Project documentation
 └── README.md               # This file
 ```
 
 ## 🤖 AI Usage Report
 
-This project was developed with significant AI assistance, demonstrating effective human-AI collaboration:
+This project was developed with substantial AI assistance, highlighting effective human-AI collaboration and improved productivity.
 
-### AI-Assisted Development Areas
+The development started with Gemini CLI and continued using Cursor. To maintain context, I first instructed the AI to list all tasks in ACTION_ITEMS.md. The AI then selected tasks from this file and documented completed work in WORK_DONE.md.
 
-#### Backend Development
-- **Architecture Design**: AI helped design the Controller-Service pattern and RBAC system
-- **Database Schema**: Prisma schema design with complex relationships
-- **API Implementation**: RESTful endpoints with proper error handling
-- **Authentication**: JWT implementation with dynamic permissions
-- **Real-time Features**: Socket.IO integration for live notifications
+To provide additional context, I created API_DOCS.md and DATABASE_SCHEMA.md, and also supplied REQUIREMENTS.md containing the project specifications.
 
-#### Frontend Development
-- **Component Architecture**: React component design with TypeScript
-- **State Management**: React Query integration for server state
-- **UI/UX Design**: Modern interface with Tailwind CSS and shadcn/ui
-- **Form Handling**: Complex forms with validation and error handling
-- **Real-time Integration**: WebSocket client implementation
-
-#### Testing & Quality Assurance
-- **Test Strategy**: Comprehensive testing approach with Jest and Vitest
-- **Test Implementation**: Unit, integration, and component tests
-- **Mocking Strategy**: Effective mocking of external dependencies
-- **Bug Identification**: AI-assisted debugging and issue resolution
-
-#### Documentation
-- **API Documentation**: Comprehensive OpenAPI/Swagger documentation
-- **Code Documentation**: Clear inline documentation and comments
-- **User Documentation**: Setup guides and usage instructions
-
-### Productivity Improvements
-- **Code Generation**: ~60% of boilerplate code generated with AI assistance
-- **Problem Solving**: Rapid resolution of complex technical challenges
-- **Best Practices**: Implementation of industry-standard patterns and practices
-- **Error Handling**: Comprehensive error scenarios and edge cases covered
-
-### Code Quality Maintenance
-- **Consistent Patterns**: Maintained architectural consistency throughout
-- **Type Safety**: Full TypeScript coverage with proper type definitions
-- **Testing Coverage**: Comprehensive test suite with high coverage
-- **Performance**: Optimized queries and efficient data handling
+For managing permissions, I prepared PERMISSION.md, which includes the JSON structure used for our RBAC system. This setup allowed the AI to understand project requirements, database structure, APIs, and permissions, enabling it to assist effectively throughout development.
 
 ## 🚀 Deployment
 
@@ -338,6 +356,16 @@ This project was developed with significant AI assistance, demonstrating effecti
 2. Configure environment variables
 3. Deploy to hosting platform
 4. Set up custom domain (optional)
+
+### Docker Deployment
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+
+# Or deploy individual services
+docker build -t rfp-backend ./backend
+docker build -t rfp-frontend ./frontend
+```
 
 ## 🤝 Contributing
 
@@ -355,11 +383,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgments
 
 - Built with modern web technologies and best practices
-- AI-assisted development for enhanced productivity
+- AI-assisted development for enhanced productivity and quality
 - Open source libraries and frameworks that made this possible
 - shadcn/ui for the excellent component library
 - Tailwind CSS for the utility-first styling approach
+- Aceternity UI for beautiful landing page components
+- Prisma for excellent database tooling
+- React Query for efficient data fetching
 
 ---
 
 **RFPFlow** - Streamline Your RFP Process with Modern Technology 🚀
+
+*Demonstrating production-ready application development with AI assistance*
