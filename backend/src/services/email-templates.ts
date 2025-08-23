@@ -9,6 +9,7 @@ export const EMAIL_TEMPLATES = {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
         <title>${title}</title>
         <style>
             body {
@@ -106,8 +107,8 @@ export const EMAIL_TEMPLATES = {
     <body>
         <div class="email-container">
             <div class="header">
-                <div class="logo">🚀 RFP Pro</div>
-                <p>Professional Request for Proposal Management</p>
+                <div class="logo"><i class="fa fa-envelope" style="font-size:24px;color:#3b82f6"></i> RFPFlow</div>
+                <p>Streamline Your RFP Process</p>
             </div>
             <div class="content">
                 ${content}
