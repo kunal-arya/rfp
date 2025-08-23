@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useUnreadCount } from '@/hooks/useNotification';
-import { NotificationList } from './NotificationList';
+import { NotificationList } from '@/components/shared/NotificationList';
 
 export const NotificationBell: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { data: unreadData, isLoading } = useUnreadCount();
+  const { data: unreadData } = useUnreadCount();
   const unreadCount = unreadData?.count || 0;
 
   return (

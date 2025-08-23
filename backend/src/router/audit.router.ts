@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { protect } from '../middleware/auth.middleware';
+import { protect, hasPermission } from '../middleware/auth.middleware';
 import * as auditController from '../controllers/audit.controller';
 
 const router = Router();
@@ -31,7 +31,7 @@ const router = Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/my', protect, auditController.getUserAuditTrails);
+router.get('/my', protect, hasPermission('audit', 'view'), auditController.getUserAuditTrails);
 
 /**
  * @swagger
@@ -72,7 +72,7 @@ router.get('/my', protect, auditController.getUserAuditTrails);
  *       401:
  *         description: Unauthorized
  */
-router.get('/target/:targetType/:targetId', protect, auditController.getTargetAuditTrails);
+router.get('/target/:targetType/:targetId', protect, hasPermission('audit', 'view'), auditController.getTargetAuditTrails);
 
 /**
  * @swagger
@@ -123,6 +123,6 @@ router.get('/target/:targetType/:targetId', protect, auditController.getTargetAu
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get('/all', protect, auditController.getAllAuditTrails);
+router.get('/all', protect, hasPermission('admin', 'view'), auditController.getAllAuditTrails);
 
 export default router;

@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: rfp_postgres
+    environment:
+      POSTGRES_DB: rfp_db
+      POSTGRES_USER: rfp_user
+      POSTGRES_PASSWORD: rfp_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/src/prisma/seed.sql:/docker-entrypoint-initdb.d/seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rfp_user -d rfp_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rfp_backend
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://rfp_user:rfp_password@postgres:5432/rfp_db
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      SENDGRID_API_KEY: your-sendgrid-api-key
+      FROM_EMAIL: noreply@yourdomain.com
+      CLOUDINARY_CLOUD_NAME: your-cloud-name
+      CLOUDINARY_API_KEY: your-api-key
+      CLOUDINARY_API_SECRET: your-api-secret
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: pnpm dev
+    
+volumes:
+  postgres_data:

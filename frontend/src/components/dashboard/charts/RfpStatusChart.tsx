@@ -48,7 +48,7 @@ export const RfpStatusChart: React.FC<RfpStatusChartProps> = ({ stats }) => {
               }}
             />
             <Legend />
-            <Bar dataKey="count" fill="hsl(var(--primary))" name="Number of RFPs" />
+            <Bar dataKey="count" fill="#3b82f6" name="Number of RFPs" />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

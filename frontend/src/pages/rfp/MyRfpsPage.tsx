@@ -47,10 +47,10 @@ export const MyRfpsPage: React.FC = () => {
 
     // Handle budget filters
     if (newFilters.budgetMin) {
-      processedFilters['lte___budget_min'] = newFilters.budgetMin;
+      processedFilters['gte___budget_min'] = newFilters.budgetMin;
     }
     if (newFilters.budgetMax) {
-      processedFilters['gte___budget_max'] = newFilters.budgetMax;
+      processedFilters['lte___budget_max'] = newFilters.budgetMax;
     }
 
     setFilters(processedFilters);

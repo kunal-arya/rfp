@@ -686,7 +686,6 @@ export const awardRfp = async (rFPId: string, responseId: string, buyerId: strin
     if (rfpWithSuppliers) {
         const supplierIds = rfpWithSuppliers.supplier_responses.map(response => response.supplier_id);
         notifyRfpAwarded(updatedRfp, supplierIds);
-        notifyRfpStatusChanged(updatedRfp, supplierIds);
     }
 
     // Create notification for all suppliers who responded

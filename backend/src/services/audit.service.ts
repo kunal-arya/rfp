@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { modifyGeneralFilterPrisma } from '../utils/filters';
 
 const prisma = new PrismaClient();
 
@@ -31,12 +32,31 @@ export const auditService = {
   },
 
   // Get audit trails for a user
-  getUserAuditTrails: async (userId: string, page: number = 1, limit: number = 10) => {
+  getUserAuditTrails: async (userId: string, page: number = 1, limit: number = 10, search?: string, action?: string, filters?: any) => {
     const offset = (page - 1) * limit;
+    
+    const whereClause: any = { user_id: userId };
+    
+    if (search) {
+      whereClause.OR = [
+        { action: { contains: search, mode: 'insensitive' } },
+        { details: { path: ['$'], string_contains: search } },
+      ];
+    }
+    
+    if (action) {
+      whereClause.action = action;
+    }
+
+    // Apply additional filters using the filter utility
+    if (filters) {
+      const additionalFilters = modifyGeneralFilterPrisma(filters);
+      Object.assign(whereClause, additionalFilters);
+    }
     
     const [auditTrails, total] = await Promise.all([
       prisma.auditTrail.findMany({
-        where: { user_id: userId },
+        where: whereClause,
         include: {
           user: {
             select: {
@@ -50,7 +70,7 @@ export const auditService = {
         take: limit,
       }),
       prisma.auditTrail.count({
-        where: { user_id: userId },
+        where: whereClause,
       }),
     ]);
 

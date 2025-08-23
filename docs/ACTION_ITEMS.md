@@ -222,17 +222,17 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
         -   [X] Create ResponseLifecycleActions component for response lifecycle management.
         -   [X] Integrate lifecycle components into RFP and Response detail pages.
         -   [X] Add proper permission checks and status validation in frontend components.
--   [ ] **Backend Deployment:**
+-   [ ] **Backend Deployment:** ( not to be done by AI )
     -   [ ] Deploy to Railway, Heroku, or similar platform.
     -   [ ] Set up production database (PostgreSQL).
     -   [ ] Configure environment variables.
     -   [ ] Set up SSL certificates.
--   [ ] **Frontend Deployment:**
+-   [ ] **Frontend Deployment:** ( not to be done by AI )
     -   [ ] Build optimized production bundle.
     -   [ ] Deploy to Vercel, Netlify, or similar platform.
     -   [ ] Configure environment variables.
     -   [ ] Set up custom domain (optional).
--   [ ] **Production Testing:**
+-   [ ] **Production Testing:** ( not to be done by AI )
     -   [ ] Test all functionality in production environment.
     -   [ ] Verify email notifications work.
     -   [ ] Test file uploads and downloads.
@@ -240,7 +240,7 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [ ] Performance testing and optimization.
 
 ### Final Deliverables
--   [ ] **Working Application:**
+-   [ ] **Working Application:** ( not to be done by AI )
     -   [ ] Live demo URL.
     -   [ ] GitHub repository with complete code.
     -   [ ] All features working end-to-end.
@@ -248,8 +248,8 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
     -   [ ] Complete README.md.
     -   [ ] API documentation.
     -   [ ] Database schema documentation.
-    -   [ ] AI usage report.
-    -   [ ] Deployment guide.
+    -   [ ] AI usage report in README.md.
+    -   [ ] Deployment guide in README.md.
 
 ## Phase 5: Bug Fixes
 
@@ -286,8 +286,15 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
             -   [X] in backend, I have created this "notifyResponseMovedToReview" in websocket.service.ts, please do it on frontend as well.
       -  [X] where I can see buyer or supplier see all of there activities ?? there is a recent activity tab in dashboard but it fetch only first 5 i guess.... implement this feature, in that "Recent Activity" tab, give a Link to a page where user can see all of his activites with pagination implemented.... check backend if backend has the apis, if not create related apis.
       -   [X] make the dialog ui of "Create New RFP Version" good, now it is small and scrollable, put the heading into dialog title and do other relevant things
-      
-  -   [X] **Backend Deployment:**
+      -   [X] not able to even go to the "/login" or "/register" page when I am on landing page. please check if login or register page routes accessible or not when user is not logged in 
+      -   [X] "/audit" is not accessible, buyer and supplier can access this page and they will see there own audit trails and activities... please make neccessary changes in permission json, frontend and backend.
+      -   [X] when awarded, don't send real-time notification saying status change, make correct it say that you have been awarded or something for supplier.
+      -   [X] check Landing Page and see if u can make it more attractive, like update pricing section, see if there is any bug in it or not etc etc.
+            -   [X] implement pagination in /audit page... user can see it's own audit only. check for any bug in the flow and fix
+      -   [X] fix the "rfps/my" filter of budget should be => gte___budget_min = 17000, lte___budget_max = 85000
+      -   [X] "responses/my" page, please add backend filters, remove these frontend filters, add pagination if not already added
+        
+    -   [X] **Backend Deployment:**
       -   [X] In "createRfp" service, u are not creating it correctly, read schema.prisma to get the hang of how the schema is and then implement it, for ex - current_version_id is setting as null, but that should not be the case, versions to get all the versions related to an rpf and general we will fetch only the current_version using current_version_id
       -   [X] In "getRfpById", please all the documents that are related to this "rfp_version_id" and send them to the frontend. do it same for "getMyRfps", include documents that are related to this "rfp_version_id"
       -   [X] Create "Delete Document API", this is not present, make the route => /api/rfp/documents/<document_id>, frontend will send u if the document related to rfp version or response, accordingly send rfp_verion_id or responseId... soft delete documents please....
@@ -302,4 +309,6 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
       -   [X] We forget the Versioning flow of FRP completely, read "requirements.md" file and implement versioning flow. Our schema at schema.prisma actually supports RFP versioning. Implement Backend and frontend completely and then test it if it's working or not, whether your implementation after done is right or not.
       -   [X] update api-docs.md and update that, plus update docs-schema.md if needed and readme.md ... apart from them... give me a good new .md file explaining everything in brief from frontend till backend everything
       -   [X] improve "email.service.ts" email template, they are too simple, plus move templates to different page to make the file readable... put logo on top and do other neccessary changes
+      -   [X] permission json changed, check seed.ts and please refactor the route, controller and service for audit
+      -   [X] create docker file for backend to deploy plus create a docker file to start postgres locally.. after starting postgres, seed.ts should be implemented.
   

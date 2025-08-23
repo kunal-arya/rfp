@@ -12,8 +12,13 @@ export const getUserAuditTrails = async (req: AuthenticatedRequest, res: Respons
 
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string;
+    const action = req.query.action as string;
 
-    const auditTrails = await auditService.getUserAuditTrails(user.userId, page, limit);
+    // Extract additional filters (excluding search, action, page, limit)
+    const { search: _, action: __, page: ___, limit: ____, ...additionalFilters } = req.query;
+
+    const auditTrails = await auditService.getUserAuditTrails(user.userId, page, limit, search, action, additionalFilters);
     res.json(auditTrails);
   } catch (error: any) {
     console.error('Failed to get user audit trails:', error);
@@ -47,14 +52,6 @@ export const getAllAuditTrails = async (req: AuthenticatedRequest, res: Response
     const user = req.user;
     if (!user) {
       return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    // Check if user has admin permissions
-    const userPermissions = user.permissions;
-    const adminPermission = userPermissions?.admin?.manage_users;
-    
-    if (!adminPermission) {
-      return res.status(403).json({ message: 'Forbidden: Admin access required' });
     }
 
     const page = parseInt(req.query.page as string) || 1;

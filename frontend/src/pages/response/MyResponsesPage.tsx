@@ -1,14 +1,58 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResponseList } from '@/components/response/ResponseList';
 import { useMyResponses } from '@/hooks/useResponse';
 import { useDeleteResponse, useSubmitResponse } from '@/hooks/useResponse';
+import { AdvancedFilterBar, Filters } from '@/components/shared/AdvancedFilterBar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { format } from 'date-fns';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export const MyResponsesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { data: responsesData, isLoading } = useMyResponses();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [filters, setFilters] = useState<any>({});
+
+  // Build API filters including pagination
+  const apiFilters = {
+    ...filters,
+    page: currentPage,
+    limit: pageSize,
+  };
+
+  const { data: responsesData, isLoading } = useMyResponses(apiFilters);
   const deleteResponseMutation = useDeleteResponse();
   const submitResponseMutation = useSubmitResponse();
+
+  const handleFilterChange = (newFilters: Filters) => {
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+    
+    const processedFilters: any = {
+      search: newFilters.search,
+      status: newFilters.status,
+    };
+
+    // Handle date range filters
+    if (newFilters.dateRange?.from) {
+      processedFilters['gte___created_at'] = format(newFilters.dateRange.from, 'yyyy-MM-dd');
+    }
+    if (newFilters.dateRange?.to) {
+      processedFilters['lte___created_at'] = format(newFilters.dateRange.to, 'yyyy-MM-dd');
+    }
+
+    // Handle budget filters
+    if (newFilters.budgetMin) {
+      processedFilters['gte___proposed_budget'] = newFilters.budgetMin;
+    }
+    if (newFilters.budgetMax) {
+      processedFilters['lte___proposed_budget'] = newFilters.budgetMax;
+    }
+
+    setFilters(processedFilters);
+  };
 
   const handleViewResponse = (responseId: string) => {
     navigate(`/responses/${responseId}`);
@@ -34,8 +78,29 @@ export const MyResponsesPage: React.FC = () => {
     navigate('/responses/create');
   };
 
+  const handleNextPage = () => {
+    if (responsesData && currentPage < Math.ceil(responsesData.total / pageSize)) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const responseStatuses = [
+    { value: 'Draft', label: 'Draft' },
+    { value: 'Submitted', label: 'Submitted' },
+    { value: 'Under Review', label: 'Under Review' },
+    { value: 'Approved', label: 'Approved' },
+    { value: 'Rejected', label: 'Rejected' },
+    { value: 'Awarded', label: 'Awarded' },
+  ];
+
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 space-y-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">My Responses</h1>
         <p className="text-muted-foreground">
@@ -43,20 +108,58 @@ export const MyResponsesPage: React.FC = () => {
         </p>
       </div>
 
-      <ResponseList
-        responses={responsesData?.data || []}
-        isLoading={isLoading}
-        onViewResponse={handleViewResponse}
-        onEditResponse={handleEditResponse}
-        onDeleteResponse={handleDeleteResponse}
-        onSubmitResponse={handleSubmitResponse}
-        onApproveResponse={() => {}} // Not available for suppliers
-        onRejectResponse={() => {}} // Not available for suppliers
-        onCreateResponse={handleCreateResponse}
-        showCreateButton={true}
-        showActions={true}
-        showBuyerActions={false}
-      />
+      <AdvancedFilterBar onFilterChange={handleFilterChange} statuses={responseStatuses} />
+
+      <div className="space-y-6">
+        <ResponseList
+          responses={responsesData?.data || []}
+          isLoading={isLoading}
+          onViewResponse={handleViewResponse}
+          onEditResponse={handleEditResponse}
+          onDeleteResponse={handleDeleteResponse}
+          onSubmitResponse={handleSubmitResponse}
+          onApproveResponse={() => {}} // Not available for suppliers
+          onRejectResponse={() => {}} // Not available for suppliers
+          onCreateResponse={handleCreateResponse}
+          showCreateButton={true}
+          showActions={true}
+          showBuyerActions={false}
+        />
+
+        {/* Pagination */}
+        {responsesData && responsesData.total > pageSize && (
+          <Card>
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, responsesData.total)} of {responsesData.total} responses
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                <span className="text-sm font-medium px-3 py-1 bg-muted rounded">
+                  Page {currentPage} of {Math.ceil(responsesData.total / pageSize)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextPage}
+                  disabled={currentPage >= Math.ceil(responsesData.total / pageSize)}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };

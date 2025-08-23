@@ -34,6 +34,7 @@ const buyerPermissions = {
     upload_for_response: { allowed: false }
   },
   search: { allowed: true },
+  audit: { view: { allowed: true, scope: 'own' } },
   admin: { manage_users: false, manage_roles: false }
 };
 
@@ -66,6 +67,7 @@ const supplierPermissions = {
         upload_for_response: { allowed: true, scope: 'own' },
     },
     search: { allowed: true },
+    audit: { view: { allowed: true, scope: 'own' } },
     admin: {
         manage_users: false,
         manage_roles: false,
