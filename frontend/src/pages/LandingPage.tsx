@@ -178,7 +178,7 @@ const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-                <Card className="h-full bg-white/10 dark:bg-black/20 backdrop-blur-md rounded-2xl hover:scale-[1.02] hover:shadow-xl transition-all duration-300 border-0">
+                <Card className="h-full  backdrop-blur-md rounded-2xl hover:scale-[1.02] hover:shadow-xl transition-all duration-300 border-0">
                   <CardHeader>
                     <div className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center shadow-lg mb-4">
                       <feature.icon className="h-7 w-7 text-white" />
