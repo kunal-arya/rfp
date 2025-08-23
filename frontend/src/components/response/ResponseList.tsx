@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { SupplierResponse } from '@/apis/types';
-import { MessageSquare, Search, Plus, DollarSign, Calendar, Eye, Edit, Trash2, CheckCircle, XCircle, Send } from 'lucide-react';
+import { MessageSquare, Plus, DollarSign, Calendar, Eye, Edit, Trash2, CheckCircle, XCircle, Send } from 'lucide-react';
+import { AdvancedFilterBar, Filters } from '../shared/AdvancedFilterBar';
 
 interface ResponseListProps {
   responses: SupplierResponse[];
@@ -19,6 +19,8 @@ interface ResponseListProps {
   showCreateButton?: boolean;
   showActions?: boolean;
   showBuyerActions?: boolean;
+  handleFilterChange?: (filters: Filters) => void;
+  responseStatuses?: { value: string; label: string }[];
 }
 
 export const ResponseList: React.FC<ResponseListProps> = ({
@@ -34,8 +36,10 @@ export const ResponseList: React.FC<ResponseListProps> = ({
   showCreateButton = true,
   showActions = true,
   showBuyerActions = false,
+  handleFilterChange,
+  responseStatuses = [],
 }) => {
-  const filteredResponses = responses
+  const filteredResponses = responses;
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -86,34 +90,14 @@ export const ResponseList: React.FC<ResponseListProps> = ({
     <div className="space-y-6">
       {/* Header and Search */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div>
+        <div className="flex gap-2 items-center">
           <h2 className="text-2xl font-bold">Responses</h2>
+          {handleFilterChange && responseStatuses.length > 0 && (
+            <AdvancedFilterBar onFilterChange={handleFilterChange} statuses={responseStatuses} />
+          )}
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-          {/* <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search responses..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full sm:w-64"
-            />
-          </div>
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-input rounded-md bg-background"
-          >
-            <option value="all">All Status</option>
-            <option value="Draft">Draft</option>
-            <option value="Submitted">Submitted</option>
-            <option value="Under Review">Under Review</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
-          </select> */}
-          
           {showCreateButton && (
             <Button onClick={onCreateResponse} className="whitespace-nowrap">
               <Plus className="h-4 w-4 mr-2" />

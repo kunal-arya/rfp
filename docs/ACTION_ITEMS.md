@@ -312,4 +312,3 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
       -   [X] improve "email.service.ts" email template, they are too simple, plus move templates to different page to make the file readable... put logo on top and do other neccessary changes
       -   [X] permission json changed, check seed.ts and please refactor the route, controller and service for audit
       -   [X] create docker file for backend to deploy plus create a docker file to start postgres locally.. after starting postgres, seed.ts should be implemented.
-  

@@ -17,7 +17,7 @@ import { MyResponsesPage } from './pages/response/MyResponsesPage';
 import { RfpResponsesPage } from './pages/response/RfpResponsesPage';
 import { RfpDetailPage } from './pages/rfp/RfpDetailPage';
 import { ResponseDetailPage } from './pages/response/ResponseDetailPage';
-import AuditTrailPage from './pages/audit/AuditTrailPage';
+import { AuditTrailPage } from './pages/audit/AuditTrailPage';
 import './App.css';
 
 function App() {

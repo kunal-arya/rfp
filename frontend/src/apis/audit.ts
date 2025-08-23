@@ -1,4 +1,5 @@
 import apiClient from './client';
+import { DateRange } from 'react-day-picker';
 
 export interface AuditTrail {
   id: number;
@@ -27,6 +28,7 @@ export interface AuditFilters {
   target_type?: string;
   target_id?: string;
   search?: string;
+  dateRange?: DateRange;
   page?: number;
   limit?: number;
 }

@@ -16,8 +16,8 @@ interface RfpListProps {
   onCreateRfp: () => void;
   showCreateButton?: boolean;
   showActions?: boolean;
-  handleFilterChange: (filters: Filters) => void;
-  rfpStatuses: { value: string; label: string }[];
+  handleFilterChange?: (filters: Filters) => void;
+  rfpStatuses?: { value: string; label: string }[];
 }
 
 export const RfpList: React.FC<RfpListProps> = ({

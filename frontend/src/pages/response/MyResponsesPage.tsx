@@ -108,8 +108,6 @@ export const MyResponsesPage: React.FC = () => {
         </p>
       </div>
 
-      <AdvancedFilterBar onFilterChange={handleFilterChange} statuses={responseStatuses} />
-
       <div className="space-y-6">
         <ResponseList
           responses={responsesData?.data || []}
@@ -124,6 +122,8 @@ export const MyResponsesPage: React.FC = () => {
           showCreateButton={true}
           showActions={true}
           showBuyerActions={false}
+          handleFilterChange={handleFilterChange}
+          responseStatuses={responseStatuses}
         />
 
         {/* Pagination */}

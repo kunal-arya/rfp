@@ -1,119 +1,143 @@
 import React, { useState } from 'react';
 import { useMyAuditTrails } from '@/hooks/useAudit';
 import { AuditTrailList } from '@/components/shared/AuditTrailList';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Search, Filter, ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { Calendar as CalendarIcon, Filter, Search, X, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
+import { AuditFilters } from '@/apis/audit';
 
-interface AuditFilters {
-  search?: string;
-  action?: string;
-  dateRange?: DateRange;
-}
-
-const AuditTrailPage: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize] = useState<number>(15);
-  const [filters, setFilters] = useState<AuditFilters>({});
-  const [localSearch, setLocalSearch] = useState<string>('');
+export const AuditTrailPage: React.FC = () => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(15);
+  const [localSearch, setLocalSearch] = useState('');
+  const [localFilters, setLocalFilters] = useState<AuditFilters>({});
+  const [appliedFilters, setAppliedFilters] = useState<AuditFilters>({});
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Build API filters including pagination
   const apiFilters = {
-    search: filters.search,
-    action: filters.action,
+    ...appliedFilters,
+    search: localSearch,
     page: currentPage,
     limit: pageSize,
   };
 
-  // Query with pagination and filters
-  const myAuditTrails = useMyAuditTrails(apiFilters);
-
-  const handleFilterChange = (newFilters: AuditFilters) => {
-    // Reset to page 1 when filters change
-    setCurrentPage(1);
-    
-    const processedFilters: Record<string, string | undefined> = {
-      search: newFilters.search,
-      action: newFilters.action,
-    };
-
-    // Handle date range filters
-    if (newFilters.dateRange?.from) {
-      processedFilters['gte___created_at'] = format(newFilters.dateRange.from, 'yyyy-MM-dd');
-    }
-    if (newFilters.dateRange?.to) {
-      processedFilters['lte___created_at'] = format(newFilters.dateRange.to, 'yyyy-MM-dd');
-    }
-
-    setFilters(processedFilters);
-  };
+  const { data: myAuditTrails, isLoading } = useMyAuditTrails(apiFilters);
 
   const handleSearch = () => {
-    handleFilterChange({ ...filters, search: localSearch });
+    // Search is handled by the API call above
+  };
+
+  const handleFilterChange = (newFilters: Partial<AuditFilters>) => {
+    setLocalFilters({ ...localFilters, ...newFilters });
+  };
+
+  const handleApplyFilters = () => {
+    // Reset to page 1 when filters change
+    setCurrentPage(1);
+    setAppliedFilters(localFilters);
+    setIsDialogOpen(false);
   };
 
   const handleClearFilters = () => {
+    setLocalFilters({});
+    setAppliedFilters({});
     setLocalSearch('');
-    setFilters({});
     setCurrentPage(1);
+    setIsDialogOpen(false);
   };
 
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
+  const handleNextPage = () => {
+    if (myAuditTrails && currentPage < Math.ceil(myAuditTrails.total / pageSize)) {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
-  const totalPages = myAuditTrails.data?.total 
-    ? Math.ceil(myAuditTrails.data.total / pageSize) 
-    : 0;
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // Calculate active filter count
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (localSearch) count++;
+    if (appliedFilters.action) count++;
+    if (appliedFilters.dateRange?.from || appliedFilters.dateRange?.to) count++;
+    return count;
+  };
+
+  const activeFilterCount = getActiveFilterCount();
 
   const auditActions = [
+    { value: 'USER_LOGIN', label: 'User Login' },
+    { value: 'USER_REGISTERED', label: 'User Registered' },
     { value: 'RFP_CREATED', label: 'RFP Created' },
     { value: 'RFP_UPDATED', label: 'RFP Updated' },
     { value: 'RFP_PUBLISHED', label: 'RFP Published' },
-    { value: 'RFP_STATUS_CHANGED', label: 'RFP Status Changed' },
-    { value: 'RESPONSE_CREATED', label: 'Response Created' },
     { value: 'RESPONSE_SUBMITTED', label: 'Response Submitted' },
     { value: 'RESPONSE_APPROVED', label: 'Response Approved' },
     { value: 'RESPONSE_REJECTED', label: 'Response Rejected' },
-    { value: 'RESPONSE_AWARDED', label: 'Response Awarded' },
     { value: 'DOCUMENT_UPLOADED', label: 'Document Uploaded' },
     { value: 'DOCUMENT_DELETED', label: 'Document Deleted' },
-    { value: 'USER_LOGIN', label: 'User Login' },
-    { value: 'USER_REGISTERED', label: 'User Registered' },
   ];
 
   return (
-    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
-      <div className="flex items-center flex-col">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">My Activity</h1>
-        <p className="text-muted-foreground text-center">
-          Track and monitor your system activity and actions
-        </p>
+    <div className="container mx-auto px-4 py-4 sm:py-8 space-y-6 sm:space-y-8">
+      {/* Header */}
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 sm:gap-6">
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Activity History</h1>
+            <p className="text-muted-foreground">
+              Track your system activity and view detailed audit logs of all your actions.
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-          <CardDescription>Filter your audit trail entries</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            {/* Search Input */}
-            <div className="flex-1">
-              <Label htmlFor="search">Search</Label>
-              <div className="flex gap-2">
+      <div className="flex gap-2">
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="relative">
+              <Filter className={`h-4 w-4 ${activeFilterCount > 0 ? 'text-primary' : ''}`} />
+              {activeFilterCount > 0 && (
+                <Badge 
+                  variant="secondary" 
+                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                >
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="ml-auto">
+                    {activeFilterCount} active
+                  </Badge>
+                )}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              {/* Search Input */}
+              <div className="space-y-2">
+                <Label htmlFor="search">Search</Label>
                 <Input
                   id="search"
                   placeholder="Search in details..."
@@ -121,215 +145,129 @@ const AuditTrailPage: React.FC = () => {
                   onChange={(e) => setLocalSearch(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 />
-                <Button
-                  onClick={handleSearch}
-                  disabled={myAuditTrails.isLoading}
+              </div>
+
+              {/* Action Type Select */}
+              <div className="space-y-2 w-full">
+                <Label htmlFor="action">Action Type</Label>
+                <Select 
+                  value={localFilters.action || 'all'} 
+                  onValueChange={(value) => handleFilterChange({ action: value === 'all' ? undefined : value })}
                 >
-                  <Search className="h-4 w-4" />
+                  <SelectTrigger id="action" className="w-full">
+                    <SelectValue placeholder="Select action" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Actions</SelectItem>
+                    {auditActions.map((action) => (
+                      <SelectItem key={action.value} value={action.value}>
+                        {action.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date Range Popover */}
+              <div className="space-y-2">
+                <Label>Date Range</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={'outline'}
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {localFilters.dateRange?.from ? (
+                        localFilters.dateRange.to ? (
+                          <>
+                            {format(localFilters.dateRange.from, 'LLL dd, y')} - {format(localFilters.dateRange.to, 'LLL dd, y')}
+                          </>
+                        ) : (
+                          format(localFilters.dateRange.from, 'LLL dd, y')
+                        )
+                      ) : (
+                        <span>Pick a date range</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      initialFocus
+                      mode="range"
+                      defaultMonth={localFilters.dateRange?.from}
+                      selected={localFilters.dateRange}
+                      onSelect={(range) => handleFilterChange({ dateRange: range })}
+                      numberOfMonths={2}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" onClick={handleClearFilters} className="flex-1">
+                  <X className="mr-2 h-4 w-4" />
+                  Clear All
+                </Button>
+                <Button onClick={handleApplyFilters} className="flex-1">
+                  <Filter className="mr-2 h-4 w-4" />
+                  Apply Filters
                 </Button>
               </div>
             </div>
-
-            {/* Action Type Select */}
-            <div className="w-48">
-              <Label htmlFor="action">Action Type</Label>
-              <Select 
-                value={filters.action || 'all'} 
-                onValueChange={(value) => handleFilterChange({ ...filters, action: value === 'all' ? undefined : value })}
-              >
-                <SelectTrigger id="action">
-                  <SelectValue placeholder="Select action" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Actions</SelectItem>
-                  {auditActions.map((action) => (
-                    <SelectItem key={action.value} value={action.value}>
-                      {action.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Date Range Popover */}
-            <div className="w-48">
-              <Label>Date Range</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={'outline'}
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.dateRange?.from ? (
-                      filters.dateRange.to ? (
-                        <>
-                          {format(filters.dateRange.from, 'LLL dd, y')} - {format(filters.dateRange.to, 'LLL dd, y')}
-                        </>
-                      ) : (
-                        format(filters.dateRange.from, 'LLL dd, y')
-                      )
-                    ) : (
-                      <span>Pick a date range</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={filters.dateRange?.from}
-                    selected={filters.dateRange}
-                    onSelect={(range) => handleFilterChange({ ...filters, dateRange: range })}
-                    numberOfMonths={2}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-end">
-              <Button variant="ghost" onClick={handleClearFilters}>
-                <X className="mr-2 h-4 w-4" />
-                Clear Filters
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       {/* Audit Trail List */}
-      <Card>
+      <Card className="border-0 shadow-sm">
         <CardHeader>
-          <CardTitle>Activity History</CardTitle>
-          <CardDescription>
-            Your recent activity and actions in the system
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg text-left">
+            <Activity className="h-5 w-5 text-green-600" />
+            Recent Activity
+          </CardTitle>
+          <CardDescription className="text-left">
+            Your recent system activity and audit trail entries
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <AuditTrailList
-            auditTrails={myAuditTrails.data?.data || []}
-            isLoading={myAuditTrails.isLoading}
+          <AuditTrailList 
+            auditTrails={myAuditTrails?.data || []} 
+            isLoading={isLoading} 
           />
         </CardContent>
       </Card>
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {myAuditTrails && myAuditTrails.total > pageSize && (
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="text-sm text-muted-foreground text-center sm:text-left">
-                Showing {((currentPage - 1) * pageSize) + 1} to{' '}
-                {Math.min(currentPage * pageSize, myAuditTrails.data?.total || 0)} of{' '}
-                {myAuditTrails.data?.total || 0} entries
-              </div>
-              <div className="flex items-center justify-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1 || myAuditTrails.isLoading}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  <span className="hidden sm:inline ml-1">Previous</span>
-                </Button>
-                <div className="flex items-center space-x-1">
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const pageNum = i + 1;
-                    return (
-                      <Button
-                        key={pageNum}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePageChange(pageNum)}
-                        disabled={myAuditTrails.isLoading}
-                        className="w-8 h-8 p-0"
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
-                  {totalPages > 5 && (
-                    <>
-                      {currentPage > 3 && <span className="px-2">...</span>}
-                      {currentPage > 3 && currentPage < totalPages - 2 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-8 h-8 p-0"
-                          disabled
-                        >
-                          {currentPage}
-                        </Button>
-                      )}
-                      {currentPage < totalPages - 2 && <span className="px-2">...</span>}
-                      {currentPage < totalPages - 2 && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handlePageChange(totalPages)}
-                          disabled={myAuditTrails.isLoading}
-                          className="w-8 h-8 p-0"
-                        >
-                          {totalPages}
-                        </Button>
-                      )}
-                    </>
-                  )}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages || myAuditTrails.isLoading}
-                >
-                  <span className="hidden sm:inline mr-1">Next</span>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+          <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+            <div className="text-sm text-muted-foreground text-center sm:text-left">
+              Showing {((currentPage - 1) * pageSize) + 1} - {Math.min(currentPage * pageSize, myAuditTrails.total)} of {myAuditTrails.total} entries
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Error Display */}
-      {myAuditTrails.error && (
-        <Card className="border-destructive">
-          <CardContent className="pt-6">
-            <div className="text-center text-destructive">
-              <p>Error loading audit trail: {myAuditTrails.error.message}</p>
+            <div className="flex items-center justify-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => myAuditTrails.refetch()}
-                className="mt-2"
+                size="sm"
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
               >
-                Try Again
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Previous</span>
               </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Stats */}
-      {myAuditTrails.data?.data && myAuditTrails.data.data.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
-              <Badge variant="secondary">
-                Total Entries: {myAuditTrails.data.total}
-              </Badge>
-              <Badge variant="secondary">
-                Current Page: {currentPage} of {totalPages}
-              </Badge>
-              {myAuditTrails.data.data.length > 0 && (
-                <Badge variant="secondary">
-                  Date Range: {new Date(myAuditTrails.data.data[myAuditTrails.data.data.length - 1].created_at).toLocaleDateString()} - {new Date(myAuditTrails.data.data[0].created_at).toLocaleDateString()}
-                </Badge>
-              )}
+              <span className="text-sm font-medium px-3 py-1 bg-muted rounded">
+                {currentPage} / {Math.ceil(myAuditTrails.total / pageSize)}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={currentPage >= Math.ceil(myAuditTrails.total / pageSize)}
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -337,7 +275,5 @@ const AuditTrailPage: React.FC = () => {
     </div>
   );
 };
-
-export default AuditTrailPage;
 
 

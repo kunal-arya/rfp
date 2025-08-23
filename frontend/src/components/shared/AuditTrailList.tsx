@@ -120,7 +120,7 @@ export const AuditTrailList: React.FC<AuditTrailListProps> = ({ auditTrails, isL
   }
 
   return (
-    <div className="max-h-72 overflow-y-auto pr-2 space-y-3 border-t border-gray-200">
+    <div className="pr-2 space-y-3 border-t border-gray-200">
       {auditTrails.map((audit) => {
         const clickableItem = getClickableDetails(audit);
         
