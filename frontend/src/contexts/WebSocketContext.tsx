@@ -169,6 +169,24 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         });
       });
 
+      newSocket.on('rfp_awarded', (notification) => {
+        const data = notification.data;
+        
+        // Invalidate dashboard queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['rfps'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        
+        toast.info(`RFP Awarded: ${data.title || 'RFP'}`, {
+          description: `This RFP has been awarded to a supplier.`,
+          action: {
+            label: 'View RFP',
+            onClick: () => (window.location.href = `/rfps/${data.id}`),
+          },
+        });
+      });
+
       // Additional real-time events for dashboard updates
       newSocket.on('rfp_created', (notification) => {
         const data = notification.data;

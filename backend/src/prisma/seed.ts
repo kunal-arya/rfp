@@ -41,7 +41,7 @@ const supplierPermissions = {
     dashboard: { view: { allowed: true } },
     rfp: {
         create: { allowed: false },
-        view: { allowed: true, scope: 'published' },
+        view: { allowed: true, allowed_rfp_statuses: ['Published',"Awarded","Rejected"] },
         edit: { allowed: false },
         publish: { allowed: false },
         close: { allowed: false },

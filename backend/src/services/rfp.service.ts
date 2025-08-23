@@ -4,7 +4,7 @@ import { uploadToCloudinary } from '../utils/cloudinary';
 import { RFP_STATUS, RoleName, SUPPLIER_RESPONSE_STATUS } from '../utils/enum';
 import { sendRfpPublishedNotification, sendResponseSubmittedNotification, sendRfpStatusChangeNotification, sendResponseMovedToReviewNotification, sendResponseApprovedNotification, sendResponseRejectedNotification, sendResponseAwardedNotification } from './email.service';
 import { notificationService } from './notification.service';
-import { notifyRfpPublished, notifyResponseSubmitted, notifyRfpStatusChanged, notifyRfpCreated, notifyRfpUpdated, notifyRfpDeleted, notifyResponseMovedToReview, notifyResponseApproved, notifyResponseRejected, notifyResponseAwarded } from './websocket.service';
+import { notifyRfpPublished, notifyResponseSubmitted, notifyRfpStatusChanged, notifyRfpCreated, notifyRfpUpdated, notifyRfpDeleted, notifyResponseMovedToReview, notifyResponseApproved, notifyResponseRejected, notifyResponseAwarded, notifyRfpAwarded } from './websocket.service';
 import { createAuditEntry, AUDIT_ACTIONS } from './audit.service';
 
 const prisma = new PrismaClient();
@@ -155,27 +155,6 @@ export const getRfpById = async (rfpId: string, userId: string) => {
 
     if (!rfp) {
         throw new Error('RFP not found');
-    }
-
-    // Check if user can view this RFP
-    // Buyers can view their own RFPs, Suppliers can view published RFPs
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: { role: true },
-    });
-
-    if (!user) {
-        throw new Error('User not found');
-    }
-
-    if (user.role.name === 'Buyer') {
-        if (rfp.buyer_id !== userId) {
-            throw new Error('You are not authorized to view this RFP');
-        }
-    } else if (user.role.name === 'Supplier') {
-        if (rfp.status.code !== 'Published') {
-            throw new Error('You are not authorized to view this RFP');
-        }
     }
 
     return rfp;
@@ -485,27 +464,48 @@ export const awardRfp = async (rFPId: string, responseId: string, buyerId: strin
         throw new Error('Awarded status not found');
     }
 
-    const updatedRfp = await prisma.rFP.update({
-        where: { id: rFPId , deleted_at: null },
-        data: { 
-            status_id: awardedStatus.id,
-            awarded_response_id: responseId,
-            awarded_at: new Date(),
-        },
+    // First, award the response (this will update response status and send notifications)
+    const awardedResponseRfp = await awardResponse(responseId, buyerId);
+
+    const { updatedResponse: awardedResponse, updatedRfp } = awardedResponseRfp;
+
+    // Get all suppliers who responded to this RFP for notifications
+    const rfpWithSuppliers = await prisma.rFP.findUnique({
+        where: { id: rFPId },
         include: {
-            status: true,
-            buyer: true,
-            current_version: true,
-            awarded_response: {
+            supplier_responses: {
                 include: {
                     supplier: true,
-                    status: true,
                 },
             },
         },
     });
 
-    // Create audit trail entry
+    // Send WebSocket notifications to all suppliers who responded
+    if (rfpWithSuppliers) {
+        const supplierIds = rfpWithSuppliers.supplier_responses.map(response => response.supplier_id);
+        notifyRfpAwarded(updatedRfp, supplierIds);
+        notifyRfpStatusChanged(updatedRfp, supplierIds);
+    }
+
+    // Create notification for all suppliers who responded
+    if (rfpWithSuppliers) {
+        for (const response of rfpWithSuppliers.supplier_responses) {
+            if (response.supplier_id === awardedResponse.supplier_id) {
+                // Winner notification is already sent by awardResponse function
+                continue;
+            }
+            
+            // Notify other suppliers that RFP was awarded to someone else
+            await notificationService.createNotificationForUser(response.supplier_id, "RFP_AWARDED", {
+                rfp_title: updatedRfp.title,
+                supplier_name: response.supplier.email,
+                rfp_id: updatedRfp.id
+            });
+        }
+    }
+
+    // Create audit trail entry for RFP status change
     await createAuditEntry(buyerId, AUDIT_ACTIONS.RFP_STATUS_CHANGED, 'RFP', updatedRfp.id, {
         title: updatedRfp.title,
         previous_status: rFP.status.code,
@@ -684,18 +684,16 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
         throw new Error('Submitted status not found');
     }
 
-    const updatedResponse = await prisma.$transaction(async (tx) => {
-        const updatedResponse = await tx.supplierResponse.update({
-            where: { id: responseId },
-            data: {
-                status_id: submittedStatus.id,
-            },
-            include: {
-                status: true,
-            },
-        });
-
-        return { updatedResponse };
+    const updatedResponse = await prisma.supplierResponse.update({
+        where: { id: responseId },
+        data: {
+            status_id: submittedStatus.id,
+        },
+        include: {
+            status: true,
+            supplier: true,
+            documents: true,
+        },
     });
 
     // Send email notification to buyer
@@ -1007,25 +1005,59 @@ export const awardResponse = async (responseId: string, buyerId: string) => {
         throw new Error('Awarded status not found');
     }
 
-    const updatedResponse = await prisma.supplierResponse.update({
-        where: { id: responseId },
-        data: {
-            status_id: awardedStatus.id,
-            decided_at: new Date(),
-        },
-        include: {
-            status: true,
-            supplier: true,
-            rfp: {
-                include: {
-                    buyer: true,
+    const updatedResponseRfp = await prisma.$transaction(async (tx) => {
+        const updatedResponse = await tx.supplierResponse.update({
+            where: { id: responseId },
+            data: {
+                status_id: awardedStatus.id,
+                decided_at: new Date(),
+            },
+            include: {
+                status: true,
+                supplier: true,
+                rfp: {
+                    include: {
+                        buyer: true,
+                    },
                 },
             },
-        },
+        });
+
+        const rfpawardedStatus = await prisma.rFPStatus.findUnique({
+            where: { code: RFP_STATUS.Awarded },
+        });
+    
+        if (!rfpawardedStatus) {
+            throw new Error('Awarded status not found');
+        }    
+
+        const updatedRfp = await tx.rFP.update({
+            where: { id: response.rfp_id },
+            data: {
+                awarded_response_id: updatedResponse.id,
+                awarded_at: new Date(),
+                status_id: rfpawardedStatus.id,
+            },
+            include: {
+                status: true,
+                buyer: true,
+                current_version: true,
+                awarded_response: {
+                    include: {
+                        supplier: true,
+                        status: true,
+                    },
+                },
+            },
+        });
+
+        return { updatedResponse, updatedRfp };
     });
 
+    const { updatedResponse, updatedRfp } = updatedResponseRfp;
+
     // Send real-time notification to supplier
-    notifyResponseAwarded(updatedResponse, updatedResponse.supplier_id);
+    notifyResponseAwarded(updateResponse, updatedResponse.supplier_id);
 
     // Send email notification to supplier
     await sendResponseAwardedNotification(responseId);
@@ -1045,7 +1077,7 @@ export const awardResponse = async (responseId: string, buyerId: string) => {
         new_status: updatedResponse.status.code,
     });
 
-    return updatedResponse;
+    return updatedResponseRfp
 };
 
 export const getNBAResponses = async (rFPId: string, userId: string, user_role: string) => {

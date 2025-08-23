@@ -515,7 +515,7 @@ export const awardResponse = async (req: AuthenticatedRequest, res: Response) =>
 
     try {
         const updatedResponse = await rfpService.awardResponse(response_id, user.userId);
-        res.json(updatedResponse);
+        res.json(updatedResponse.updatedResponse);
     } catch (error: any) {
         if (error.message === 'Response not found') {
             return res.status(404).json({ message: error.message });

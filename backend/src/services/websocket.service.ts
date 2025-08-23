@@ -125,6 +125,17 @@ export const notifyResponseAwarded = (responseData: any, supplierId: string) => 
     });
 };
 
+export const notifyRfpAwarded = (rfpData: any, supplierIds: string[]) => {
+    const io = getIO();
+    supplierIds.forEach(supplierId => {
+        io.to(`user_${supplierId}`).emit('rfp_awarded', {
+            type: 'RFP_AWARDED',
+            data: rfpData,
+            timestamp: new Date().toISOString()
+        });
+    });
+};
+
 export const notifyUser = (userId: string, event: string, data: any) => {
     const io = getIO();
     io.to(`user_${userId}`).emit(event, {

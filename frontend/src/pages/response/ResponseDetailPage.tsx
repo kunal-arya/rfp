@@ -32,7 +32,7 @@ export const ResponseDetailPage: React.FC = () => {
   const { data: response, isLoading, isError } = useResponseById(responseId || '');
   const deleteDocumentMutation = useDeleteDocument();
   const uploadDocumentMutation = useUploadResponseDocument();
-  const submitResponseMutation = useSubmitResponse(responseId || '');
+  const submitResponseMutation = useSubmitResponse();
   const [uploadingDocs, setUploadingDocs] = useState(false);
 
   const handleDelete = (docId: string) => {
@@ -127,6 +127,8 @@ export const ResponseDetailPage: React.FC = () => {
       </div>
     );
   }
+
+  console.log({response})
 
   return (
     <div className="min-h-screen bg-background">

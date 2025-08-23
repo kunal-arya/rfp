@@ -186,6 +186,36 @@ export const notificationService = {
                 title: 'RFP Deadline Approaching',
                 message: 'The deadline for RFP "{{rfp_title}}" is approaching on {{deadline}}',
                 channel: 'BOTH'
+            },
+            {
+                code: 'RESPONSE_MOVED_TO_REVIEW',
+                title: 'Response Under Review',
+                message: 'Your response to RFP "{{rfp_title}}" has been moved to review status. The buyer is now evaluating your proposal.',
+                channel: 'BOTH'
+            },
+            {
+                code: 'RESPONSE_APPROVED',
+                title: 'Response Approved',
+                message: 'Congratulations! Your response to RFP "{{rfp_title}}" has been approved by the buyer.',
+                channel: 'BOTH'
+            },
+            {
+                code: 'RESPONSE_REJECTED',
+                title: 'Response Rejected',
+                message: 'Your response to RFP "{{rfp_title}}" has been rejected. Reason: {{rejection_reason}}',
+                channel: 'BOTH'
+            },
+            {
+                code: 'RESPONSE_AWARDED',
+                title: 'Response Awarded',
+                message: '🎉 Congratulations! Your response to RFP "{{rfp_title}}" has been awarded! You are the winning supplier.',
+                channel: 'BOTH'
+            },
+            {
+                code: 'RFP_AWARDED',
+                title: 'RFP Awarded',
+                message: 'The RFP "{{rfp_title}}" has been awarded to a supplier. Thank you for your participation.',
+                channel: 'BOTH'
             }
         ];
 

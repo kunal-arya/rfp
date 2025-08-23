@@ -93,14 +93,14 @@ export const useDeleteResponse = () => {
   });
 };
 
-export const useSubmitResponse = (responseId: string) => {
+export const useSubmitResponse = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (responseId: string) => responseApi.submitResponse(responseId),
-    onSuccess: (updatedResponse) => {
+    onSuccess: (updatedResponse, responseId) => {
       // Update the specific response in cache
-      queryClient.invalidateQueries({ queryKey: ['responses', responseId] });
+      queryClient.setQueryData(['response', responseId], updatedResponse);
       
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['responses', 'my'] });
