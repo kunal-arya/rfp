@@ -60,12 +60,12 @@ export const FloatingNavbar = () => {
             >
               How it Works
             </a>
-            <a
+            {/* <a
               href="#pricing"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Pricing
-            </a>
+            </a> */}
           </div>
 
           {/* Auth Buttons */}

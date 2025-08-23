@@ -245,7 +245,7 @@ const LandingPage: React.FC = () => {
       </section>
 
              {/* Pricing Section */}
-       <section id="pricing" className="py-20 bg-muted/30">
+       {/* <section id="pricing" className="py-20 bg-muted/30">
          <div className="max-w-7xl mx-auto px-6 text-center">
            <motion.div
              initial={{ opacity: 0, y: 20 }}
@@ -316,7 +316,7 @@ const LandingPage: React.FC = () => {
              ))}
            </div>
          </div>
-       </section>
+       </section> */}
 
       {/* CTA Section */}
       <section className="py-20 px-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white relative overflow-hidden">
