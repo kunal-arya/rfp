@@ -17,15 +17,26 @@ const server = createServer(app);
 const port = process.env.PORT || 3000;
 
 // Enable CORS for all origins
+const allowedOrigins = [
+  'https://rfpflow.xyz',
+  'https://www.rfpflow.xyz',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5173',
+  'http://localhost:4173'
+];
+
 app.use(cors({
-  origin: [
-    'https://rfpflow.xyz',
-    'https://www.rfpflow.xyz',
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:5173', // if using Vite
-    'http://localhost:4173'  // if using Vite preview
-  ], // Allow all origins
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like curl, Postman)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, origin); // echo back the allowed origin
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true
