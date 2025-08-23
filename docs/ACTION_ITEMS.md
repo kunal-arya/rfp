@@ -293,6 +293,7 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
             -   [X] implement pagination in /audit page... user can see it's own audit only. check for any bug in the flow and fix
       -   [X] fix the "rfps/my" filter of budget should be => gte___budget_min = 17000, lte___budget_max = 85000
       -   [X] "responses/my" page, please add backend filters, remove these frontend filters, add pagination if not already added
+      -   [X] status filter are not working b.c implementation of status filter is different, as u know we don't store status in schema but have a different tables for them. check schema to know more.... apart from that ... update routes like "getPublishedRfps" , "getMyRfps", "getNBAResponses", "getUserAuditTrails" etc etc where filters can be applied for status...
         
     -   [X] **Backend Deployment:**
       -   [X] In "createRfp" service, u are not creating it correctly, read schema.prisma to get the hang of how the schema is and then implement it, for ex - current_version_id is setting as null, but that should not be the case, versions to get all the versions related to an rpf and general we will fetch only the current_version using current_version_id

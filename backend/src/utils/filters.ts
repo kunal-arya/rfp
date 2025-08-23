@@ -68,3 +68,68 @@ export const modifyGeneralFilterPrisma = (filterObj: any) => {
 
   return whereObj;
 };
+
+// Helper function to get status ID by code
+export const getStatusIdByCode = async (prisma: any, statusCode: string, statusType: 'rfp' | 'response') => {
+  try {
+    if (statusType === 'rfp') {
+      const status = await prisma.rFPStatus.findUnique({
+        where: { code: statusCode }
+      });
+      return status?.id;
+    } else {
+      const status = await prisma.supplierResponseStatus.findUnique({
+        where: { code: statusCode }
+      });
+      return status?.id;
+    }
+  } catch (error) {
+    console.error(`Error getting status ID for ${statusCode}:`, error);
+    return null;
+  }
+};
+
+// Helper function to get multiple status IDs by codes
+export const getStatusIdsByCodes = async (prisma: any, statusCodes: string[], statusType: 'rfp' | 'response') => {
+  try {
+    if (statusType === 'rfp') {
+      const statuses = await prisma.rFPStatus.findMany({
+        where: { code: { in: statusCodes } }
+      });
+      return statuses.map((s: any) => s.id);
+    } else {
+      const statuses = await prisma.supplierResponseStatus.findMany({
+        where: { code: { in: statusCodes } }
+      });
+      return statuses.map((s: any) => s.id);
+    }
+  } catch (error) {
+    console.error(`Error getting status IDs for ${statusCodes}:`, error);
+    return [];
+  }
+};
+
+// Process status filters for RFP and Response queries
+export const processStatusFilters = async (prisma: any, filters: any) => {
+  const processedFilters = { ...filters };
+  
+  // Handle RFP status filter
+  if (filters.status) {
+    const statusId = await getStatusIdByCode(prisma, filters.status, 'rfp');
+    if (statusId) {
+      processedFilters['eq___status_id'] = statusId;
+    }
+    delete processedFilters.status;
+  }
+  
+  // Handle response status filter
+  if (filters.response_status) {
+    const statusId = await getStatusIdByCode(prisma, filters.response_status, 'response');
+    if (statusId) {
+      processedFilters['eq___status_id'] = statusId;
+    }
+    delete processedFilters.response_status;
+  }
+  
+  return processedFilters;
+};

@@ -990,6 +990,22 @@ frontend/src/
   - **Response Statuses**: Added proper response status options (Draft, Submitted, Under Review, etc.)
   - **Backend Integration**: All filters now use the backend filter system with proper API parameters
 
+### **Status Filter Implementation Fix**
+- **Status Table Structure**: Fixed status filtering to work with separate status tables (`RFPStatus` and `SupplierResponseStatus`)
+- **Status Filter Utilities**: Added helper functions in `filters.ts`:
+  - `getStatusIdByCode()`: Convert status code to status ID
+  - `getStatusIdsByCodes()`: Convert multiple status codes to IDs
+  - `processStatusFilters()`: Process status filters for RFP and Response queries
+- **Backend Controller Updates**: Updated all controllers to use new status filtering:
+  - `getMyRfps`: Now properly filters by RFP status using status codes
+  - `getPublishedRfps`: Fixed status filtering for published RFPs
+  - `getMyResponses`: Now properly filters by response status using status codes
+- **Frontend Status Codes**: Fixed frontend to use correct status codes:
+  - **RFP Statuses**: Draft, Published, Closed, Awarded, Cancelled
+  - **Response Statuses**: Draft, Submitted, Under Review, Approved, Rejected, Awarded
+- **Database Integration**: Status filtering now properly queries the status tables and converts codes to IDs
+- **API Compatibility**: All status filters now work correctly with the database schema
+
 ### **Health Check Endpoint Implementation**
 - **Health Check Route**: Added comprehensive `/api/health` endpoint to monitor application status
 - **Database Connectivity Check**: Verifies database connection using Prisma query

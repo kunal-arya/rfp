@@ -37,6 +37,14 @@ socket.on('response_submitted', (data) => {
 socket.on('rfp_status_changed', (data) => {
   console.log('RFP status changed:', data);
 });
+
+socket.on('response_status_changed', (data) => {
+  console.log('Response status changed:', data);
+});
+
+socket.on('rfp_awarded', (data) => {
+  console.log('RFP awarded:', data);
+});
 ```
 
 ## Endpoints
@@ -139,560 +147,350 @@ Get role-specific dashboard data.
   "recentRfps": [...],
   "recentResponses": [...],
   "rfpsNeedingAttention": [...],
-  "role": "Buyer"
+  "stats": {
+    "totalRfps": 10,
+    "publishedRfps": 5,
+    "totalResponses": 25,
+    "pendingReviews": 3
+  }
 }
 ```
 
 **Supplier Dashboard Response:**
 ```json
 {
-  "availableRfps": [...],
-  "myResponses": [...],
-  "responsesNeedingAttention": [...],
-  "role": "Supplier"
+  "recentRfps": [...],
+  "recentResponses": [...],
+  "stats": {
+    "totalResponses": 15,
+    "approvedResponses": 8,
+    "pendingResponses": 3,
+    "awardedResponses": 2
+  }
 }
 ```
 
 #### `GET /dashboard/stats`
 
-Get dashboard statistics.
-
-**Responses:**
-
-- `200 OK`: Dashboard statistics for the user's role.
-- `401 Unauthorized`: Missing or invalid JWT.
-
-**Buyer Stats Response:**
-```json
-{
-  "totalRfps": 10,
-  "publishedRfps": 5,
-  "draftRfps": 3,
-  "totalResponses": 15,
-  "pendingResponses": 8,
-  "approvedResponses": 5,
-  "rejectedResponses": 2,
-  "role": "Buyer"
-}
-```
-
-**Supplier Stats Response:**
-```json
-{
-  "totalResponses": 8,
-  "draftResponses": 2,
-  "submittedResponses": 4,
-  "approvedResponses": 1,
-  "rejectedResponses": 1,
-  "availableRfps": 12,
-  "role": "Supplier"
-}
-```
+Get detailed dashboard statistics.
 
 ### RFPs
 
-#### `GET /rfp/all`
-
-Get all published RFPs (for suppliers).
-
-**Query Parameters:**
-- `page` (optional): Page number for pagination
-- `limit` (optional): Number of items per page
-- `search` (optional): Search term for filtering
-- `filters` (optional): Additional filters
-
-**Responses:**
-
-- `200 OK`: List of published RFPs.
-- `401 Unauthorized`: Missing or invalid JWT.
-
 #### `GET /rfp`
 
-Get user's own RFPs (for buyers).
+Get published RFPs (for suppliers) or user's RFPs (for buyers).
 
 **Query Parameters:**
-- `page` (optional): Page number for pagination
-- `limit` (optional): Number of items per page
-- `search` (optional): Search term for filtering
-- `filters` (optional): Additional filters
+- `page` (number): Page number for pagination
+- `limit` (number): Items per page
+- `search` (string): Search term
+- `status` (string): Filter by status (Draft, Published, Closed, Awarded, Cancelled)
+- `gte___budget_min` (number): Minimum budget filter
+- `lte___budget_max` (number): Maximum budget filter
+- `gte___deadline` (date): From date filter
+- `lte___deadline` (date): To date filter
 
-**Responses:**
+#### `GET /rfp/my`
 
-- `200 OK`: List of user's RFPs.
-- `401 Unauthorized`: Missing or invalid JWT.
+Get user's own RFPs (buyers only).
 
-#### `GET /rfp/{rfp_id}`
-
-Get specific RFP details.
-
-**Parameters:**
-- `rfp_id` (path): RFP ID
-
-**Responses:**
-
-- `200 OK`: RFP details.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to view this RFP.
-- `404 Not Found`: RFP not found.
+**Query Parameters:** Same as above
 
 #### `POST /rfp`
 
-Create a new RFP (buyers only).
+Create a new RFP.
 
 **Request Body:**
-
 ```json
 {
-  "title": "New RFP for Office Supplies",
-  "description": "We need a new supplier for office supplies.",
-  "requirements": "Pens, Paper, Notebooks",
-  "budget_min": 1000,
-  "budget_max": 5000,
-  "deadline": "2024-12-31T23:59:59Z",
-  "notes": "Additional requirements and notes"
+  "title": "Website Development RFP",
+  "description": "We need a new website",
+  "requirements": "Modern design, responsive",
+  "budget_min": 5000,
+  "budget_max": 15000,
+  "deadline": "2024-02-15T00:00:00.000Z"
 }
 ```
 
-**Responses:**
+#### `GET /rfp/:id`
 
-- `201 Created`: RFP created successfully.
-- `400 Bad Request`: Invalid request data.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User does not have permission to create an RFP.
+Get specific RFP details.
 
-#### `PUT /rfp/{rfp_id}`
+#### `PUT /rfp/:id`
 
-Update an RFP (buyers only).
+Update an RFP.
 
-**Parameters:**
-- `rfp_id` (path): RFP ID
+#### `DELETE /rfp/:id`
 
-**Request Body:** Same as POST /rfp
+Delete an RFP (draft only).
 
-**Responses:**
+#### `PUT /rfp/:id/publish`
 
-- `200 OK`: RFP updated successfully.
-- `400 Bad Request`: Invalid request data or RFP cannot be updated.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to update this RFP.
-- `404 Not Found`: RFP not found.
+Publish an RFP.
 
-#### `DELETE /rfp/{rfp_id}`
+#### `PUT /rfp/:id/close`
 
-Delete an RFP (buyers only).
+Close an RFP.
 
-**Parameters:**
-- `rfp_id` (path): RFP ID
+#### `PUT /rfp/:id/cancel`
 
-**Responses:**
+Cancel an RFP.
 
-- `200 OK`: RFP deleted successfully.
-- `400 Bad Request`: RFP cannot be deleted in current status.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to delete this RFP.
-- `404 Not Found`: RFP not found.
+#### `PUT /rfp/:id/award`
 
-#### `PUT /rfp/{rfp_id}/publish`
-
-Publish an RFP (buyers only).
-
-**Parameters:**
-- `rfp_id` (path): RFP ID
-
-**Responses:**
-
-- `200 OK`: RFP published successfully.
-- `400 Bad Request`: RFP cannot be published from current status.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to publish this RFP.
-- `404 Not Found`: RFP not found.
-
-#### `PUT /rfp/{rfp_id}/close`
-
-Close an RFP (buyers only).
-
-**Parameters:**
-- `rfp_id` (path): RFP ID
-
-**Responses:**
-
-- `200 OK`: RFP closed successfully.
-- `400 Bad Request`: RFP cannot be closed in current status.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to close this RFP.
-- `404 Not Found`: RFP not found.
-
-#### `PUT /rfp/{rfp_id}/cancel`
-
-Cancel an RFP (buyers only).
-
-**Parameters:**
-- `rfp_id` (path): RFP ID
-
-**Responses:**
-
-- `200 OK`: RFP cancelled successfully.
-- `400 Bad Request`: RFP cannot be cancelled in current status.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to cancel this RFP.
-- `404 Not Found`: RFP not found.
-
-#### `PUT /rfp/{rfp_id}/award`
-
-Award an RFP to a response (buyers only).
-
-**Parameters:**
-- `rfp_id` (path): RFP ID
+Award an RFP to a specific response.
 
 **Request Body:**
-
 ```json
 {
-  "response_id": "response-uuid"
+  "responseId": "response-uuid"
 }
 ```
 
-**Responses:**
+### RFP Versions
 
-- `200 OK`: RFP awarded successfully.
-- `400 Bad Request`: RFP cannot be awarded or response is not approved.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to award this RFP.
-- `404 Not Found`: RFP or response not found.
+#### `POST /rfp/:id/versions`
 
-#### `POST /rfp/{rfp_id}/versions`
+Create a new version of an RFP.
 
-Create a new version of an RFP (buyers only, Draft RFPs only).
+#### `GET /rfp/:id/versions`
 
-**Parameters:**
-- `rfp_id` (path): RFP ID
+Get all versions of an RFP.
 
-**Request Body:** Same as POST /rfp
+#### `PUT /rfp/:id/versions/:versionId`
 
-**Responses:**
+Update a specific version.
 
-- `201 Created`: RFP version created successfully.
-- `400 Bad Request`: Invalid request data or RFP cannot be versioned.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to create versions for this RFP.
-- `404 Not Found`: RFP not found.
+#### `DELETE /rfp/:id/versions/:versionId`
 
-#### `GET /rfp/{rfp_id}/versions`
-
-Get all versions of an RFP (buyers only).
-
-**Parameters:**
-- `rfp_id` (path): RFP ID
-
-**Responses:**
-
-- `200 OK`: List of RFP versions.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to view versions for this RFP.
-- `404 Not Found`: RFP not found.
-
-#### `PUT /rfp/{rfp_id}/versions/{version_id}/switch`
-
-Switch to a specific version of an RFP (buyers only, Draft RFPs only).
-
-**Parameters:**
-- `rfp_id` (path): RFP ID
-- `version_id` (path): Version ID
-
-**Responses:**
-
-- `200 OK`: RFP version switched successfully.
-- `400 Bad Request`: RFP cannot switch versions.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to switch versions for this RFP.
-- `404 Not Found`: RFP or version not found.
+Delete a version.
 
 ### Responses
 
-#### `POST /rfp/{rfp_id}/responses`
+#### `GET /rfp/my-responses`
 
-Submit a response to an RFP (suppliers only).
+Get user's responses (suppliers only).
 
-**Parameters:**
-- `rfp_id` (path): RFP ID
+**Query Parameters:**
+- `page` (number): Page number for pagination
+- `limit` (number): Items per page
+- `search` (string): Search term
+- `status` (string): Filter by status (Draft, Submitted, Under Review, Approved, Rejected, Awarded)
+- `gte___proposed_budget` (number): Minimum budget filter
+- `lte___proposed_budget` (number): Maximum budget filter
+- `gte___created_at` (date): From date filter
+- `lte___created_at` (date): To date filter
+
+#### `GET /rfp/:id/responses`
+
+Get responses for a specific RFP (buyers only).
+
+#### `POST /rfp/:id/responses`
+
+Submit a response to an RFP.
 
 **Request Body:**
-
 ```json
 {
-  "proposed_budget": 3000,
-  "timeline": "2 weeks",
-  "cover_letter": "We are excited to submit our proposal..."
+  "proposed_budget": 12000,
+  "timeline": "3 months",
+  "cover_letter": "We are excited to work on this project..."
 }
 ```
 
-**Responses:**
-
-- `201 Created`: Response created successfully.
-- `400 Bad Request`: Invalid request data or RFP not available.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to respond to this RFP.
-- `404 Not Found`: RFP not found.
-
-#### `GET /rfp/my-responses`
-
-Get supplier's responses.
-
-**Query Parameters:**
-- `page` (optional): Page number for pagination
-- `limit` (optional): Number of items per page
-- `search` (optional): Search term for filtering
-
-**Responses:**
-
-- `200 OK`: List of supplier's responses.
-- `401 Unauthorized`: Missing or invalid JWT.
-
-#### `GET /rfp/responses/{responseId}`
+#### `GET /rfp/responses/:responseId`
 
 Get specific response details.
 
-**Parameters:**
-- `responseId` (path): Response ID
+#### `PUT /rfp/responses/:responseId`
 
-**Responses:**
+Update a response.
 
-- `200 OK`: Response details.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to view this response.
-- `404 Not Found`: Response not found.
+#### `DELETE /rfp/responses/:responseId`
 
-#### `PUT /rfp/responses/{responseId}`
+Delete a response.
 
-Update a supplier response.
+#### `PUT /rfp/responses/:responseId/submit`
 
-**Parameters:**
-- `responseId` (path): Response ID
+Submit a response (change status to Submitted).
 
-**Request Body:** Same as POST /rfp/{rfp_id}/responses
-
-**Responses:**
-
-- `200 OK`: Response updated successfully.
-- `400 Bad Request`: Invalid request data or response cannot be updated.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to update this response.
-- `404 Not Found`: Response not found.
-
-#### `PUT /rfp/responses/{responseId}/submit`
-
-Submit a draft response (suppliers only).
-
-**Parameters:**
-- `responseId` (path): Response ID
-
-**Responses:**
-
-- `200 OK`: Response submitted successfully.
-- `400 Bad Request`: Response is not in Draft status.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to submit this response.
-- `404 Not Found`: Response not found.
-
-#### `GET /rfp/{rfp_id}/responses`
-
-Get all responses for a specific RFP (buyers only).
-
-**Parameters:**
-- `rfp_id` (path): RFP ID
-
-**Responses:**
-
-- `200 OK`: List of responses for the RFP.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to view responses for this RFP.
-- `404 Not Found`: RFP not found.
-
-#### `PUT /rfp/responses/review/{rfp_id}`
-
-Review a supplier response (approve/reject) (buyers only).
-
-**Parameters:**
-- `rfp_id` (path): RFP ID
-
-**Request Body:**
-
-```json
-{
-  "status": "Approved"
-}
-```
-
-**Responses:**
-
-- `200 OK`: Response reviewed successfully.
-- `400 Bad Request`: Invalid status or RFP not in correct status.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to review responses for this RFP.
-- `404 Not Found`: RFP not found.
-
-#### `PUT /rfp/responses/{response_id}/approve`
+#### `PUT /rfp/responses/:responseId/approve`
 
 Approve a response (buyers only).
 
-**Parameters:**
-- `response_id` (path): Response ID
-
-**Responses:**
-
-- `200 OK`: Response approved successfully.
-- `400 Bad Request`: Response cannot be approved in current status.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to approve this response.
-- `404 Not Found`: Response not found.
-
-#### `PUT /rfp/responses/{response_id}/reject`
+#### `PUT /rfp/responses/:responseId/reject`
 
 Reject a response (buyers only).
 
-**Parameters:**
-- `response_id` (path): Response ID
-
 **Request Body:**
-
 ```json
 {
-  "rejection_reason": "Reason for rejection"
+  "rejection_reason": "Budget too high"
 }
 ```
 
-**Responses:**
-
-- `200 OK`: Response rejected successfully.
-- `400 Bad Request`: Response cannot be rejected in current status.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to reject this response.
-- `404 Not Found`: Response not found.
-
-#### `PUT /rfp/responses/{response_id}/award`
+#### `PUT /rfp/responses/:responseId/award`
 
 Award a response (buyers only).
 
-**Parameters:**
-- `response_id` (path): Response ID
+#### `PUT /rfp/responses/:responseId/move-to-review`
 
-**Responses:**
+Move response to review status (buyers only).
 
-- `200 OK`: Response awarded successfully.
-- `400 Bad Request`: Response cannot be awarded in current status.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to award this response.
-- `404 Not Found`: Response not found.
+### Documents
+
+#### `POST /rfp/documents`
+
+Upload document for RFP.
+
+**Request Body:** Multipart form data
+- `file`: Document file
+- `rfp_version_id`: RFP version ID
+- `file_type`: Document type (pdf, image, docx)
+
+#### `POST /rfp/responses/:responseId/documents`
+
+Upload document for response.
+
+**Request Body:** Multipart form data
+- `file`: Document file
+- `file_type`: Document type
+
+#### `DELETE /rfp/documents/:documentId`
+
+Delete a document.
+
+**Request Body:**
+```json
+{
+  "rfp_version_id": "version-uuid" // or "responseId": "response-uuid"
+}
+```
+
+### Notifications
+
+#### `GET /notifications`
+
+Get user's notifications.
+
+**Query Parameters:**
+- `page` (number): Page number
+- `limit` (number): Items per page
+- `unread_only` (boolean): Filter unread notifications
+
+#### `PUT /notifications/:id/read`
+
+Mark notification as read.
+
+#### `PUT /notifications/read-all`
+
+Mark all notifications as read.
 
 ### Audit Trail
 
 #### `GET /audit/my`
 
-Get user's own audit trails.
+Get user's audit trail.
 
 **Query Parameters:**
-- `page` (optional): Page number for pagination
-- `limit` (optional): Number of items per page
-- `action` (optional): Filter by action type
-- `search` (optional): Search term
+- `page` (number): Page number
+- `limit` (number): Items per page
+- `search` (string): Search term
+- `action` (string): Filter by action type
+- `gte___created_at` (date): From date filter
+- `lte___created_at` (date): To date filter
 
-**Responses:**
+#### `GET /audit/target/:targetType/:targetId`
 
-- `200 OK`: User's audit trails with pagination.
-- `401 Unauthorized`: Missing or invalid JWT.
-
-#### `GET /audit/target/{targetType}/{targetId}`
-
-Get audit trails for a specific target (RFP, Response, etc.).
-
-**Parameters:**
-- `targetType` (path): Type of target (RFP, Response, Document, etc.)
-- `targetId` (path): ID of the target
-
-**Query Parameters:**
-- `page` (optional): Page number for pagination
-- `limit` (optional): Number of items per page
-- `action` (optional): Filter by action type
-
-**Responses:**
-
-- `200 OK`: Target's audit trails with pagination.
-- `401 Unauthorized`: Missing or invalid JWT.
+Get audit trail for specific target.
 
 #### `GET /audit/all`
 
 Get all audit trails (admin only).
 
-**Query Parameters:**
-- `page` (optional): Page number for pagination
-- `limit` (optional): Number of items per page
-- `user_id` (optional): Filter by user ID
-- `action` (optional): Filter by action type
-- `target_type` (optional): Filter by target type
-- `target_id` (optional): Filter by target ID
+## Status Codes
 
-**Responses:**
+### RFP Statuses
+- `Draft`: Initial state, only visible to creator
+- `Published`: Visible to all suppliers
+- `Closed`: No longer accepting responses
+- `Awarded`: RFP has been awarded to a supplier
+- `Cancelled`: RFP has been cancelled
 
-- `200 OK`: All audit trails with pagination.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: Admin access required.
-
-### Documents
-
-#### `POST /rfp/{rfp_version_id}/documents`
-
-Upload a document for an RFP.
-
-**Parameters:**
-- `rfp_version_id` (path): RFP Version ID
-
-**Request Body:**
-- `document` (multipart/form-data): File to upload
-
-**Responses:**
-
-- `201 Created`: Document uploaded successfully.
-- `400 Bad Request`: No file uploaded.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to upload documents for this RFP.
-- `404 Not Found`: RFP version not found.
-
-#### `POST /rfp/responses/{responseId}/documents`
-
-Upload a document for a response.
-
-**Parameters:**
-- `responseId` (path): Response ID
-
-**Request Body:**
-- `document` (multipart/form-data): File to upload
-
-**Responses:**
-
-- `201 Created`: Document uploaded successfully.
-- `400 Bad Request`: No file uploaded.
-- `401 Unauthorized`: Missing or invalid JWT.
-- `403 Forbidden`: User not authorized to upload documents for this response.
-- `404 Not Found`: Response not found.
+### Response Statuses
+- `Draft`: Initial state, only visible to supplier
+- `Submitted`: Submitted for review
+- `Under Review`: Being reviewed by buyer
+- `Approved`: Approved by buyer
+- `Rejected`: Rejected by buyer
+- `Awarded`: Response has been awarded
 
 ## Error Responses
 
-All endpoints may return the following error responses:
+All endpoints return consistent error responses:
 
-- `400 Bad Request`: Invalid request data or business rule violation
-- `401 Unauthorized`: Missing or invalid authentication
-- `403 Forbidden`: User does not have permission for the requested action
-- `404 Not Found`: Resource not found
-- `500 Internal Server Error`: Server error
-
-## Environment Variables
-
-The following environment variables are required:
-
-```env
-JWT_SECRET=your_jwt_secret
-DATABASE_URL=your_database_url
-SENDGRID_API_KEY=your_sendgrid_api_key
-FROM_EMAIL=noreply@yourdomain.com
-FRONTEND_URL=http://localhost:3000
+```json
+{
+  "message": "Error description",
+  "errors": [
+    {
+      "field": "field_name",
+      "message": "Validation error message"
+    }
+  ]
+}
 ```
+
+## Pagination
+
+Most list endpoints support pagination with the following response format:
+
+```json
+{
+  "data": [...],
+  "total": 100,
+  "page": 1,
+  "limit": 10
+}
+```
+
+## Filtering
+
+Many endpoints support advanced filtering using the following format:
+
+- `eq___field`: Equal to value
+- `neq___field`: Not equal to value
+- `gte___field`: Greater than or equal to value
+- `lte___field`: Less than or equal to value
+- `gt___field`: Greater than value
+- `lt___field`: Less than value
+- `contains___field`: Contains substring
+- `in___field`: Value in array (comma-separated)
+- `not_in___field`: Value not in array (comma-separated)
+
+## File Upload
+
+File uploads support the following formats:
+- **Documents**: PDF, DOC, DOCX
+- **Images**: JPG, PNG, GIF
+- **Maximum size**: 10MB per file
+
+## Rate Limiting
+
+- **Authentication endpoints**: 5 requests per minute
+- **File uploads**: 10 requests per minute
+- **Other endpoints**: 100 requests per minute
+
+## WebSocket Events
+
+### Client to Server
+- `join_room`: Join a specific room for notifications
+- `leave_room`: Leave a room
+
+### Server to Client
+- `rfp_published`: New RFP published
+- `response_submitted`: New response submitted
+- `rfp_status_changed`: RFP status updated
+- `response_status_changed`: Response status updated
+- `rfp_awarded`: RFP awarded to supplier
+- `notification`: New notification received

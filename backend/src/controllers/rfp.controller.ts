@@ -2,8 +2,10 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import * as rfpService from '../services/rfp.service';
 import { createRfpSchema, getRfpResponsesSchema, submitResponseSchema, reviewResponseSchema } from '../validations/rfp.validation';
-import { modifyGeneralFilterPrisma } from '../utils/filters';
-import { User } from '@prisma/client';
+import { modifyGeneralFilterPrisma, processStatusFilters } from '../utils/filters';
+import { User, PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export const createRfp = async (req: AuthenticatedRequest, res: Response) => {
     const validationResult = createRfpSchema.safeParse(req.body);
@@ -147,6 +149,9 @@ export const getPublishedRfps = async (req: AuthenticatedRequest, res: Response)
         const limit: number = limitNumber ? parseInt(limitNumber as string) : 10;
         const offset = (page - 1) * limit;
 
+        // Process status filters first
+        const processedFilters = await processStatusFilters(prisma, filters);
+        
         // Split filters for RFP vs RFPVersion fields
         const rfpFilterKeys = ['title', 'status_id', 'buyer_id', 'created_at'];
         const versionFilterKeys = ['budget_min', 'budget_max', 'deadline', 'description', 'requirements'];
@@ -154,10 +159,10 @@ export const getPublishedRfps = async (req: AuthenticatedRequest, res: Response)
         const rfpFilters: any = {};
         const versionFilters: any = {};
 
-        for (let key in filters) {
+        for (let key in processedFilters) {
             const columnKey = key.split('___')[1];
-            if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = filters[key];
-            else if (versionFilterKeys.includes(columnKey)) versionFilters[key] = filters[key];
+            if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = processedFilters[key];
+            else if (versionFilterKeys.includes(columnKey)) versionFilters[key] = processedFilters[key];
         }
 
         const generalFilters = modifyGeneralFilterPrisma(rfpFilters);
@@ -192,6 +197,8 @@ export const getMyRfps = async (req: AuthenticatedRequest, res: Response) => {
         const limit: number = limitNumber ? parseInt(limitNumber as string) : 10;
         const offset = (page - 1) * limit;
 
+        // Process status filters first
+        const processedFilters = await processStatusFilters(prisma, filters);
         // Split filters for RFP vs RFPVersion fields
         const rfpFilterKeys = ['title', 'status_id', 'buyer_id', 'created_at'];
         const versionFilterKeys = ['budget_min', 'budget_max', 'deadline', 'description', 'requirements'];
@@ -199,10 +206,10 @@ export const getMyRfps = async (req: AuthenticatedRequest, res: Response) => {
         const rfpFilters: any = {};
         const versionFilters: any = {};
 
-        for (let key in filters) {
+        for (let key in processedFilters) {
             const columnKey = key.split('___')[1];
-            if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = filters[key];
-            else if (versionFilterKeys.includes(columnKey)) versionFilters[key] = filters[key];
+            if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = processedFilters[key];
+            else if (versionFilterKeys.includes(columnKey)) versionFilters[key] = processedFilters[key];
         }
 
         const generalFilters = modifyGeneralFilterPrisma(rfpFilters);
@@ -681,17 +688,20 @@ export const getMyResponses = async (req: AuthenticatedRequest, res: Response) =
         const limit: number = limitNumber ? parseInt(limitNumber as string) : 10;
         const offset = (page - 1) * limit;
 
+        // Process status filters first
+        const processedFilters = await processStatusFilters(prisma, filters);
+        
         // Split filters for response vs RFP fields
-        const responseFilterKeys = ['proposed_budget', 'timeline', 'cover_letter', 'created_at'];
+        const responseFilterKeys = ['proposed_budget', 'timeline', 'cover_letter', 'created_at', 'status_id'];
         const rfpFilterKeys = ['title', 'status_id', 'buyer_id'];
 
         const responseFilters: any = {};
         const rfpFilters: any = {};
 
-        for (let key in filters) {
+        for (let key in processedFilters) {
             const columnKey = key.split('___')[1];
-            if (responseFilterKeys.includes(columnKey)) responseFilters[key] = filters[key];
-            else if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = filters[key];
+            if (responseFilterKeys.includes(columnKey)) responseFilters[key] = processedFilters[key];
+            else if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = processedFilters[key];
         }
 
         const generalFilters = modifyGeneralFilterPrisma(responseFilters);

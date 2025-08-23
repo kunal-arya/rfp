@@ -100,9 +100,9 @@ export const MyRfpsPage: React.FC = () => {
   const rfpStatuses = [
     { value: 'Draft', label: 'Draft' },
     { value: 'Published', label: 'Published' },
-    { value: 'Under Review', label: 'Under Review' },
-    { value: 'Approved', label: 'Approved' },
-    { value: 'Rejected', label: 'Rejected' },
+    { value: 'Closed', label: 'Closed' },
+    { value: 'Awarded', label: 'Awarded' },
+    { value: 'Cancelled', label: 'Cancelled' },
   ];
 
   return (

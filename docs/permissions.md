@@ -67,56 +67,127 @@ The following rules can be combined to create fine-grained access control.
 
 ---
 
-## Example: Buyer Role Permissions
+## Complete Role Permission Objects
+
+### Buyer Role Permissions
 
 ```json
 {
-  "dashboard": { "view": true },
+  "dashboard": { 
+    "view": { "allowed": true } 
+  },
   "rfp": {
     "create": { "allowed": true },
     "view": { "allowed": true, "scope": "own" },
     "edit": { "allowed": true, "scope": "own", "allowed_rfp_statuses": ["Draft"] },
     "publish": { "allowed": true, "scope": "own", "allowed_rfp_statuses": ["Draft"] },
+    "close": { "allowed": true, "scope": "own", "allowed_rfp_statuses": ["Published"] },
+    "cancel": { "allowed": true, "scope": "own", "allowed_rfp_statuses": ["Draft", "Published"] },
+    "award": { "allowed": true, "scope": "own", "allowed_rfp_statuses": ["Published", "Closed"] },
     "review_responses": { "allowed": true, "scope": "own" },
     "read_responses": { "allowed": true, "scope": "own" },
-    "manage_documents": { "allowed": true, "scope": "own" },
-    "change_status": {
-      "allowed": true,
-      "scope": "own",
-      "allowed_transitions": {
-        "Under_Review": ["Approved", "Rejected"]
-      }
-    }
+    "manage_documents": { "allowed": true, "scope": "own" }
   },
   "supplier_response": {
+    "submit": { "allowed": false },
     "view": { "allowed": true, "scope": "rfp_owner" },
-    "review": { "allowed": true, "scope": "rfp_owner" }
+    "edit": { "allowed": false },
+    "create": { "allowed": false },
+    "manage_documents": { "allowed": false },
+    "review": { "allowed": true, "scope": "rfp_owner" },
+    "approve": { "allowed": true, "scope": "rfp_owner", "allowed_response_statuses": ["Under Review"] },
+    "reject": { "allowed": true, "scope": "rfp_owner", "allowed_response_statuses": ["Under Review"] },
+    "award": { "allowed": true, "scope": "rfp_owner", "allowed_response_statuses": ["Approved"] }
   },
   "documents": {
-    "upload_for_rfp": { "allowed": true, "scope": "own" }
+    "upload_for_rfp": { "allowed": true, "scope": "own" },
+    "upload_for_response": { "allowed": false }
   },
-  "search": { "allowed": true }
+  "search": { "allowed": true },
+  "audit": { 
+    "view": { "allowed": true, "scope": "own" } 
+  },
+  "admin": { 
+    "manage_users": { "allowed": false }, 
+    "manage_roles": { "allowed": false } 
+  }
 }
 ```
 
-## Example: Supplier Role Permissions
+### Supplier Role Permissions
 
 ```json
 {
-  "dashboard": { "view": true },
+  "dashboard": { 
+    "view": { "allowed": true } 
+  },
   "rfp": {
-    "view": { "allowed": true, "scope": "published" }
+    "create": { "allowed": false },
+    "view": { "allowed": true, "allowed_rfp_statuses": ["Published", "Awarded", "Rejected"] },
+    "edit": { "allowed": false },
+    "publish": { "allowed": false },
+    "close": { "allowed": false },
+    "cancel": { "allowed": false },
+    "award": { "allowed": false },
+    "review_responses": { "allowed": false },
+    "read_responses": { "allowed": true },
+    "manage_documents": { "allowed": false }
   },
   "supplier_response": {
     "create": { "allowed": true, "allowed_rfp_statuses": ["Published"] },
     "submit": { "allowed": true, "scope": "own", "allowed_response_statuses": ["Draft"] },
     "view": { "allowed": true, "scope": "own" },
     "edit": { "allowed": true, "scope": "own", "allowed_response_statuses": ["Draft"] },
-    "manage_documents": { "allowed": true, "scope": "own" }
+    "manage_documents": { "allowed": true, "scope": "own" },
+    "approve": { "allowed": false },
+    "reject": { "allowed": false },
+    "award": { "allowed": false }
   },
   "documents": {
+    "upload_for_rfp": { "allowed": false },
     "upload_for_response": { "allowed": true, "scope": "own" }
   },
-  "search": { "allowed": true }
+  "search": { "allowed": true },
+  "audit": { 
+    "view": { "allowed": true, "scope": "own" } 
+  },
+  "admin": {
+    "manage_users": { "allowed": false },
+    "manage_roles": { "allowed": false }
+  }
 }
 ```
+
+---
+
+## Implementation Notes
+
+### Middleware Usage
+
+The `hasPermission(resource, action)` middleware should be used in route handlers:
+
+```javascript
+// Example: Only buyers can create RFPs
+app.post('/rfp', hasPermission('rfp', 'create'), createRfpHandler);
+
+// Example: Users can only view their own RFPs (scope: "own")
+app.get('/rfp/:id', hasPermission('rfp', 'view'), getRfpHandler);
+
+// Example: Buyers can approve supplier responses (scope: "rfp_owner")
+app.patch('/supplier-response/:id/approve', hasPermission('supplier_response', 'approve'), approveResponseHandler);
+```
+
+### Status-based Access Control
+
+When checking permissions that depend on resource status:
+
+1. The middleware should first verify `allowed: true`
+2. Then check if the resource status matches `allowed_rfp_statuses` or `allowed_response_statuses`
+3. Apply scope restrictions (`own`, `rfp_owner`, etc.)
+
+### Error Handling
+
+When access is denied, the middleware should return appropriate HTTP status codes:
+- `401 Unauthorized`: User not authenticated
+- `403 Forbidden`: User authenticated but lacks permission
+- `404 Not Found`: Resource doesn't exist or user has no access (security by obscurity)
