@@ -372,7 +372,6 @@ export async function getNBAResponses(req: AuthenticatedRequest, res: Response) 
 
     try {
         const responses = await rfpService.getNBAResponses(rfp_id, user.userId, user.role);
-        console.log({responses})
         return res.json(responses);
     } catch (error: any) {
         if (error.message === 'RFP not found') {

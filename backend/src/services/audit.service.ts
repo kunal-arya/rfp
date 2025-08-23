@@ -54,8 +54,6 @@ export const auditService = {
       }),
     ]);
 
-    console.log({auditTrails, total, page, limit});
-
     return {
       data: auditTrails,
       total,

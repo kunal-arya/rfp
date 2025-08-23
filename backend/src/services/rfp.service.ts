@@ -748,8 +748,6 @@ export const getPublishedRfps = async (
         ];
     }
 
-    console.log(user)
-
     const rfps = await prisma.rFP.findMany({
         where: {
             status_id: publishedStatus.id,
@@ -1293,12 +1291,9 @@ export const getNBAResponses = async (rFPId: string, userId: string, user_role: 
     const isSupplier = user_role === RoleName.Supplier;
     const isBuyer = user_role === RoleName.Buyer;
 
-    console.log({isSupplier, isBuyer, user_role, userId})
-
     // Check authorization
     if (isSupplier) {
         // Suppliers can only see their own responses
-        console.log({userId, rFPId, rthis: "this is the user id"})
         const responses = await prisma.supplierResponse.findMany({
             where: {
                 rfp_id: rFPId,
@@ -1310,7 +1305,6 @@ export const getNBAResponses = async (rFPId: string, userId: string, user_role: 
                 documents: true,
             },
         });
-        console.log({responses})
         return responses;
     } else if (isBuyer) {        
         const responses = await prisma.supplierResponse.findMany({

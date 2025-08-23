@@ -128,7 +128,6 @@ export const ResponseDetailPage: React.FC = () => {
     );
   }
 
-  console.log({response})
 
   return (
     <div className="min-h-screen bg-background">
