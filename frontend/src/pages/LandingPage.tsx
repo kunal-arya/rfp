@@ -153,16 +153,6 @@ const LandingPage: React.FC = () => {
               </Button>
             </div>
           </motion.div>
-          {/* Scroll Indicator */}
-            <a href="#features" className="absolute inset-x-0 bottom-6 z-10 flex justify-center">
-                <motion.div
-                    animate={{ y: [0, 6, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.8 }}
-                    className="text-sm text-muted-foreground"
-                >
-                    ↓ Scroll
-                </motion.div>
-            </a>
         </div>
       </section>
 
