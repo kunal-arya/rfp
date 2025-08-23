@@ -41,6 +41,47 @@ socket.on('rfp_status_changed', (data) => {
 
 ## Endpoints
 
+### Health Check
+
+#### `GET /health`
+
+Check the health status of the application and its services.
+
+**Responses:**
+
+- `200 OK`: Application is healthy
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "uptime": 3600,
+  "environment": "development",
+  "version": "1.0.0",
+  "services": {
+    "database": "connected",
+    "websocket": "active",
+    "api": "running"
+  }
+}
+```
+
+- `503 Service Unavailable`: Application is unhealthy
+```json
+{
+  "status": "unhealthy",
+  "timestamp": "2024-01-15T10:30:00.000Z",
+  "uptime": 3600,
+  "environment": "development",
+  "version": "1.0.0",
+  "services": {
+    "database": "disconnected",
+    "websocket": "active",
+    "api": "running"
+  },
+  "error": "Database connection failed"
+}
+```
+
 ### Authentication
 
 #### `POST /auth/register`
