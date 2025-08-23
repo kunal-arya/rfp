@@ -1,5 +1,6 @@
 import sgMail from '@sendgrid/mail';
 import { PrismaClient } from '@prisma/client';
+import { EMAIL_TEMPLATES } from './email-templates';
 
 const prisma = new PrismaClient();
 
@@ -62,16 +63,7 @@ export const sendRfpPublishedNotification = async (rfpId: string) => {
             const emailData: EmailData = {
                 to: supplier.email,
                 subject: `New RFP Available: ${rfp.title}`,
-                html: `
-                    <h2>New RFP Available</h2>
-                    <p>A new Request for Proposal has been published:</p>
-                    <h3>${rfp.title}</h3>
-                    <p><strong>Description:</strong> ${rfp.current_version?.description || 'N/A'}</p>
-                    <p><strong>Requirements:</strong> ${rfp.current_version?.requirements || 'N/A'}</p>
-                    <p><strong>Deadline:</strong> ${rfp.current_version?.deadline ? new Date(rfp.current_version.deadline).toLocaleDateString() : 'N/A'}</p>
-                    <p><strong>Budget Range:</strong> $${rfp.current_version?.budget_min || 'N/A'} - $${rfp.current_version?.budget_max || 'N/A'}</p>
-                    <p>Please log in to your dashboard to view the full details and submit your response.</p>
-                `,
+                html: EMAIL_TEMPLATES.rfpPublished(rfp),
             };
             return sendEmail(emailData);
         });
@@ -106,15 +98,7 @@ export const sendResponseMovedToReviewNotification = async (responseId: string) 
         const emailData: EmailData = {
             to: response.supplier.email,
             subject: `Your Response is Under Review: ${response.rfp.title}`,
-            html: `
-                <h2>Response Under Review</h2>
-                <p>Your response to the RFP "${response.rfp.title}" has been moved to review status.</p>
-                <p><strong>RFP:</strong> ${response.rfp.title}</p>
-                <p><strong>Your Proposed Budget:</strong> $${response.proposed_budget || 'N/A'}</p>
-                <p><strong>Your Timeline:</strong> ${response.timeline || 'N/A'}</p>
-                <p>The buyer is now reviewing your response. You will be notified once a decision has been made.</p>
-                <p>Please log in to your dashboard to view the current status.</p>
-            `,
+            html: EMAIL_TEMPLATES.responseMovedToReview(response),
         };
 
         return await sendEmail(emailData);
@@ -146,15 +130,7 @@ export const sendResponseApprovedNotification = async (responseId: string) => {
         const emailData: EmailData = {
             to: response.supplier.email,
             subject: `Response Approved: ${response.rfp.title}`,
-            html: `
-                <h2>Congratulations! Your Response Has Been Approved</h2>
-                <p>Your response to the RFP "${response.rfp.title}" has been approved by the buyer.</p>
-                <p><strong>RFP:</strong> ${response.rfp.title}</p>
-                <p><strong>Your Proposed Budget:</strong> $${response.proposed_budget || 'N/A'}</p>
-                <p><strong>Your Timeline:</strong> ${response.timeline || 'N/A'}</p>
-                <p>Your response is now in the approved status. The buyer may award the RFP to you or another approved supplier.</p>
-                <p>Please log in to your dashboard to view the current status.</p>
-            `,
+            html: EMAIL_TEMPLATES.responseApproved(response),
         };
 
         return await sendEmail(emailData);
@@ -186,18 +162,7 @@ export const sendResponseRejectedNotification = async (responseId: string, rejec
         const emailData: EmailData = {
             to: response.supplier.email,
             subject: `Response Update: ${response.rfp.title}`,
-            html: `
-                <h2>Response Status Update</h2>
-                <p>Your response to the RFP "${response.rfp.title}" has been reviewed.</p>
-                <p><strong>RFP:</strong> ${response.rfp.title}</p>
-                <p><strong>Status:</strong> Rejected</p>
-                <p><strong>Reason for Rejection:</strong></p>
-                <p style="background-color: #f8f9fa; padding: 10px; border-left: 4px solid #dc3545; margin: 10px 0;">
-                    ${rejectionReason}
-                </p>
-                <p>We encourage you to review the feedback and consider submitting responses to other available RFPs.</p>
-                <p>Please log in to your dashboard to view other opportunities.</p>
-            `,
+            html: EMAIL_TEMPLATES.responseRejected(response, rejectionReason),
         };
 
         return await sendEmail(emailData);
@@ -229,15 +194,7 @@ export const sendResponseAwardedNotification = async (responseId: string) => {
         const emailData: EmailData = {
             to: response.supplier.email,
             subject: `🎉 RFP Awarded to You: ${response.rfp.title}`,
-            html: `
-                <h2>🎉 Congratulations! You've Been Awarded the RFP</h2>
-                <p>Your response to the RFP "${response.rfp.title}" has been awarded!</p>
-                <p><strong>RFP:</strong> ${response.rfp.title}</p>
-                <p><strong>Your Proposed Budget:</strong> $${response.proposed_budget || 'N/A'}</p>
-                <p><strong>Your Timeline:</strong> ${response.timeline || 'N/A'}</p>
-                <p>This is a significant achievement! The buyer has selected your proposal as the winning response.</p>
-                <p>Please log in to your dashboard to view the details and next steps.</p>
-            `,
+            html: EMAIL_TEMPLATES.responseAwarded(response),
         };
 
         return await sendEmail(emailData);
@@ -269,15 +226,7 @@ export const sendResponseSubmittedNotification = async (responseId: string) => {
         const emailData: EmailData = {
             to: response.rfp.buyer.email,
             subject: `New Response Received: ${response.rfp.title}`,
-            html: `
-                <h2>New Response Received</h2>
-                <p>A supplier has submitted a response to your RFP:</p>
-                <h3>${response.rfp.title}</h3>
-                <p><strong>Supplier:</strong> ${response.supplier.email}</p>
-                <p><strong>Proposed Budget:</strong> $${response.proposed_budget || 'N/A'}</p>
-                <p><strong>Timeline:</strong> ${response.timeline || 'N/A'}</p>
-                <p>Please log in to your dashboard to review the response.</p>
-            `,
+            html: EMAIL_TEMPLATES.responseSubmitted(response),
         };
 
         return await sendEmail(emailData);
@@ -311,13 +260,7 @@ export const sendRfpStatusChangeNotification = async (rfpId: string, newStatus: 
             const emailData: EmailData = {
                 to: response.supplier.email,
                 subject: `RFP Status Update: ${rfp.title}`,
-                html: `
-                    <h2>RFP Status Update</h2>
-                    <p>The status of the RFP you responded to has been updated:</p>
-                    <h3>${rfp.title}</h3>
-                    <p><strong>New Status:</strong> ${newStatus}</p>
-                    <p>Please log in to your dashboard to view the updated status.</p>
-                `,
+                html: EMAIL_TEMPLATES.rfpAwarded(rfp),
             };
             return sendEmail(emailData);
         });
@@ -327,5 +270,31 @@ export const sendRfpStatusChangeNotification = async (rfpId: string, newStatus: 
     } catch (error) {
         console.error('RFP status change notification failed:', error);
         return { success: false, message: 'Notification failed' };
+    }
+};
+
+export const sendUserRegistrationWelcome = async (userId: string) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                role: true,
+            },
+        });
+
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        const emailData: EmailData = {
+            to: user.email,
+            subject: 'Welcome to RFP Pro!',
+            html: EMAIL_TEMPLATES.userRegistered(user),
+        };
+
+        return await sendEmail(emailData);
+    } catch (error) {
+        console.error('User registration welcome email failed:', error);
+        return { success: false, message: 'Welcome email failed' };
     }
 };

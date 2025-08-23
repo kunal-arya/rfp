@@ -180,3 +180,45 @@ export const usePublishRfp = () => {
     },
   });
 };
+
+export const useCreateRfpVersion = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ rfpId, data }: { rfpId: string; data: CreateRfpData }) =>
+      rfpApi.createRfpVersion(rfpId, data),
+    onSuccess: (updatedRfp) => {
+      queryClient.setQueryData(['rfp', updatedRfp.id], updatedRfp);
+      queryClient.invalidateQueries({ queryKey: ['rfp-versions', updatedRfp.id] });
+      queryClient.invalidateQueries({ queryKey: ['rfps'] });
+    },
+    onError: (error) => {
+      console.error('Failed to create RFP version:', error);
+    },
+  });
+};
+
+export const useRfpVersions = (rfpId: string) => {
+  return useQuery({
+    queryKey: ['rfp-versions', rfpId],
+    queryFn: () => rfpApi.getRfpVersions(rfpId),
+    enabled: !!rfpId,
+  });
+};
+
+export const useSwitchRfpVersion = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ rfpId, versionId }: { rfpId: string; versionId: string }) =>
+      rfpApi.switchRfpVersion(rfpId, versionId),
+    onSuccess: (updatedRfp) => {
+      queryClient.setQueryData(['rfp', updatedRfp.id], updatedRfp);
+      queryClient.invalidateQueries({ queryKey: ['rfp-versions', updatedRfp.id] });
+      queryClient.invalidateQueries({ queryKey: ['rfps'] });
+    },
+    onError: (error) => {
+      console.error('Failed to switch RFP version:', error);
+    },
+  });
+};

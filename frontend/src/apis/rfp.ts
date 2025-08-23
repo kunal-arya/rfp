@@ -83,4 +83,22 @@ export const rfpApi = {
     const response = await apiClient.put<RFP>(`/rfp/${rfpId}/award`, { response_id: responseId });
     return response.data;
   },
+
+  // Create new RFP version
+  createRfpVersion: async (rfpId: string, data: CreateRfpData): Promise<RFP> => {
+    const response = await apiClient.post<RFP>(`/rfp/${rfpId}/versions`, data);
+    return response.data;
+  },
+
+  // Get RFP versions
+  getRfpVersions: async (rfpId: string): Promise<RFPVersion[]> => {
+    const response = await apiClient.get<RFPVersion[]>(`/rfp/${rfpId}/versions`);
+    return response.data;
+  },
+
+  // Switch RFP version
+  switchRfpVersion: async (rfpId: string, versionId: string): Promise<RFP> => {
+    const response = await apiClient.put<RFP>(`/rfp/${rfpId}/versions/${versionId}/switch`);
+    return response.data;
+  },
 };

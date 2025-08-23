@@ -133,12 +133,20 @@ export const getMyRfps = async (
 
 export const getRfpById = async (rfpId: string, userId: string) => {
     const rfp = await prisma.rFP.findUnique({
-        where: { id: rfpId , deleted_at: null },
+        where: { id: rfpId, deleted_at: null },
         include: {
             current_version: {
                 include: {
                     documents: {
                         where: { deleted_at: null }, // Exclude soft-deleted documents
+                    },
+                },
+            },
+            versions: {
+                orderBy: { version_number: 'desc' },
+                include: {
+                    documents: {
+                        where: { deleted_at: null },
                     },
                 },
             },
@@ -160,20 +168,213 @@ export const getRfpById = async (rfpId: string, userId: string) => {
     return rfp;
 };
 
-export const updateRfp = async (rfpId: string, rfpData: CreateRfpData, userId: string) => {
+export const getRfpVersions = async (rfpId: string, userId: string) => {
     const rfp = await prisma.rFP.findUnique({
-        where: { id: rfpId , deleted_at: null },
-        include: { status: true },
+        where: { id: rfpId, deleted_at: null },
+        include: {
+            versions: {
+                orderBy: { version_number: 'desc' },
+                include: {
+                    documents: {
+                        where: { deleted_at: null },
+                    },
+                },
+            },
+            current_version: true,
+            status: true,
+            buyer: true,
+        },
     });
 
     if (!rfp) {
         throw new Error('RFP not found');
     }
 
+    if (rfp.buyer_id !== userId) {
+        throw new Error('You are not authorized to view versions of this RFP');
+    }
+
+    return rfp.versions;
+};
+
+export const switchRfpVersion = async (rfpId: string, versionId: string, userId: string) => {
+    const rfp = await prisma.rFP.findUnique({
+        where: { id: rfpId, deleted_at: null },
+        include: {
+            status: true,
+            versions: {
+                where: { id: versionId },
+                include: {
+                    documents: {
+                        where: { deleted_at: null },
+                    },
+                },
+            },
+        },
+    });
+
+    if (!rfp) {
+        throw new Error('RFP not found');
+    }
+
+    if (rfp.buyer_id !== userId) {
+        throw new Error('You are not authorized to switch versions of this RFP');
+    }
+
+    // Only allow version switching for Draft RFPs
+    if (rfp.status.code !== 'Draft') {
+        throw new Error('RFP versions can only be switched for Draft RFPs');
+    }
+
+    if (rfp.versions.length === 0) {
+        throw new Error('Version not found');
+    }
+
+    const selectedVersion = rfp.versions[0];
+
+    const updatedRfp = await prisma.rFP.update({
+        where: { id: rfpId, deleted_at: null },
+        data: {
+            current_version_id: selectedVersion.id,
+        },
+        include: {
+            current_version: {
+                include: {
+                    documents: true,
+                },
+            },
+            versions: {
+                orderBy: { version_number: 'desc' },
+                include: {
+                    documents: true,
+                },
+            },
+            status: true,
+            buyer: true,
+        },
+    });
+
+    // Create audit trail entry
+    await createAuditEntry(userId, AUDIT_ACTIONS.RFP_UPDATED, 'RFP', rfpId, {
+        title: updatedRfp.title,
+        version_switched_to: selectedVersion.version_number,
+        previous_version: updatedRfp.current_version?.version_number,
+    });
+
+    return updatedRfp;
+};
+
+export const createRfpVersion = async (rfpId: string, rfpData: CreateRfpData, userId: string) => {
+    const rfp = await prisma.rFP.findUnique({
+        where: { id: rfpId, deleted_at: null },
+        include: { 
+            status: true,
+            current_version: true,
+            versions: {
+                orderBy: { version_number: 'desc' },
+                take: 1
+            }
+        },
+    });
+
+    if (!rfp) {
+        throw new Error('RFP not found');
+    }
+
+    if (rfp.buyer_id !== userId) {
+        throw new Error('You are not authorized to create versions for this RFP');
+    }
+
+    // Only allow versioning for Draft RFPs
+    if (rfp.status.code !== 'Draft') {
+        throw new Error('RFP versions can only be created for Draft RFPs');
+    }
+
+    const { title, description, requirements, budget_min, budget_max, deadline, notes } = rfpData;
+
+    // Get the next version number
+    const nextVersionNumber = rfp.versions.length > 0 ? rfp.versions[0].version_number + 1 : 1;
+
+    const updatedRfp = await prisma.$transaction(async (tx) => {
+        // Create new version
+        const newVersion = await tx.rFPVersion.create({
+            data: {
+                rfp_id: rfpId,
+                version_number: nextVersionNumber,
+                description,
+                requirements,
+                budget_min,
+                budget_max,
+                deadline,
+                notes,
+            },
+        });
+
+        // Update RFP title and set new version as current
+        const updatedRfp = await tx.rFP.update({
+            where: { id: rfpId, deleted_at: null },
+            data: {
+                title,
+                current_version_id: newVersion.id,
+            },
+            include: {
+                current_version: true,
+                status: true,
+                buyer: true,
+                versions: {
+                    orderBy: { version_number: 'desc' }
+                }
+            },
+        });
+
+        return updatedRfp;
+    });
+
+    // Send real-time notification to buyer
+    notifyRfpUpdated(updatedRfp);
+
+    // Create audit trail entry
+    await createAuditEntry(userId, AUDIT_ACTIONS.RFP_UPDATED, 'RFP', rfpId, {
+        title: updatedRfp.title,
+        version_number: nextVersionNumber,
+        description: updatedRfp.current_version?.description,
+        requirements: updatedRfp.current_version?.requirements,
+        budget_min: updatedRfp.current_version?.budget_min,
+        budget_max: updatedRfp.current_version?.budget_max,
+        deadline: updatedRfp.current_version?.deadline,
+        notes: updatedRfp.current_version?.notes,
+    });
+
+    return updatedRfp;
+};
+
+export const updateRfp = async (rfpId: string, rfpData: CreateRfpData, userId: string) => {
+    const rfp = await prisma.rFP.findUnique({
+        where: { id: rfpId, deleted_at: null },
+        include: { 
+            status: true,
+            current_version: true 
+        },
+    });
+
+    if (!rfp) {
+        throw new Error('RFP not found');
+    }
+
+    if (rfp.buyer_id !== userId) {
+        throw new Error('You are not authorized to update this RFP');
+    }
+
+    // For Draft RFPs, create a new version
+    if (rfp.status.code === 'Draft') {
+        return await createRfpVersion(rfpId, rfpData, userId);
+    }
+
+    // For published RFPs, only allow minor updates to current version
     const { title, description, requirements, budget_min, budget_max, deadline, notes } = rfpData;
 
     const updatedRfp = await prisma.rFP.update({
-        where: { id: rfpId , deleted_at: null },
+        where: { id: rfpId, deleted_at: null },
         data: {
             title,
             current_version: {

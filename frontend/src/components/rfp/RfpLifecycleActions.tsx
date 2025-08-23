@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCloseRfp, useCancelRfp, useAwardRfp } from '@/hooks/useRfp';
 import { useAuth } from '@/contexts/AuthContext';
 import { RFP, SupplierResponse } from '@/apis/types';
 import { toast } from 'sonner';
-import { X, CheckCircle, XCircle, Award, Lock, Ban } from 'lucide-react';
+import { Award, Lock, Ban } from 'lucide-react';
 
 interface RfpLifecycleActionsProps {
   rfp: RFP;
@@ -64,7 +63,8 @@ export const RfpLifecycleActions: React.FC<RfpLifecycleActionsProps> = ({
     }
   };
 
-  const handleAwardRfp = async () => {
+  const handleAwardRfp = async (e: React.FormEvent<HTMLButtonElement>) => {
+    e.preventDefault();
     if (!selectedResponseId) {
       toast.error('Please select a response to award');
       return;
@@ -140,14 +140,14 @@ export const RfpLifecycleActions: React.FC<RfpLifecycleActionsProps> = ({
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="response-select">Select Response</Label>
-                <Select value={selectedResponseId} onValueChange={setSelectedResponseId}>
-                  <SelectTrigger>
+                <Select value={selectedResponseId} onValueChange={setSelectedResponseId} className="w-full">
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Choose an approved response" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="w-full">
                     {approvedResponses.map((response) => (
-                      <SelectItem key={response.id} value={response.id}>
-                        <div className="flex flex-col">
+                      <SelectItem key={response.id} value={response.id} className="w-full">
+                        <div className="flex w-full gap-2">
                           <span className="font-medium">{response.supplier.email}</span>
                           <span className="text-sm text-muted-foreground">
                             Budget: ${response.proposed_budget || 'N/A'}

@@ -318,6 +318,97 @@ router.put(
 
 /**
  * @swagger
+ * /rfp/{rfp_id}/versions:
+ *   post:
+ *     summary: Create a new version of an RFP
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: rfp_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: New RFP version created successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: RFP not found
+ */
+router.post(
+    '/:rfp_id/versions',
+    hasPermission('rfp', 'edit'),
+    rfpController.createRfpVersion
+);
+
+/**
+ * @swagger
+ * /rfp/{rfp_id}/versions:
+ *   get:
+ *     summary: Get all versions of an RFP
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: rfp_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: List of RFP versions
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: RFP not found
+ */
+router.get(
+    '/:rfp_id/versions',
+    hasPermission('rfp', 'view'),
+    rfpController.getRfpVersions
+);
+
+/**
+ * @swagger
+ * /rfp/{rfp_id}/versions/{version_id}/switch:
+ *   put:
+ *     summary: Switch to a specific version of an RFP
+ *     tags: [RFPs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: rfp_id
+ *         name: version_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: RFP version switched successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: RFP or version not found
+ */
+router.put(
+    '/:rfp_id/versions/:version_id/switch',
+    hasPermission('rfp', 'edit'),
+    rfpController.switchRfpVersion
+);
+
+/**
+ * @swagger
  * /rfp/{id}/responses:
  *   post:
  *     summary: Submit a response to an RFP

@@ -284,6 +284,8 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
       -   [X] if on page, responses/<response_id>, if the responses is submitted, then give user to review the response, according to lifecycle. most probably approve or reject actions but check it and then implement. if new is required, do it
       -   [X] page , /rfps/<rfp_id>, if it is in draft state, give user to action to delete
             -   [X] in backend, I have created this "notifyResponseMovedToReview" in websocket.service.ts, please do it on frontend as well.
+      -  [X] where I can see buyer or supplier see all of there activities ?? there is a recent activity tab in dashboard but it fetch only first 5 i guess.... implement this feature, in that "Recent Activity" tab, give a Link to a page where user can see all of his activites with pagination implemented.... check backend if backend has the apis, if not create related apis.
+      -   [X] make the dialog ui of "Create New RFP Version" good, now it is small and scrollable, put the heading into dialog title and do other relevant things
       
   -   [X] **Backend Deployment:**
       -   [X] In "createRfp" service, u are not creating it correctly, read schema.prisma to get the hang of how the schema is and then implement it, for ex - current_version_id is setting as null, but that should not be the case, versions to get all the versions related to an rpf and general we will fetch only the current_version using current_version_id
@@ -297,5 +299,7 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
       -   [X] For supplier, Recent Responses in dashboard frontend should show reponses, whether draft or published.. api/dashboard check this route API
       -   [X] real-time and email and notification service when buyer mark supplier response "UNDER_REVIEW", "Approved", "REJECTED", "AWARDED" and check others too.. do frontend changes to support these changes as well.
       -   [X] Fix RFP awarding bug: when awarding an RFP, the selected response status should change from "Approved" to "Awarded" along with RFP status change to "Awarded", and send proper notifications (email, WebSocket, in-app) to all suppliers who responded.
-      -   [ ] We forget the Versioning flow of FRP completely, read "requirements.md" file and implement versioning flow. Our schema at schema.prisma actually supports RFP versioning. Implement Backend and frontend completely and then test it if it's working or not, whether your implementation after done is right or not.
+      -   [X] We forget the Versioning flow of FRP completely, read "requirements.md" file and implement versioning flow. Our schema at schema.prisma actually supports RFP versioning. Implement Backend and frontend completely and then test it if it's working or not, whether your implementation after done is right or not.
+      -   [X] update api-docs.md and update that, plus update docs-schema.md if needed and readme.md ... apart from them... give me a good new .md file explaining everything in brief from frontend till backend everything
+      -   [X] improve "email.service.ts" email template, they are too simple, plus move templates to different page to make the file readable... put logo on top and do other neccessary changes
   

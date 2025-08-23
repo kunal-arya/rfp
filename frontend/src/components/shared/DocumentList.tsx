@@ -29,18 +29,16 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDelete,
           <ul className="space-y-2">
             {documents.map((doc) => (
               <li key={doc.id} className="flex items-center justify-between p-2 border rounded-md">
-                <div className="flex items-center gap-3">
-                  <File className="h-6 w-6 text-primary" />
-                  <div>
-                    <a 
-                      href={doc.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="font-medium hover:underline"
-                    >
-                      {doc.file_name}
-                    </a>
-                  </div>
+                <div className="flex items-center gap-3 min-w-0">
+                  <File className="h-6 w-6 text-primary shrink-0" />
+                  <a 
+                    href={doc.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="block truncate max-w-[250px] font-medium hover:underline"
+                  >
+                    {doc.file_name}
+                  </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <a href={doc.url} download target="_blank" rel="noopener noreferrer">

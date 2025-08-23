@@ -319,6 +319,53 @@ Award an RFP to a response (buyers only).
 - `403 Forbidden`: User not authorized to award this RFP.
 - `404 Not Found`: RFP or response not found.
 
+#### `POST /rfp/{rfp_id}/versions`
+
+Create a new version of an RFP (buyers only, Draft RFPs only).
+
+**Parameters:**
+- `rfp_id` (path): RFP ID
+
+**Request Body:** Same as POST /rfp
+
+**Responses:**
+
+- `201 Created`: RFP version created successfully.
+- `400 Bad Request`: Invalid request data or RFP cannot be versioned.
+- `401 Unauthorized`: Missing or invalid JWT.
+- `403 Forbidden`: User not authorized to create versions for this RFP.
+- `404 Not Found`: RFP not found.
+
+#### `GET /rfp/{rfp_id}/versions`
+
+Get all versions of an RFP (buyers only).
+
+**Parameters:**
+- `rfp_id` (path): RFP ID
+
+**Responses:**
+
+- `200 OK`: List of RFP versions.
+- `401 Unauthorized`: Missing or invalid JWT.
+- `403 Forbidden`: User not authorized to view versions for this RFP.
+- `404 Not Found`: RFP not found.
+
+#### `PUT /rfp/{rfp_id}/versions/{version_id}/switch`
+
+Switch to a specific version of an RFP (buyers only, Draft RFPs only).
+
+**Parameters:**
+- `rfp_id` (path): RFP ID
+- `version_id` (path): Version ID
+
+**Responses:**
+
+- `200 OK`: RFP version switched successfully.
+- `400 Bad Request`: RFP cannot switch versions.
+- `401 Unauthorized`: Missing or invalid JWT.
+- `403 Forbidden`: User not authorized to switch versions for this RFP.
+- `404 Not Found`: RFP or version not found.
+
 ### Responses
 
 #### `POST /rfp/{rfp_id}/responses`
@@ -495,6 +542,59 @@ Award a response (buyers only).
 - `401 Unauthorized`: Missing or invalid JWT.
 - `403 Forbidden`: User not authorized to award this response.
 - `404 Not Found`: Response not found.
+
+### Audit Trail
+
+#### `GET /audit/my`
+
+Get user's own audit trails.
+
+**Query Parameters:**
+- `page` (optional): Page number for pagination
+- `limit` (optional): Number of items per page
+- `action` (optional): Filter by action type
+- `search` (optional): Search term
+
+**Responses:**
+
+- `200 OK`: User's audit trails with pagination.
+- `401 Unauthorized`: Missing or invalid JWT.
+
+#### `GET /audit/target/{targetType}/{targetId}`
+
+Get audit trails for a specific target (RFP, Response, etc.).
+
+**Parameters:**
+- `targetType` (path): Type of target (RFP, Response, Document, etc.)
+- `targetId` (path): ID of the target
+
+**Query Parameters:**
+- `page` (optional): Page number for pagination
+- `limit` (optional): Number of items per page
+- `action` (optional): Filter by action type
+
+**Responses:**
+
+- `200 OK`: Target's audit trails with pagination.
+- `401 Unauthorized`: Missing or invalid JWT.
+
+#### `GET /audit/all`
+
+Get all audit trails (admin only).
+
+**Query Parameters:**
+- `page` (optional): Page number for pagination
+- `limit` (optional): Number of items per page
+- `user_id` (optional): Filter by user ID
+- `action` (optional): Filter by action type
+- `target_type` (optional): Filter by target type
+- `target_id` (optional): Filter by target ID
+
+**Responses:**
+
+- `200 OK`: All audit trails with pagination.
+- `401 Unauthorized`: Missing or invalid JWT.
+- `403 Forbidden`: Admin access required.
 
 ### Documents
 

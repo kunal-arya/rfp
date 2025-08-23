@@ -503,6 +503,90 @@ export const moveResponseToReview = async (req: AuthenticatedRequest, res: Respo
     }
 };
 
+export const createRfpVersion = async (req: AuthenticatedRequest, res: Response) => {
+    const { rfp_id } = req.params;
+    const validationResult = createRfpSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+        return res.status(400).json({ errors: validationResult.error.issues });
+    }
+
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const updatedRfp = await rfpService.createRfpVersion(rfp_id, validationResult.data, user.userId);
+        res.json(updatedRfp);
+    } catch (error: any) {
+        if (error.message === 'RFP not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to create versions for this RFP') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'RFP versions can only be created for Draft RFPs') {
+            return res.status(400).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const getRfpVersions = async (req: AuthenticatedRequest, res: Response) => {
+    const { rfp_id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const versions = await rfpService.getRfpVersions(rfp_id, user.userId);
+        res.json(versions);
+    } catch (error: any) {
+        if (error.message === 'RFP not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to view versions of this RFP') {
+            return res.status(403).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const switchRfpVersion = async (req: AuthenticatedRequest, res: Response) => {
+    const { rfp_id, version_id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const updatedRfp = await rfpService.switchRfpVersion(rfp_id, version_id, user.userId);
+        res.json(updatedRfp);
+    } catch (error: any) {
+        if (error.message === 'RFP not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to switch versions of this RFP') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'RFP versions can only be switched for Draft RFPs') {
+            return res.status(400).json({ message: error.message });
+        }
+        if (error.message === 'Version not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 export const awardResponse = async (req: AuthenticatedRequest, res: Response) => {
     const { response_id } = req.params;
     const user = req.user;

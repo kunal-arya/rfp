@@ -20,6 +20,20 @@ export interface AuthResponse {
   };
 }
 
+export interface RFPVersion {
+  id: string;
+  rfp_id: string;
+  version_number: number;
+  description: string;
+  requirements: string;
+  budget_min?: number;
+  budget_max?: number;
+  deadline: string;
+  notes?: string;
+  documents: Document[];
+  created_at: string;
+}
+
 export interface RFP {
   id: string;
   title: string;
@@ -45,6 +59,7 @@ export interface RFP {
     documents: Document[];
   };
   current_version_id?: string;
+  versions?: RFPVersion[];
   supplier_responses: SupplierResponse[];
   created_at: string;
   updated_at: string;

@@ -138,17 +138,26 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
       {/* Recent Activity */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Activity className="h-5 w-5 text-green-600" />
-            Recent Activity
-          </CardTitle>
-          <CardDescription>Your recent system activity</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Activity className="h-5 w-5 text-green-600" />
+                Recent Activity
+              </CardTitle>
+              <CardDescription>Your recent system activity</CardDescription>
+            </div>
+            <Link 
+              to="/audit" 
+              className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
+            >
+              View All
+              <Activity className="h-3 w-3" />
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
           <AuditTrailList
             auditTrails={auditData?.data || []}
-            title=""
-            description=""
             isLoading={false}
           />
         </CardContent>

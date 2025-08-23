@@ -7,7 +7,7 @@ export const createRfpSchema = z.object({
   requirements: z.string(),
   budget_min: z.number().optional(),
   budget_max: z.number().optional(),
-  deadline: z.iso.datetime(),
+  deadline: z.string().transform((val) => new Date(val).toISOString()),
   notes: z.string().optional(),
 });
 

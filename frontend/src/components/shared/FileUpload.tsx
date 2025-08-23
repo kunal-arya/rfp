@@ -27,6 +27,13 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, isLoading
       'application/vnd.ms-excel': ['.xls'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
       'text/plain': ['.txt'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+      'image/gif': ['.gif'],
+      'image/webp': ['.webp'],
+      'image/svg+xml': ['.svg'],
+      'image/tiff': ['.tiff'],
+      'image/bmp': ['.bmp'],
     },
   });
 
@@ -56,7 +63,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFilesSelect, isLoading
           <p className="text-muted-foreground">
             Drag & drop some files here, or click to select files
             <br />
-            <span className="text-xs">(PDF, DOC, DOCX, XLS, XLSX, TXT)</span>
+            <span className="text-xs">(PDF, DOC, DOCX, XLS, XLSX, TXT, JPG, JPEG, PNG, GIF, WEBP, SVG, TIFF, BMP)</span>
           </p>
         )}
       </div>
