@@ -214,7 +214,7 @@ export const RfpDetailPage: React.FC = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* RFP Details */}
-            {/* <Card>
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
@@ -247,9 +247,9 @@ export const RfpDetailPage: React.FC = () => {
                   </>
                 )}
               </CardContent>
-            </Card> */}
+            </Card>
 
-                      {/* Versioning Section */}
+          {/* Versioning Section */}
           <RfpVersioning 
             rfp={rfp}
             onVersionChange={() => {

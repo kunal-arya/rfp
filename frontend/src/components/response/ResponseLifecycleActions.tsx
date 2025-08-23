@@ -202,18 +202,6 @@ export const ResponseLifecycleActions: React.FC<ResponseLifecycleActionsProps> =
           Award Response
         </Button>
       )}
-
-      {response.status.code === 'Rejected' && response.rejection_reason && (
-        <div className="w-full p-3 bg-red-50 border border-red-200 rounded-lg">
-          <div className="flex items-start gap-2">
-            <MessageSquare className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-red-800">Rejection Reason</p>
-              <p className="text-sm text-red-700 mt-1">{response.rejection_reason}</p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
