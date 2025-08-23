@@ -106,11 +106,11 @@ export const MyRfpsPage: React.FC = () => {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      <div className="mb-8">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">My RFPs</h1>
+    <div className="container mx-auto px-4 py-4 sm:py-8 space-y-6 sm:space-y-8">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 sm:gap-6">
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">My RFPs</h1>
             <p className="text-muted-foreground">
               Manage your Request for Proposals and track responses from suppliers.
             </p>
@@ -143,11 +143,11 @@ export const MyRfpsPage: React.FC = () => {
         {/* Pagination */}
         {rfpsData && rfpsData.total > pageSize && (
           <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="text-sm text-muted-foreground">
+            <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+              <div className="text-sm text-muted-foreground text-center sm:text-left">
                 Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, rfpsData.total)} of {rfpsData.total} RFPs
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -155,10 +155,10 @@ export const MyRfpsPage: React.FC = () => {
                   disabled={currentPage === 1}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
+                  <span className="hidden sm:inline">Previous</span>
                 </Button>
                 <span className="text-sm font-medium px-3 py-1 bg-muted rounded">
-                  Page {currentPage} of {Math.ceil(rfpsData.total / pageSize)}
+                  {currentPage} / {Math.ceil(rfpsData.total / pageSize)}
                 </span>
                 <Button
                   variant="outline"
@@ -166,7 +166,7 @@ export const MyRfpsPage: React.FC = () => {
                   onClick={handleNextPage}
                   disabled={currentPage >= Math.ceil(rfpsData.total / pageSize)}
                 >
-                  Next
+                  <span className="hidden sm:inline">Next</span>
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>

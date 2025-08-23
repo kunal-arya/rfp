@@ -26,27 +26,27 @@ import {
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const plans = [
-    {
-      name: "Starter",
-      price: "₹499",
-      description: "Perfect for trying things out.",
-      features: ["Basic features", "Up to 3 projects", "Email support"],
-    },
-    {
-      name: "Pro",
-      price: "₹1,999",
-      description: "Best for growing teams and startups.",
-      features: ["Everything in Starter", "Unlimited projects", "Priority support", "Team collaboration"],
-      highlight: true,
-    },
-    {
-      name: "Enterprise",
-      price: "Custom",
-      description: "Tailored solutions for large businesses.",
-      features: ["Dedicated account manager", "Custom integrations", "24/7 support"],
-    },
-  ];
+  // const plans = [
+  //   {
+  //     name: "Starter",
+  //     price: "₹499",
+  //     description: "Perfect for trying things out.",
+  //     features: ["Basic features", "Up to 3 projects", "Email support"],
+  //   },
+  //   {
+  //     name: "Pro",
+  //     price: "₹1,999",
+  //     description: "Best for growing teams and startups.",
+  //     features: ["Everything in Starter", "Unlimited projects", "Priority support", "Team collaboration"],
+  //     highlight: true,
+  //   },
+  //   {
+  //     name: "Enterprise",
+  //     price: "Custom",
+  //     description: "Tailored solutions for large businesses.",
+  //     features: ["Dedicated account manager", "Custom integrations", "24/7 support"],
+  //   },
+  // ];
 
   const features = [
     {

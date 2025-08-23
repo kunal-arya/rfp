@@ -91,10 +91,10 @@ const AuditTrailPage: React.FC = () => {
   ];
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="container mx-auto py-4 sm:py-6 space-y-4 sm:space-y-6">
       <div className="flex items-center flex-col">
-        <h1 className="text-3xl font-bold tracking-tight">My Activity</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">My Activity</h1>
+        <p className="text-muted-foreground text-center">
           Track and monitor your system activity and actions
         </p>
       </div>
@@ -110,9 +110,9 @@ const AuditTrailPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Search Input */}
-              <div className="lg:col-span-2">
+              <div className="sm:col-span-2">
                 <Label htmlFor="search">Search</Label>
                 <div className="flex gap-2">
                   <Input
@@ -220,13 +220,13 @@ const AuditTrailPage: React.FC = () => {
       {totalPages > 1 && (
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="text-sm text-muted-foreground text-center sm:text-left">
                 Showing {((currentPage - 1) * pageSize) + 1} to{' '}
                 {Math.min(currentPage * pageSize, myAuditTrails.data?.total || 0)} of{' '}
                 {myAuditTrails.data?.total || 0} entries
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center justify-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -234,7 +234,7 @@ const AuditTrailPage: React.FC = () => {
                   disabled={currentPage === 1 || myAuditTrails.isLoading}
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Previous
+                  <span className="hidden sm:inline ml-1">Previous</span>
                 </Button>
                 <div className="flex items-center space-x-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -286,7 +286,7 @@ const AuditTrailPage: React.FC = () => {
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages || myAuditTrails.isLoading}
                 >
-                  Next
+                  <span className="hidden sm:inline mr-1">Next</span>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -320,7 +320,7 @@ const AuditTrailPage: React.FC = () => {
             <CardTitle>Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
               <Badge variant="secondary">
                 Total Entries: {myAuditTrails.data.total}
               </Badge>

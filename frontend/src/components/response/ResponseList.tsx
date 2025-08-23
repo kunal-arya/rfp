@@ -137,14 +137,11 @@ export const ResponseList: React.FC<ResponseListProps> = ({
       {/* Response List */}
       {filteredResponses.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center">
+          <CardContent className="p-6 sm:p-8 text-center">
             <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">No responses found</h3>
             <p className="text-muted-foreground mb-4">
-              {searchTerm || statusFilter !== 'all' 
-                ? 'Try adjusting your search or filters'
-                : 'Get started by creating your first response'
-              }
+              {showCreateButton ? 'Get started by creating your first response' : 'No responses have been submitted yet'}
             </p>
             {showCreateButton && (
               <Button onClick={onCreateResponse}>
@@ -158,47 +155,51 @@ export const ResponseList: React.FC<ResponseListProps> = ({
         <div className="space-y-4">
           {filteredResponses.map((response) => (
             <Card key={response.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-lg font-semibold line-clamp-1">
-                        Response to: {response.rfp?.title}
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 
+                        className="text-base sm:text-lg font-semibold line-clamp-1 cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => onViewResponse(response.id)}
+                      >
+                        Response to {response.rfp?.title}
                       </h3>
-                      <Badge className={getStatusColor(response.status.code)}>
-                        {response.status.label}
-                      </Badge>
                     </div>
-                    
-                    <p className="text-muted-foreground mb-3 line-clamp-2">
-                      {response.cover_letter}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4" />
-                        <span>Budget: {formatBudget(response.proposed_budget || 0)}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>Timeline: {response.timeline}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MessageSquare className="h-4 w-4" />
-                        <span>Created: {formatDate(response.created_at)}</span>
-                      </div>
+                    <Badge className={`${getStatusColor(response.status.code)} flex-shrink-0`}>
+                      {response.status.label}
+                    </Badge>
+                  </div>
+                  
+                  <p className="text-muted-foreground line-clamp-2 text-sm sm:text-base">
+                    {response.cover_letter}
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4 flex-shrink-0" />
+                      <span>Submitted: {formatDate(response.created_at)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="h-4 w-4 flex-shrink-0" />
+                      <span>Budget: {formatBudget(response.proposed_budget)}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                      <span>By {response.supplier.email}</span>
                     </div>
                   </div>
                   
                   {showActions && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 pt-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => onViewResponse(response.id)}
+                        className="flex-1 sm:flex-none"
                       >
                         <Eye className="h-4 w-4 mr-1" />
-                        View
+                        <span className="hidden sm:inline">View</span>
                       </Button>
                       
                       {response.status.code === 'Draft' && (
@@ -207,28 +208,33 @@ export const ResponseList: React.FC<ResponseListProps> = ({
                             variant="outline"
                             size="sm"
                             onClick={() => onEditResponse(response.id)}
+                            className="flex-1 sm:flex-none"
                           >
                             <Edit className="h-4 w-4 mr-1" />
-                            Edit
+                            <span className="hidden sm:inline">Edit</span>
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => onSubmitResponse(response.id)}
+                            className="flex-1 sm:flex-none"
                           >
                             <Send className="h-4 w-4 mr-1" />
-                            Submit
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onDeleteResponse(response.id)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Delete
+                            <span className="hidden sm:inline">Submit</span>
                           </Button>
                         </>
+                      )}
+                      
+                      {response.status.code === 'Draft' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onDeleteResponse(response.id)}
+                          className="flex-1 sm:flex-none"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          <span className="hidden sm:inline">Delete</span>
+                        </Button>
                       )}
                       
                       {showBuyerActions && response.status.code === 'Submitted' && (
@@ -237,19 +243,19 @@ export const ResponseList: React.FC<ResponseListProps> = ({
                             variant="outline"
                             size="sm"
                             onClick={() => onApproveResponse(response.id)}
-                            className="text-green-600 hover:text-green-600"
+                            className="flex-1 sm:flex-none bg-green-50 hover:bg-green-100"
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
-                            Approve
+                            <span className="hidden sm:inline">Approve</span>
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => onRejectResponse(response.id)}
-                            className="text-red-600 hover:text-red-600"
+                            className="flex-1 sm:flex-none bg-red-50 hover:bg-red-100"
                           >
                             <XCircle className="h-4 w-4 mr-1" />
-                            Reject
+                            <span className="hidden sm:inline">Reject</span>
                           </Button>
                         </>
                       )}

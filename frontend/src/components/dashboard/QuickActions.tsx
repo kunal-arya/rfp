@@ -53,7 +53,7 @@ export const QuickActions: React.FC = () => {
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
           <Settings className="h-5 w-5 text-gray-600" />
           Quick Actions
         </CardTitle>
@@ -62,18 +62,18 @@ export const QuickActions: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {filteredActions.map((action, index) => {
             const Icon = action.icon;
             return (
               <Button
                 key={index}
                 onClick={action.action}
-                className={`${action.color} text-white h-auto p-4 flex flex-col items-center gap-2 transition-all duration-200 hover:scale-105`}
+                className={`${action.color} text-white h-auto p-3 sm:p-4 flex flex-col items-center gap-2 transition-all duration-200 hover:scale-105`}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                 <div className="text-center">
-                  <div className="font-medium">{action.title}</div>
+                  <div className="font-medium text-sm sm:text-base">{action.title}</div>
                   <div className="text-xs opacity-90 text-wrap">{action.description}</div>
                 </div>
               </Button>

@@ -30,25 +30,32 @@ export const RfpStatusChart: React.FC<RfpStatusChartProps> = ({ stats }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>RFP Status Distribution</CardTitle>
+        <CardTitle className="text-base sm:text-lg">RFP Status Distribution</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={250} className="min-h-[250px]">
           <BarChart
             data={data}
-            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis allowDecimals={false} />
+            <XAxis 
+              dataKey="name" 
+              tick={{ fontSize: 12 }}
+              angle={-45}
+              textAnchor="end"
+              height={60}
+            />
+            <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'hsl(var(--background))',
-                borderColor: 'hsl(var(--border))',
+                backgroundColor: 'var(--color-background)',
+                borderColor: 'var(--color-border)',
+                fontSize: '12px',
               }}
             />
             <Legend />
-            <Bar dataKey="count" fill="#3b82f6" name="Number of RFPs" />
+            <Bar dataKey="count" fill="var(--color-primary)" name="Number of RFPs" />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

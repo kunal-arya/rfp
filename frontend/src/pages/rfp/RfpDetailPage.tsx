@@ -135,27 +135,31 @@ export const RfpDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 sm:py-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-2">{rfp.title}</h1>
-            <div className="flex items-center gap-4">
-              <Badge className={`${getStatusColor(rfp.status.code)} text-white`}>
-                {rfp.status.label}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                Created on {format(new Date(rfp.created_at), 'MMM dd, yyyy')}
-              </span>
+        <div className="flex flex-col gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="w-fit">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">{rfp.title}</h1>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <Badge className={`${getStatusColor(rfp.status.code)} text-white w-fit`}>
+                  {rfp.status.label}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Created on {format(new Date(rfp.created_at), 'MMM dd, yyyy')}
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex gap-2">
+          
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2">
             {isOwner && canEditRfp && isDraft && (
-              <Button onClick={() => navigate(`/rfps/${rfpId}/edit`)}>
+              <Button onClick={() => navigate(`/rfps/${rfpId}/edit`)} size="sm">
                 <Edit className="h-4 w-4 mr-2" />
                 Edit RFP
               </Button>
@@ -169,6 +173,7 @@ export const RfpDetailPage: React.FC = () => {
                 }}
                 disabled={publishRfpMutation.isPending}
                 className="bg-green-600 hover:bg-green-700"
+                size="sm"
               >
                 {publishRfpMutation.isPending ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -188,6 +193,7 @@ export const RfpDetailPage: React.FC = () => {
                 }}
                 disabled={deleteRfpMutation.isPending}
                 variant="destructive"
+                size="sm"
               >
                 {deleteRfpMutation.isPending ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -210,7 +216,7 @@ export const RfpDetailPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* RFP Details */}

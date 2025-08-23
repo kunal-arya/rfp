@@ -40,11 +40,11 @@ export const BrowseRfpsPage: React.FC = () => {
   const rfpStatuses = [{ value: 'Published', label: 'Published' }];
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      <div className="mb-8">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Browse RFPs</h1>
+    <div className="container mx-auto px-4 py-4 sm:py-8 space-y-6 sm:space-y-8">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 sm:gap-6">
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Browse RFPs</h1>
             <p className="text-muted-foreground">
               Find and respond to Request for Proposals from buyers.
             </p>

@@ -56,9 +56,9 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
 
   return (
     <div className="p-4 border rounded-lg bg-card space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Search Input */}
-        <div className="lg:col-span-2">
+        <div className="sm:col-span-2">
           <Label htmlFor="search">Search</Label>
           <Input
             id="search"
@@ -123,25 +123,30 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
         </div>
       </div>
 
-      {/* Budget Slider */}
+      {/* Budget Range */}
       <div className="space-y-2">
         <Label>Budget Range: ${budget[0].toLocaleString()} - ${budget[1].toLocaleString()}</Label>
         <Slider
           value={budget}
           onValueChange={setBudget}
           max={100000}
+          min={0}
           step={1000}
-          minStepsBetweenThumbs={1}
+          className="w-full"
         />
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>$0</span>
+          <span>$100,000</span>
+        </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-2">
-        <Button variant="ghost" onClick={handleClearFilters}>
+      <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+        <Button variant="outline" onClick={handleClearFilters} className="w-full sm:w-auto">
           <X className="mr-2 h-4 w-4" />
           Clear Filters
         </Button>
-        <Button onClick={handleApplyFilters}>
+        <Button onClick={handleApplyFilters} className="w-full sm:w-auto">
           <Filter className="mr-2 h-4 w-4" />
           Apply Filters
         </Button>

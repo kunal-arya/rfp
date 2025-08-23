@@ -47,9 +47,12 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
         <FileText className="h-4 w-4 text-blue-600" />
       </div>
       <div className="flex-1 min-w-0">
-        <Link to={`/rfps/${rfp.id}`}>
-          <p className="text-sm font-medium text-foreground truncate">{rfp.title}</p>
-        </Link>
+        <p 
+          className="text-sm font-medium text-foreground truncate cursor-pointer hover:text-primary transition-colors"
+          onClick={() => window.location.href = `/rfps/${rfp.id}`}
+        >
+          {rfp.title}
+        </p>
         <p className="text-xs text-muted-foreground">
           {formatDate(rfp.created_at)}
         </p>
@@ -66,11 +69,12 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
         <Users className="h-4 w-4 text-purple-600" />
       </div>
       <div className="flex-1 min-w-0">
-        <Link to={`/responses/${response.id}`}>
-          <p className="text-sm font-medium text-foreground truncate">
-            Response to RFP #{response.rfp_id}
-          </p>
-        </Link>
+        <p 
+          className="text-sm font-medium text-foreground truncate cursor-pointer hover:text-primary transition-colors"
+          onClick={() => window.location.href = `/responses/${response.id}`}
+        >
+          Response to RFP #{response.rfp_id}
+        </p>
         <p className="text-xs text-muted-foreground">
           {formatDate(response.created_at)}
         </p>
@@ -82,11 +86,11 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
   );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
       {/* Recent RFPs */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <FileText className="h-5 w-5 text-blue-600" />
             Recent RFPs
           </CardTitle>
@@ -100,9 +104,8 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
             return rfps && rfps.length > 0 ? (
               rfps.slice(0, 5).map(renderRfpItem)
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">{isBuyer ? 'No recent RFPs' : 'No available RFPs'}</p>
+              <div className="text-center py-4 text-muted-foreground text-sm">
+                No RFPs found
               </div>
             );
           })()}
@@ -112,7 +115,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
       {/* Recent Responses */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Users className="h-5 w-5 text-purple-600" />
             Recent Responses
           </CardTitle>
@@ -122,13 +125,12 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
         </CardHeader>
         <CardContent className="space-y-2">
           {(() => {
-            const responses = isBuyer ? data.recentResponses : data.myResponses;
+            const responses = data.myResponses || data.recentResponses;
             return responses && responses.length > 0 ? (
               responses.slice(0, 5).map(renderResponseItem)
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No recent responses</p>
+              <div className="text-center py-4 text-muted-foreground text-sm">
+                No responses found
               </div>
             );
           })()}
@@ -138,28 +140,51 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
       {/* Recent Activity */}
       <Card className="border-0 shadow-sm">
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Activity className="h-5 w-5 text-green-600" />
-                Recent Activity
-              </CardTitle>
-              <CardDescription>Your recent system activity</CardDescription>
-            </div>
-            <Link 
-              to="/audit" 
-              className="text-sm text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-            >
-              View All
-              <Activity className="h-3 w-3" />
-            </Link>
-          </div>
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Activity className="h-5 w-5 text-green-600" />
+            Recent Activity
+          </CardTitle>
+          <CardDescription>
+            Your recent system activity
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <AuditTrailList
-            auditTrails={auditData?.data || []}
-            isLoading={false}
-          />
+        <CardContent className="space-y-2">
+          {auditData?.data && auditData.data.length > 0 ? (
+            <div className="space-y-2">
+              {auditData.data.slice(0, 5).map((audit) => (
+                <div key={audit.id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="p-1.5 bg-green-50 rounded-lg">
+                    <Activity className="h-3 w-3 text-green-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">
+                      {audit.action}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(audit.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <div className="pt-2">
+                <Link 
+                  to="/audit" 
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  View All Activity →
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-4 text-muted-foreground text-sm">
+              No recent activity
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

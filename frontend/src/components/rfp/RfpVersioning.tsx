@@ -103,7 +103,7 @@ export const RfpVersioning: React.FC<RfpVersioningProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-col md:flex-row gap-2">
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="flex items-center gap-1">
                 <CheckCircle className="h-3 w-3" />

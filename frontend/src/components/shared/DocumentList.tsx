@@ -28,7 +28,7 @@ export const DocumentList: React.FC<DocumentListProps> = ({ documents, onDelete,
         ) : (
           <ul className="space-y-2">
             {documents.map((doc) => (
-              <li key={doc.id} className="flex items-center justify-between p-2 border rounded-md">
+              <li key={doc.id} className="flex gap-2 flex-col md:flex-row items-center justify-between p-2 border rounded-md">
                 <div className="flex items-center gap-3 min-w-0">
                   <File className="h-6 w-6 text-primary shrink-0" />
                   <a 

@@ -72,7 +72,6 @@ export const ResponseDetailPage: React.FC = () => {
   const canManageDocuments = permissionHelpers.hasPermission('supplier_response', 'manage_documents');
   const canSubmitResponse = permissionHelpers.hasPermission('supplier_response', 'submit');
   const isOwner = user?.id === response?.supplier?.id;
-  const isRfpOwner = user?.id === response?.rfp?.buyer?.id;
   const canUploadDocuments = canManageDocuments && isOwner; // Only supplier can upload documents
   const canDeleteDocuments = canManageDocuments && isOwner; // Only supplier can delete documents
   const canSubmit = canSubmitResponse && isOwner && response?.status.code === 'Draft';
@@ -131,45 +130,52 @@ export const ResponseDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 sm:py-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-2">Response Details</h1>
-            <div className="flex items-center gap-4">
-              <Badge className={`${getStatusColor(response.status.code)} text-white`}>
-                {response.status.label}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                {response.status.code === 'Draft' ? 'Created' : 'Submitted'} on {format(new Date(response.created_at), 'MMM dd, yyyy')}
-              </span>
+        <div className="flex flex-col gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="w-fit">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">
+                Response to {response.rfp.title}
+              </h1>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <Badge className={`${getStatusColor(response.status.code)} text-white w-fit`}>
+                  {response.status.label}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Submitted by {response.supplier.email}
+                </span>
+              </div>
             </div>
           </div>
-          {canSubmit && (
-            <Button 
-              onClick={() => {
-                if (window.confirm('Are you sure you want to submit this response? You won\'t be able to edit it after submission.')) {
-                  submitResponseMutation.mutate(response.id);
-                }
-              }}
-              disabled={submitResponseMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {submitResponseMutation.isPending ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4 mr-2" />
-              )}
-              Submit Response
-            </Button>
-          )}
           
-          {/* Lifecycle Actions for RFP Owner */}
-          {isRfpOwner && (
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2">
+            {canSubmit && (
+              <Button 
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to submit this response? You won\'t be able to edit it after submission.')) {
+                    submitResponseMutation.mutate(response.id);
+                  }
+                }}
+                disabled={submitResponseMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700"
+                size="sm"
+              >
+                {submitResponseMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                Submit Response
+              </Button>
+            )}
+            
+            {/* Lifecycle Actions */}
             <ResponseLifecycleActions 
               response={response}
               onActionComplete={() => {
@@ -177,10 +183,10 @@ export const ResponseDetailPage: React.FC = () => {
                 window.location.reload();
               }}
             />
-          )}
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {response.status.code === 'Rejected' && response.rejection_reason && (
@@ -206,7 +212,7 @@ export const ResponseDetailPage: React.FC = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Cover Letter</h3>
                   <p className="text-muted-foreground whitespace-pre-wrap">
-                    {response.cover_letter || 'No cover letter provided'}
+                    {response.cover_letter}
                   </p>
                 </div>
                 <Separator />
@@ -302,16 +308,14 @@ export const ResponseDetailPage: React.FC = () => {
                   </p>
                 </div>
                 <Separator />
-                <div>
-                  <h4 className="font-medium text-sm text-muted-foreground">RFP</h4>
-                  <p className="font-medium">{response.rfp?.title}</p>
-                  <Button 
-                    variant="link" 
-                    className="p-0 h-auto text-sm"
-                    onClick={() => navigate(`/rfps/${response.rfp_id}`)}
+                <div className="space-y-2">
+                  <h3 className="font-semibold">RFP</h3>
+                  <p 
+                    className="font-medium cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => navigate(`/rfps/${response.rfp.id}`)}
                   >
-                    View RFP Details
-                  </Button>
+                    {response.rfp?.title}
+                  </p>
                 </div>
                 <Separator />
                 <div>

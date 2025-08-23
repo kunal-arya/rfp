@@ -32,7 +32,7 @@ export const EditRfpPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
           <p className="text-muted-foreground">Loading RFP...</p>
@@ -43,7 +43,7 @@ export const EditRfpPage: React.FC = () => {
 
   if (isError || !rfp) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-destructive mb-4">Error loading RFP or RFP not found</p>
           <Button onClick={() => navigate('/dashboard')}>Go to Dashboard</Button>
@@ -66,14 +66,14 @@ export const EditRfpPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+    <div className="container mx-auto px-4 py-4 sm:py-8">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 sm:mb-8">
+        <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="w-fit">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Edit RFP</h1>
+        <div className="flex-1">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Edit RFP</h1>
           <p className="text-muted-foreground">
             Update the details of your Request for Proposal.
           </p>

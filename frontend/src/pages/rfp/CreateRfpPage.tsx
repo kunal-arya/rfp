@@ -65,15 +65,15 @@ export const CreateRfpPage: React.FC = () => {
   const isLoading = createRfpMutation.isPending || uploadDocumentMutation.isPending;
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Create New RFP</h1>
+    <div className="container mx-auto px-4 py-4 sm:py-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Create New RFP</h1>
         <p className="text-muted-foreground">
           Create a new Request for Proposal and upload supporting documents to find the right suppliers for your project.
         </p>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {/* RFP Form */}
         <RfpForm
           mode="create"

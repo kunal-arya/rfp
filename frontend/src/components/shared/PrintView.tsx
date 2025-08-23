@@ -9,6 +9,7 @@ interface PrintViewProps {
 
 export const PrintView = forwardRef<HTMLDivElement, PrintViewProps>(
   ({ type, data, rfpTitle }, ref) => {
+
     const renderRfpDetails = (rfp: RFP) => (
       <div className="space-y-6">
         <div className="text-center border-b pb-4">
@@ -61,6 +62,7 @@ export const PrintView = forwardRef<HTMLDivElement, PrintViewProps>(
     );
 
     const renderRfpList = (rfps: RFP[]) => (
+      console.log(rfps),
       <div className="space-y-6">
         <div className="text-center border-b pb-4">
           <h1 className="text-2xl font-bold">RFP List</h1>

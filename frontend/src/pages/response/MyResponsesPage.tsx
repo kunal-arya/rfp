@@ -100,9 +100,9 @@ export const MyResponsesPage: React.FC = () => {
   ];
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">My Responses</h1>
+    <div className="container mx-auto px-4 py-4 sm:py-8 space-y-6 sm:space-y-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">My Responses</h1>
         <p className="text-muted-foreground">
           Manage your responses to RFPs and track their status.
         </p>
@@ -129,11 +129,11 @@ export const MyResponsesPage: React.FC = () => {
         {/* Pagination */}
         {responsesData && responsesData.total > pageSize && (
           <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="text-sm text-muted-foreground">
+            <CardContent className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4">
+              <div className="text-sm text-muted-foreground text-center sm:text-left">
                 Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, responsesData.total)} of {responsesData.total} responses
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -141,10 +141,10 @@ export const MyResponsesPage: React.FC = () => {
                   disabled={currentPage === 1}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
+                  <span className="hidden sm:inline">Previous</span>
                 </Button>
                 <span className="text-sm font-medium px-3 py-1 bg-muted rounded">
-                  Page {currentPage} of {Math.ceil(responsesData.total / pageSize)}
+                  {currentPage} / {Math.ceil(responsesData.total / pageSize)}
                 </span>
                 <Button
                   variant="outline"
@@ -152,7 +152,7 @@ export const MyResponsesPage: React.FC = () => {
                   onClick={handleNextPage}
                   disabled={currentPage >= Math.ceil(responsesData.total / pageSize)}
                 >
-                  Next
+                  <span className="hidden sm:inline">Next</span>
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
               </div>

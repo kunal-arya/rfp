@@ -84,7 +84,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
   const currentStats = isBuyer ? buyerStats : supplierStats;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
       {currentStats.map((stat, index) => {
         const Icon = stat.icon;
         return (
@@ -99,9 +99,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {stat.description}
-              </p>
+              <p className="text-xs text-muted-foreground">{stat.description}</p>
             </CardContent>
           </Card>
         );

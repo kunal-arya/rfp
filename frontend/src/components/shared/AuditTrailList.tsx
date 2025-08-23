@@ -60,7 +60,40 @@ const formatDetails = (details: Record<string, unknown>) => {
   return parts.join(' ');
 };
 
+const getClickableDetails = (audit: AuditTrail) => {
+  const details = audit.details as Record<string, unknown>;
+  if (!details) return null;
+
+  // Check if this is an RFP-related action
+  if (audit.action.includes('RFP') && details.title) {
+    return {
+      type: 'rfp',
+      title: details.title as string,
+      id: audit.target_id
+    };
+  }
+
+  // Check if this is a response-related action
+  if (audit.action.includes('RESPONSE') && details.rfp_title) {
+    return {
+      type: 'response',
+      title: `Response for "${details.rfp_title}"`,
+      id: audit.target_id
+    };
+  }
+
+  return null;
+};
+
 export const AuditTrailList: React.FC<AuditTrailListProps> = ({ auditTrails, isLoading }) => {
+  const handleItemClick = (clickableItem: { type: string; id: string }) => {
+    if (clickableItem.type === 'rfp') {
+      window.location.href = `/rfps/${clickableItem.id}`;
+    } else if (clickableItem.type === 'response') {
+      window.location.href = `/responses/${clickableItem.id}`;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4 animate-pulse">
@@ -88,35 +121,46 @@ export const AuditTrailList: React.FC<AuditTrailListProps> = ({ auditTrails, isL
 
   return (
     <div className="max-h-72 overflow-y-auto pr-2 space-y-3 border-t border-gray-200">
-      {auditTrails.map((audit) => (
-        <div
-          key={audit.id}
-          className="flex items-start gap-3 p-3 rounded-lg border hover:shadow-sm transition bg-white"
-        >
-          <div className="flex-shrink-0 mt-1">
-            <div className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100">
-              {getActionIcon(audit.action)}
+      {auditTrails.map((audit) => {
+        const clickableItem = getClickableDetails(audit);
+        
+        return (
+          <div
+            key={audit.id}
+            className={`flex items-start gap-3 p-3 rounded-lg border hover:shadow-sm transition bg-white ${
+              clickableItem ? 'cursor-pointer hover:bg-gray-50' : ''
+            }`}
+            onClick={() => clickableItem && handleItemClick(clickableItem)}
+          >
+            <div className="flex-shrink-0 mt-1">
+              <div className="h-9 w-9 flex items-center justify-center rounded-full bg-gray-100">
+                {getActionIcon(audit.action)}
+              </div>
             </div>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1">
-              <Badge className="text-xs mb-1 font-semibold">{formatAction(audit.action)}</Badge>
-            </div>
-            {audit.user && (
-              <p className="text-sm text-start text-gray-800 font-semibold flex items-center gap-1">
-                <User className="h-3 w-3" />
-                {audit.user.email}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1">
+                <Badge className="text-xs mb-1 font-semibold">{formatAction(audit.action)}</Badge>
+              </div>
+              {audit.user && (
+                <p className="text-sm text-start text-gray-800 font-semibold flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  {audit.user.email}
+                </p>
+              )}
+              {audit.details && (
+                <p className={`text-sm text-start font-medium ${
+                  clickableItem ? 'text-blue-600 hover:text-blue-800' : 'text-gray-500'
+                }`}>
+                  {formatDetails(audit.details)}
+                </p>
+              )}
+              <p className="text-xs text-start text-gray-500 mt-1">
+                {format(new Date(audit.created_at), 'MMM dd, yyyy HH:mm')}
               </p>
-            )}
-            {audit.details && (
-              <p className="text-sm text-start text-gray-500 font-medium">{formatDetails(audit.details)}</p>
-            )}
-            <p className="text-xs text-start text-gray-500 mt-1">
-              {format(new Date(audit.created_at), 'MMM dd, yyyy HH:mm')}
-            </p>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
