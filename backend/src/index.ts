@@ -18,7 +18,14 @@ const port = process.env.PORT || 3000;
 
 // Enable CORS for all origins
 app.use(cors({
-  origin: '*', // Allow all origins
+  origin: [
+    'https://rfpflow.xyz',
+    'https://www.rfpflow.xyz',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173', // if using Vite
+    'http://localhost:4173'  // if using Vite preview
+  ], // Allow all origins
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   credentials: true
