@@ -141,7 +141,7 @@ export const awardRfp = async (req: AuthenticatedRequest, res: Response) => {
     }
 };
 
-export const getPublishedRfps = async (req: AuthenticatedRequest, res: Response) => {
+export const getAllRfps = async (req: AuthenticatedRequest, res: Response) => {
     try {
         let { page: pageNumber, limit: limitNumber, search, show_new_rfps, ...filters } = req.query;
 
@@ -168,7 +168,7 @@ export const getPublishedRfps = async (req: AuthenticatedRequest, res: Response)
         const generalFilters = modifyGeneralFilterPrisma(rfpFilters);
         const versionGeneralFilters = modifyGeneralFilterPrisma(versionFilters);
 
-        const rfps = await rfpService.getPublishedRfps(
+        const rfps = await rfpService.getAllRfps(
             generalFilters,
             versionGeneralFilters,
             offset,

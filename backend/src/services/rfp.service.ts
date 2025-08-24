@@ -716,7 +716,7 @@ export const awardRfp = async (rFPId: string, responseId: string, buyerId: strin
     return updatedRfp;
 };
 
-export const getPublishedRfps = async (
+export const getAllRfps = async (
     rfpFilters: any,
     versionFilters: any,
     offset: number,
@@ -725,14 +725,25 @@ export const getPublishedRfps = async (
     user?: any,
     show_new_rfps?: any
 ) => {
+
+    if (user?.role === RoleName.Supplier && show_new_rfps) {
+        const newRfps = await getNewRfpsForSupplierService(user.userId);
+        return { total: newRfps.length, page: 1, limit: newRfps.length, data: newRfps };
+    }
+    
     // Apply version filters to current_version
     if (Object.keys(versionFilters).length > 0) {
         rfpFilters.current_version = { ...versionFilters };
     }
 
+    // Initialize base where conditions
+    const baseWhere: any = {
+        deleted_at: null,
+    };
+
     // Add search across RFP and current_version fields
     if (search) {
-        rfpFilters.OR = [
+        baseWhere.OR = [ // Use OR for search terms
             { title: { contains: search, mode: 'insensitive' } },
             { current_version: { description: { contains: search, mode: 'insensitive' } } },
             { current_version: { requirements: { contains: search, mode: 'insensitive' } } },
@@ -740,20 +751,49 @@ export const getPublishedRfps = async (
         ];
     }
 
-    const rfps = await prisma.rFP.findMany({
-        where: {
-            deleted_at: null,
-            ...((user?.role === RoleName.Supplier && show_new_rfps) 
-                ? {
-                    supplier_responses: {
-                      none: {
-                        supplier_id: user.userId, // exclude RFPs that already have a response from this supplier
-                      },
+    // Apply supplier-specific logic
+    if (user?.role === RoleName.Supplier) {
+        // Use OR to combine the two conditions for suppliers
+        baseWhere.AND = [ // Combine supplier-specific OR with other filters using AND
+            baseWhere.AND || {}, // Preserve existing AND conditions if any (e.g., from search)
+            {
+                OR: [
+                    // Condition 1: RFPs the supplier has responded to (not draft)
+                    {
+                        status: {
+                            code: {
+                                not: RFP_STATUS.Draft,
+                            },
+                        },
+                        supplier_responses: {
+                            some: {
+                                supplier_id: user.userId,
+                            },
+                        },
                     },
-                  }
-                : {}),
-            ...rfpFilters
-        },
+                    // Condition 2: Published RFPs the supplier has NOT responded to
+                    {
+                        status: {
+                            code: RFP_STATUS.Published,
+                        },
+                        supplier_responses: {
+                            none: {
+                                supplier_id: user.userId,
+                            },
+                        },
+                    },
+                ],
+            },
+        ];
+    }
+
+    // Merge rfpFilters last, ensuring they don't overwrite the OR/AND logic
+    // This assumes rfpFilters are additional AND conditions
+    Object.assign(baseWhere, rfpFilters);
+
+
+    const rfps = await prisma.rFP.findMany({
+        where: baseWhere,
         skip: offset,
         take: limit,
         include: {
@@ -772,23 +812,27 @@ export const getPublishedRfps = async (
     });
 
     const total = await prisma.rFP.count({
-        where: {
-            deleted_at: null,
-            ...((user?.role === RoleName.Supplier && show_new_rfps) 
-                ? {
-                    supplier_responses: {
-                      none: {
-                        supplier_id: user.userId, // exclude RFPs that already have a response from this supplier
-                      },
-                    },
-                  }
-                : {}),
-            ...rfpFilters
-        }
+        where: baseWhere // Use the same baseWhere for total count
     });
 
     return { total, page: Math.floor(offset / limit) + 1, limit, data: rfps };
 };
+
+async function getNewRfpsForSupplierService(supplierId: string) {
+    return prisma.rFP.findMany({
+      where: {
+        status: {
+          code: RFP_STATUS.Published,
+        },
+        supplier_responses: {
+          none: {
+            supplier_id: supplierId,
+          }
+        }
+      },
+      orderBy: { created_at: 'desc' },
+    });
+  }  
 
 export const createDraftResponse = async (rFPId: string, responseData: SubmitResponseData, supplierId: string) => {
     const { proposed_budget, timeline, cover_letter } = responseData;

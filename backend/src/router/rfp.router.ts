@@ -27,7 +27,7 @@ router.use(protect);
 router.get(
     '/all',
     hasPermission('rfp', 'view'),
-    rfpController.getPublishedRfps
+    rfpController.getAllRfps
 );
 
 /**
