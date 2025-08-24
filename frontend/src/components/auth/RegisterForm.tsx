@@ -11,6 +11,7 @@ import { useRegister } from '@/hooks/useRegister';
 import { Mail, User, AlertCircle } from 'lucide-react';
 
 const registerSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string(),
@@ -67,6 +68,20 @@ export const RegisterForm: React.FC = () => {
               </AlertDescription>
             </Alert>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Enter your name"
+              {...register('name')}
+              className={errors.name ? 'border-destructive' : ''}
+            />
+            {errors.name && (
+              <p className="text-sm text-destructive">{errors.name.message}</p>
+            )}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>

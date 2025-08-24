@@ -7,6 +7,7 @@ export interface LoginData {
 }
 
 export interface RegisterData {
+  name: string;
   email: string;
   password: string;
   roleName: 'Buyer' | 'Supplier';

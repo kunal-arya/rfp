@@ -24,6 +24,7 @@ export interface RfpFilters {
   deadline_to?: string;
   page?: number;
   limit?: number;
+  show_new_rfps?: 1 | 0;
 }
 
 export const rfpApi = {

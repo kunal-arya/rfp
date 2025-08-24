@@ -154,7 +154,7 @@ export const ResponseDetailPage: React.FC = () => {
           </div>
           
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 flex-row-reverse">
             {canSubmit && (
               <Button 
                 onClick={() => {
@@ -271,7 +271,7 @@ export const ResponseDetailPage: React.FC = () => {
             </Card>
 
             {/* Upload Documents - Only show if supplier owns the response */}
-            {canUploadDocuments && (
+            {canUploadDocuments && response.status.code === 'Draft' && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">

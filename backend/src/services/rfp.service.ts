@@ -722,16 +722,9 @@ export const getPublishedRfps = async (
     offset: number,
     limit: number,
     search?: string,
-    user?: any
+    user?: any,
+    show_new_rfps?: any
 ) => {
-    const publishedStatus = await prisma.rFPStatus.findUnique({
-        where: { code: 'Published' },
-    });
-
-    if (!publishedStatus) {
-        throw new Error('Published status not found');
-    }
-
     // Apply version filters to current_version
     if (Object.keys(versionFilters).length > 0) {
         rfpFilters.current_version = { ...versionFilters };
@@ -749,9 +742,8 @@ export const getPublishedRfps = async (
 
     const rfps = await prisma.rFP.findMany({
         where: {
-            status_id: publishedStatus.id,
             deleted_at: null,
-            ...(user?.role === RoleName.Supplier
+            ...((user?.role === RoleName.Supplier && show_new_rfps) 
                 ? {
                     supplier_responses: {
                       none: {
@@ -772,6 +764,7 @@ export const getPublishedRfps = async (
                     },
                 },
             },
+            status: true,
             buyer: true,
             supplier_responses: true
         },
@@ -780,13 +773,21 @@ export const getPublishedRfps = async (
 
     const total = await prisma.rFP.count({
         where: {
-            status_id: publishedStatus.id,
             deleted_at: null,
+            ...((user?.role === RoleName.Supplier && show_new_rfps) 
+                ? {
+                    supplier_responses: {
+                      none: {
+                        supplier_id: user.userId, // exclude RFPs that already have a response from this supplier
+                      },
+                    },
+                  }
+                : {}),
             ...rfpFilters
         }
     });
 
-    return { total, page: offset / ( limit + 1 ), limit, data: rfps };
+    return { total, page: Math.floor(offset / limit) + 1, limit, data: rfps };
 };
 
 export const createDraftResponse = async (rFPId: string, responseData: SubmitResponseData, supplierId: string) => {
@@ -891,6 +892,7 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
             status: true,
             supplier: true,
             documents: true,
+            rfp: true,
         },
     });
 
@@ -1255,7 +1257,7 @@ export const awardResponse = async (responseId: string, buyerId: string) => {
     const { updatedResponse, updatedRfp } = updatedResponseRfp;
 
     // Send real-time notification to supplier
-    notifyResponseAwarded(updateResponse, updatedResponse.supplier_id);
+    notifyResponseAwarded(updatedResponse, updatedResponse.supplier_id);
 
     // Send email notification to supplier
     await sendResponseAwardedNotification(responseId);

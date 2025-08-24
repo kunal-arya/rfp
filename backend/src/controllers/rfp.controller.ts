@@ -143,7 +143,7 @@ export const awardRfp = async (req: AuthenticatedRequest, res: Response) => {
 
 export const getPublishedRfps = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        let { page: pageNumber, limit: limitNumber, search, ...filters } = req.query;
+        let { page: pageNumber, limit: limitNumber, search, show_new_rfps, ...filters } = req.query;
 
         const page: number = pageNumber ? parseInt(pageNumber as string) : 1;
         const limit: number = limitNumber ? parseInt(limitNumber as string) : 10;
@@ -174,7 +174,8 @@ export const getPublishedRfps = async (req: AuthenticatedRequest, res: Response)
             offset,
             limit,
             search as string | undefined,
-            req.user as any
+            req.user as any,
+            show_new_rfps
         );
 
         res.json(rfps);

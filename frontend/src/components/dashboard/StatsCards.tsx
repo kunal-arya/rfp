@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardStats } from '@/apis/types';
 import { FileText, Users, TrendingUp, Clock, CheckCircle, XCircle } from 'lucide-react';
@@ -9,7 +10,14 @@ interface StatsCardsProps {
 }
 
 export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
+  const navigate = useNavigate();
   const isBuyer = role === 'Buyer';
+
+  const handleCardClick = (destination: string, filters?: Record<string, string>) => {
+    const queryParams = filters ? new URLSearchParams(filters).toString() : '';
+    const url = queryParams ? `${destination}?${queryParams}` : destination;
+    navigate(url);
+  };
 
   const buyerStats = [
     {
@@ -19,6 +27,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
       icon: FileText,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
+      destination: '/rfps/my',
     },
     {
       title: 'Published RFPs',
@@ -27,6 +36,8 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
       icon: TrendingUp,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
+      destination: '/rfps/my',
+      filters: { status: 'Published' },
     },
     {
       title: 'Total Responses',
@@ -35,6 +46,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
       icon: Users,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
+      destination: '/rfps/my',
     },
     {
       title: 'Pending Review',
@@ -43,6 +55,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
       icon: Clock,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
+      destination: '/rfps/my',
     },
   ];
 
@@ -54,6 +67,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
       icon: FileText,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
+      destination: '/rfps/browse',
     },
     {
       title: 'My Responses',
@@ -62,6 +76,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
       icon: Users,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
+      destination: '/responses/my',
     },
     {
       title: 'Approved',
@@ -70,6 +85,8 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
       icon: CheckCircle,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
+      destination: '/responses/my',
+      filters: { status: 'Approved' },
     },
     {
       title: 'Rejected',
@@ -78,6 +95,8 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
       icon: XCircle,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
+      destination: '/responses/my',
+      filters: { status: 'Rejected' },
     },
   ];
 
@@ -88,7 +107,11 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
       {currentStats.map((stat, index) => {
         const Icon = stat.icon;
         return (
-          <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+          <Card 
+            key={index} 
+            className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer hover:bg-muted/50"
+            onClick={() => handleCardClick(stat.destination, stat.filters)}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}

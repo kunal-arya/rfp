@@ -2,6 +2,7 @@
 
 export interface User {
   id: string;
+  name: string;
   email: string;
   role: {
     name: string;
@@ -13,6 +14,7 @@ export interface AuthResponse {
   token: string;
   permissions: Record<string, unknown>;
   user: {
+    name: string;
     email: string;
     id: string;
     role_id: string;

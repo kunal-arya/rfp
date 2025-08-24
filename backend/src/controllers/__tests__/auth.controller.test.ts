@@ -20,6 +20,7 @@ describe('Auth Controller', () => {
 
   describe('register', () => {
     const validRegisterBody = {
+      name: 'John Doe',
       email: 'test@example.com',
       password: 'password123',
       roleName: 'Buyer',
@@ -30,6 +31,7 @@ describe('Auth Controller', () => {
       const mockResponse = {
         user: { 
           id: '1', 
+          name: 'John Doe',
           email: 'test@example.com', 
           role: 'Buyer',
           role_id: 'buyer-role-id',
@@ -45,6 +47,7 @@ describe('Auth Controller', () => {
       await register(req as Request, res as Response);
 
       expect(mockAuthService.register).toHaveBeenCalledWith(
+        validRegisterBody.name,
         validRegisterBody.email,
         validRegisterBody.password,
         validRegisterBody.roleName
@@ -108,6 +111,7 @@ describe('Auth Controller', () => {
         token: 'mock-token',
         permissions: { dashboard: { view: { allowed: true } } },
         user: { 
+          name: 'John Doe',
           id: '1', 
           email: 'buyer@example.com', 
           role: 'Buyer',

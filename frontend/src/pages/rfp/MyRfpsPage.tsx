@@ -125,7 +125,7 @@ export const MyRfpsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6"> 
         <RfpList
           handleFilterChange={handleFilterChange}
           rfpStatuses={rfpStatuses}
@@ -138,6 +138,7 @@ export const MyRfpsPage: React.FC = () => {
           onCreateRfp={handleCreateRfp}
           showCreateButton={true}
           showActions={true}
+          page="MyRfpsPage"
         />
 
         {/* Pagination */}

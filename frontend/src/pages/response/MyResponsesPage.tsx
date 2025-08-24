@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ResponseList } from '@/components/response/ResponseList';
 import { useMyResponses } from '@/hooks/useResponse';
 import { useDeleteResponse, useSubmitResponse } from '@/hooks/useResponse';
-import { AdvancedFilterBar, Filters } from '@/components/shared/AdvancedFilterBar';
+import { Filters } from '@/components/shared/AdvancedFilterBar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
@@ -32,7 +32,7 @@ export const MyResponsesPage: React.FC = () => {
     
     const processedFilters: any = {
       search: newFilters.search,
-      status: newFilters.status,
+      response_status: newFilters.response_status,
     };
 
     // Handle date range filters

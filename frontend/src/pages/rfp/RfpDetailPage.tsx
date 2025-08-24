@@ -157,7 +157,7 @@ export const RfpDetailPage: React.FC = () => {
           </div>
           
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 flex-row-reverse">
             {isOwner && canEditRfp && isDraft && (
               <Button onClick={() => navigate(`/rfps/${rfpId}/edit`)} size="sm">
                 <Edit className="h-4 w-4 mr-2" />

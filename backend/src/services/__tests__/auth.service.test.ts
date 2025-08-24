@@ -38,22 +38,24 @@ describe('Auth Service', () => {
 
   describe('register', () => {
     const registerData = {
-      email: 'test@example.com',
+      name: 'John Doe',
+      email: 'buyer@example.com',
       password: 'password123',
       roleName: 'Buyer' as const,
     };
 
-    it('should register a new user successfully', async () => {
+    it('should register user successfully', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.role.findUnique.mockResolvedValue(mockRoles.buyer);
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedpassword');
       mockPrisma.user.create.mockResolvedValue({
         ...mockUsers.buyer,
+        name: registerData.name,
         email: registerData.email,
       });
       (jwt.sign as jest.Mock).mockReturnValue('mock-token');
 
-      const result = await register(registerData.email, registerData.password, registerData.roleName);
+      const result = await register(registerData.name, registerData.email, registerData.password, registerData.roleName);
 
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { email: registerData.email },
@@ -64,6 +66,7 @@ describe('Auth Service', () => {
       expect(bcrypt.hash).toHaveBeenCalledWith(registerData.password, 10);
       expect(mockPrisma.user.create).toHaveBeenCalledWith({
         data: {
+          name: registerData.name,
           email: registerData.email,
           password_hash: 'hashedpassword',
           role_id: mockRoles.buyer.id,
@@ -74,6 +77,7 @@ describe('Auth Service', () => {
       expect(result).toHaveProperty('permissions');
       expect(result).toHaveProperty('token');
       expect(result.user.email).toBe(registerData.email);
+      expect(result.user.name).toBe(registerData.name);
       expect(result.token).toBe('mock-token');
     });
 
@@ -81,7 +85,7 @@ describe('Auth Service', () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUsers.buyer);
 
       await expect(
-        register(registerData.email, registerData.password, registerData.roleName)
+        register(registerData.name, registerData.email, registerData.password, registerData.roleName)
       ).rejects.toThrow('Email already exists');
     });
 
@@ -90,7 +94,7 @@ describe('Auth Service', () => {
       mockPrisma.role.findUnique.mockResolvedValue(null);
 
       await expect(
-        register(registerData.email, registerData.password, registerData.roleName)
+        register(registerData.name, registerData.email, registerData.password, registerData.roleName)
       ).rejects.toThrow('Role not found');
     });
 
@@ -98,7 +102,7 @@ describe('Auth Service', () => {
       mockPrisma.user.findUnique.mockRejectedValue(new Error('Database error'));
 
       await expect(
-        register(registerData.email, registerData.password, registerData.roleName)
+        register(registerData.name, registerData.email, registerData.password, registerData.roleName)
       ).rejects.toThrow('Database error');
     });
   });

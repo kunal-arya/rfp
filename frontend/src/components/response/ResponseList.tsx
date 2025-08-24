@@ -93,7 +93,7 @@ export const ResponseList: React.FC<ResponseListProps> = ({
         <div className="flex gap-2 items-center">
           <h2 className="text-2xl font-bold">Responses</h2>
           {handleFilterChange && responseStatuses.length > 0 && (
-            <AdvancedFilterBar onFilterChange={handleFilterChange} statuses={responseStatuses} />
+            <AdvancedFilterBar page="MyResponsesPage" onFilterChange={handleFilterChange} statuses={responseStatuses} filterType="response" />
           )}
         </div>
         

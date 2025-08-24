@@ -28,6 +28,7 @@ describe('Auth Router', () => {
 
   describe('POST /api/auth/register', () => {
     const validRegisterData = {
+      name: 'John Doe',
       email: 'test@example.com',
       password: 'password123',
       roleName: 'Buyer',
@@ -35,7 +36,7 @@ describe('Auth Router', () => {
 
     it('should register user successfully', async () => {
       const mockResponse = {
-        user: { id: '1', email: 'test@example.com', role: 'Buyer', role_id: '1', created_at: new Date(), updated_at: new Date() },
+        user: { id: '1', name: 'John Doe', email: 'test@example.com', role: 'Buyer', role_id: '1', created_at: new Date('2025-08-24T07:23:49.564Z'), updated_at: new Date('2025-08-24T07:23:49.564Z') },
         permissions: { dashboard: { view: { allowed: true } } },
         token: 'mock-token',
       };
@@ -49,6 +50,7 @@ describe('Auth Router', () => {
 
       expect(response.body).toEqual(mockResponse);
       expect(mockAuthService.register).toHaveBeenCalledWith(
+        validRegisterData.name,
         validRegisterData.email,
         validRegisterData.password,
         validRegisterData.roleName
@@ -103,7 +105,7 @@ describe('Auth Router', () => {
       const mockResponse = {
         token: 'mock-token',
         permissions: { dashboard: { view: { allowed: true } } },
-        user: { id: '1', email: 'buyer@example.com', role: 'Buyer', role_id: '1', created_at: new Date(), updated_at: new Date() },
+        user: { name: 'John Doe', id: '1', email: 'buyer@example.com', role: 'Buyer', role_id: '1', created_at: new Date('2025-08-24T07:23:49.603Z'), updated_at: new Date('2025-08-24T07:23:49.603Z') },
       };
 
       mockAuthService.login.mockResolvedValue(mockResponse);

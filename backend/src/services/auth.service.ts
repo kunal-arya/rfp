@@ -5,7 +5,7 @@ import { createAuditEntry, AUDIT_ACTIONS } from './audit.service';
 
 const prisma = new PrismaClient();
 
-export const register = async (email: string, password: string, roleName: 'Buyer' | 'Supplier') => {
+export const register = async (name: string, email: string, password: string, roleName: 'Buyer' | 'Supplier') => {
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
         throw new Error('Email already exists');
@@ -21,6 +21,7 @@ export const register = async (email: string, password: string, roleName: 'Buyer
 
     const user = await prisma.user.create({
         data: {
+            name,
             email,
             password_hash,
             role_id: role.id,
@@ -31,6 +32,7 @@ export const register = async (email: string, password: string, roleName: 'Buyer
     const token = jwtToken(user, role);
     // Create audit trail entry for registration
     await createAuditEntry(user.id, AUDIT_ACTIONS.USER_REGISTERED, 'User', user.id, {
+        name: user.name,
         email: user.email,
         role: role.name,
     });
@@ -91,6 +93,7 @@ export const login = async (email: string, password: string) => {
         token,
         permissions: user.role.permissions,
         user: {
+            name: user.name,
             email: user.email,
             id: user.id,
             role_id: user.role_id,

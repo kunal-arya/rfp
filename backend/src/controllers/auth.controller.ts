@@ -9,10 +9,10 @@ export const register = async (req: Request, res: Response) => {
         return res.status(400).json({ errors: validationResult.error.issues });
     }
 
-    const { email, password, roleName } = validationResult.data;
+    const { name, email, password, roleName } = validationResult.data;
 
     try {
-        const user = await authService.register(email, password, roleName);
+        const user = await authService.register(name, email, password, roleName);
         res.status(201).json(user);
     } catch (error: any) {
         if (error.message === 'Email already exists') {

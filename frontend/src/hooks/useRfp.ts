@@ -13,7 +13,7 @@ export const useAllRfps = (filters?: RfpFilters) => {
 export const usePublishedRfps = (filters?: RfpFilters) => {
   return useQuery({
     queryKey: ['rfps', 'published', filters],
-    queryFn: () => rfpApi.getAllRfps(filters),
+    queryFn: () => rfpApi.getAllRfps({...filters, status: "Published", show_new_rfps: 1}),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

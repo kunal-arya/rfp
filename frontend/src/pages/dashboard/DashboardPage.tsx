@@ -8,6 +8,7 @@ import { StatsCards } from '@/components/dashboard/StatsCards';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
 import { QuickActions } from '@/components/dashboard/QuickActions';
 import { RfpStatusChart } from '@/components/dashboard/charts/RfpStatusChart';
+import { SupplierResponseChart } from '@/components/dashboard/charts/SupplierResponseChart';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
@@ -76,9 +77,15 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             
-            {user?.role === 'Buyer' && stats && (
-              <RfpStatusChart stats={stats} />
-            )}
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 gap-6 sm:gap-8">
+              {user?.role === 'Buyer' && stats && (
+                <RfpStatusChart stats={stats} />
+              )}
+              {user?.role === 'Supplier' && stats && (
+                <SupplierResponseChart stats={stats} />
+              )}
+            </div>
 
             {/* Development Info */}
             <Card className="bg-muted/30 border-dashed">

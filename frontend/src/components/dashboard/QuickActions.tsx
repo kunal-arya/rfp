@@ -34,7 +34,7 @@ export const QuickActions: React.FC = () => {
       description: 'Find RFPs to respond to',
       icon: Search,
       action: () => navigate('/rfps/browse'),
-      permission: permissionHelpers.canSearch,
+      permission: permissionHelpers.canViewRfp,
       color: 'bg-blue-500 hover:bg-blue-600',
     },
     {
