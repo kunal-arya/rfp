@@ -13,6 +13,7 @@ export const useLogin = () => {
       const user = {
         id: response.user.id,
         email: response.user.email,
+        name: response.user.name,
         role_id: response.user.role_id,
         role: response.user.role,
       };

@@ -63,7 +63,7 @@ export const Navbar: React.FC = () => {
       label: 'Browse RFPs',
       path: '/rfps/browse',
       icon: Search,
-      permission: () => permissionHelpers.canSearch,
+      permission: () => permissionHelpers.canViewRfp,
     },
     {
       label: 'My Responses',
