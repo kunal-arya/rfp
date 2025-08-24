@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -18,6 +18,7 @@ export interface Filters {
   search?: string;
   status?: string;
   response_status?: string;
+  action?: string;
   dateRange?: DateRange;
   budgetMin?: number;
   budgetMax?: number;
@@ -26,71 +27,111 @@ export interface Filters {
 
 interface AdvancedFilterBarProps {
   onFilterChange: (filters: Filters) => void;
+  onClearFilters?: () => void; // Add clearFilters prop
   statuses: { value: string; label: string }[];
   initialFilters?: Filters;
-  filterType?: 'rfp' | 'response';
-  page?: "BrowseRfpsPage" | "MyRfpsPage" | "MyResponsesPage";
+  page?: "BrowseRfpsPage" | "MyRfpsPage" | "MyResponsesPage" | "AuditPage";
+  applyOnChange?: boolean; // If true, apply filters immediately on change
 }
 
 export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
   onFilterChange,
+  onClearFilters,
   statuses,
   initialFilters = {},
-  filterType = 'rfp',
   page = "MyRfpsPage",
+  applyOnChange = false,
 }) => {
-  // State for current applied filters
-  const [appliedFilters, setAppliedFilters] = useState<Filters>(initialFilters);
-  
+  // Memoize the initial filters to prevent unnecessary re-renders
+  const stableInitialFilters = useMemo(() => initialFilters, [
+    initialFilters.search,
+    initialFilters.status,
+    initialFilters.response_status,
+    initialFilters.action,
+    initialFilters.dateRange?.from?.getTime(),
+    initialFilters.dateRange?.to?.getTime(),
+    initialFilters.budgetMin,
+    initialFilters.budgetMax,
+    initialFilters.show_new_rfps,
+  ]);
+
   // State for dialog form (temporary state while dialog is open)
-  const [dialogFilters, setDialogFilters] = useState<Filters>(initialFilters);
+  const [dialogFilters, setDialogFilters] = useState<Filters>(stableInitialFilters);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Update dialog filters when applied filters change
-  useEffect(() => {
-    setDialogFilters(appliedFilters);
-  }, [appliedFilters]);
+  // Update dialog filters when stable initial filters change
+  React.useEffect(() => {
+    setDialogFilters(stableInitialFilters);
+  }, [stableInitialFilters]);
 
   const handleApplyFilters = () => {
     const newFilters = {
       search: dialogFilters.search || undefined,
       status: dialogFilters.status === 'all' ? undefined : dialogFilters.status,
       response_status: dialogFilters.response_status === 'all' ? undefined : dialogFilters.response_status,
+      action: dialogFilters.action === 'all' ? undefined : dialogFilters.action,
       dateRange: dialogFilters.dateRange,
       budgetMin: dialogFilters.budgetMin,
       budgetMax: dialogFilters.budgetMax,
       show_new_rfps: dialogFilters.show_new_rfps,
     };
 
-    setAppliedFilters(newFilters);
+    // Call the parent's onFilterChange
     onFilterChange(newFilters);
     setIsDialogOpen(false);
   };
 
   const handleClearFilters = () => {
     const emptyFilters = {};
-    setAppliedFilters(emptyFilters);
     setDialogFilters(emptyFilters);
-    onFilterChange(emptyFilters);
+    
+    // Call the parent's onClearFilters if provided, otherwise use onFilterChange
+    if (onClearFilters) {
+      onClearFilters();
+    } else {
+      onFilterChange(emptyFilters);
+    }
     setIsDialogOpen(false);
   };
 
   const handleDialogClose = () => {
-    // Reset dialog filters to applied filters when dialog is closed without applying
-    setDialogFilters(appliedFilters);
+    // Reset dialog filters to initial filters when dialog is closed without applying
+    setDialogFilters(stableInitialFilters);
     setIsDialogOpen(false);
   };
 
-  // Calculate active filter count
+  const handleFilterChange = (newFilters: Partial<Filters>) => {
+    const updatedFilters = { ...dialogFilters, ...newFilters };
+    setDialogFilters(updatedFilters);
+    
+    // If applyOnChange is true, apply filters immediately
+    if (applyOnChange) {
+      const filtersToApply = {
+        search: updatedFilters.search || undefined,
+        status: updatedFilters.status === 'all' ? undefined : updatedFilters.status,
+        response_status: updatedFilters.response_status === 'all' ? undefined : updatedFilters.response_status,
+        action: updatedFilters.action === 'all' ? undefined : updatedFilters.action,
+        dateRange: updatedFilters.dateRange,
+        budgetMin: updatedFilters.budgetMin,
+        budgetMax: updatedFilters.budgetMax,
+        show_new_rfps: updatedFilters.show_new_rfps,
+      };
+      
+      onFilterChange(filtersToApply);
+    }
+  };
+
+  // Calculate active filter count from stable initial filters
   const getActiveFilterCount = () => {
     let count = 0;
-    if (appliedFilters.search) count++;
-    if (appliedFilters.status && appliedFilters.status !== 'all') count++;
-    if (appliedFilters.response_status && appliedFilters.response_status !== 'all') count++;
-    if (appliedFilters.dateRange?.from || appliedFilters.dateRange?.to) count++;
-    if (appliedFilters.budgetMin && appliedFilters.budgetMin > 0) count++;
-    if (appliedFilters.budgetMax && appliedFilters.budgetMax < 100000) count++;
-    if (appliedFilters.show_new_rfps) count++;
+    if (stableInitialFilters.search) count++;
+    if (stableInitialFilters.status && stableInitialFilters.status !== 'all') count++;
+    if (stableInitialFilters.response_status && stableInitialFilters.response_status !== 'all') count++;
+    if (stableInitialFilters.action && stableInitialFilters.action !== 'all') count++;
+    if (stableInitialFilters.dateRange?.from || stableInitialFilters.dateRange?.to) count++;
+    if (stableInitialFilters.budgetMin && stableInitialFilters.budgetMin > 0) count++;
+    if (stableInitialFilters.budgetMax && stableInitialFilters.budgetMax < 100000) count++;
+    if (stableInitialFilters.show_new_rfps) count++;
     return count;
   };
 
@@ -133,19 +174,27 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                 id="search"
                 placeholder="Search by keyword..."
                 value={dialogFilters.search || ''}
-                onChange={(e) => setDialogFilters({ ...dialogFilters, search: e.target.value })}
+                onChange={(e) => handleFilterChange({ search: e.target.value })}
               />
             </div>
 
-            {/* Status Select */}
+            {/* Status/Action Select */}
             <div className="space-y-2 w-full">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor={page === "AuditPage" ? "action" : "status"}>
+                {page === "AuditPage" ? "Action" : "Status"}
+              </Label>
               <Select 
-                value={dialogFilters.status || 'all'} 
-                onValueChange={(value) => setDialogFilters({ ...dialogFilters, status: value })}
+                value={page === "AuditPage" ? (dialogFilters.action || 'all') : (dialogFilters.status || 'all')} 
+                onValueChange={(value) => {
+                  if (page === "AuditPage") {
+                    handleFilterChange({ action: value });
+                  } else {
+                    handleFilterChange({ status: value });
+                  }
+                }}
               >
-                <SelectTrigger id="status" className="w-full">
-                  <SelectValue placeholder="Select status" />
+                <SelectTrigger id={page === "AuditPage" ? "action" : "status"} className="w-full">
+                  <SelectValue placeholder={page === "AuditPage" ? "Select action" : "Select status"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All</SelectItem>
@@ -165,7 +214,7 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                   <input
                     type="checkbox"
                     checked={dialogFilters.show_new_rfps || false}
-                    onChange={(e) => setDialogFilters({ ...dialogFilters, show_new_rfps: e.target.checked })}
+                    onChange={(e) => handleFilterChange({ show_new_rfps: e.target.checked })}
                     className="rounded"
                   />
                   Show only RFPs I haven't applied to
@@ -202,29 +251,31 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                     mode="range"
                     defaultMonth={dialogFilters.dateRange?.from}
                     selected={dialogFilters.dateRange}
-                    onSelect={(range) => setDialogFilters({ ...dialogFilters, dateRange: range })}
+                    onSelect={(range) => handleFilterChange({ dateRange: range })}
                     numberOfMonths={2}
                   />
                 </PopoverContent>
               </Popover>
             </div>
 
-            {/* Budget Range */}
-            <div className="space-y-2 pt-2">
-              <Label>Budget Range: ${(dialogFilters.budgetMin || 0).toLocaleString()} - ${(dialogFilters.budgetMax || 100000).toLocaleString()}</Label>
-              <Slider
-                value={[dialogFilters.budgetMin || 0, dialogFilters.budgetMax || 100000]}
-                onValueChange={([min, max]) => setDialogFilters({ ...dialogFilters, budgetMin: min, budgetMax: max })}
-                max={100000}
-                min={0}
-                step={1000}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>$0</span>
-                <span>$100,000</span>
+            {/* Budget Range - Only show for pages that have budgets */}
+            {page !== "AuditPage" && (
+              <div className="space-y-2 pt-2">
+                <Label>Budget Range: ${(dialogFilters.budgetMin || 0).toLocaleString()} - ${(dialogFilters.budgetMax || 100000).toLocaleString()}</Label>
+                <Slider
+                  value={[dialogFilters.budgetMin || 0, dialogFilters.budgetMax || 100000]}
+                  onValueChange={([min, max]) => handleFilterChange({ budgetMin: min, budgetMax: max })}
+                  max={100000}
+                  min={0}
+                  step={1000}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>$0</span>
+                  <span>$100,000</span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex gap-2 pt-4">
@@ -232,10 +283,12 @@ export const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                 <X className="mr-2 h-4 w-4" />
                 Clear All
               </Button>
-              <Button onClick={handleApplyFilters} className="flex-1">
-                <Filter className="mr-2 h-4 w-4" />
-                Apply Filters
-              </Button>
+              {!applyOnChange && (
+                <Button onClick={handleApplyFilters} className="flex-1">
+                  <Filter className="mr-2 h-4 w-4" />
+                  Apply Filters
+                </Button>
+              )}
             </div>
           </div>
         </DialogContent>

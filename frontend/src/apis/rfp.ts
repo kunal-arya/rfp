@@ -25,6 +25,15 @@ export interface RfpFilters {
   page?: number;
   limit?: number;
   show_new_rfps?: 1 | 0;
+  // Backend-specific filter keys
+  'gte___deadline'?: string;
+  'lte___deadline'?: string;
+  'gte___created_at'?: string;
+  'lte___created_at'?: string;
+  'gte___budget_min'?: number;
+  'lte___budget_min'?: number;
+  'gte___budget_max'?: number;
+  'lte___budget_max'?: number;
 }
 
 export const rfpApi = {

@@ -46,7 +46,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
       icon: Users,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
-      destination: '/rfps/my',
+      destination: null,
     },
     {
       title: 'Pending Review',
@@ -55,7 +55,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, role }) => {
       icon: Clock,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50',
-      destination: '/rfps/my',
+      destination: null,
     },
   ];
 

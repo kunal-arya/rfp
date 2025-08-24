@@ -1,60 +1,70 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import { RfpList } from '@/components/rfp/RfpList';
 import { useMyRfps, useDeleteRfp, usePublishRfp } from '@/hooks/useRfp';
 import { Filters } from '@/components/shared/AdvancedFilterBar';
+import { RfpFilters } from '@/apis/rfp';
 import { ExportActions } from '@/components/shared/ExportActions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useUrlFilters } from '@/hooks/useUrlFilters';
 
 export const MyRfpsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(15);
-  const [filters, setFilters] = useState<any>({});
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Build API filters including pagination
-  const apiFilters = {
-    ...filters,
+  // Use URL-based filters
+  const { filters: urlFilters, updateUrlFilters, clearFilters } = useUrlFilters({
+    page: 1,
+    limit: 15,
+  });
+
+  const currentPage = urlFilters.page || 1;
+  const pageSize = urlFilters.limit || 15;
+  
+  // Memoize the initial filters to prevent unnecessary re-renders
+  const stableInitialFilters = useMemo(() => urlFilters, [
+    urlFilters.search,
+    urlFilters.status,
+    urlFilters.dateRange?.from?.getTime(),
+    urlFilters.dateRange?.to?.getTime(),
+    urlFilters.budgetMin,
+    urlFilters.budgetMax,
+    urlFilters.show_new_rfps,
+    urlFilters.page,
+    urlFilters.limit,
+  ]);
+  
+  // Convert URL filters to API filters
+  const apiFilters: RfpFilters = {
+    search: urlFilters.search,
+    status: urlFilters.status,
     page: currentPage,
     limit: pageSize,
   };
 
+  // Handle date range filters - backend expects gte___deadline, lte___deadline
+  if (urlFilters.dateRange?.from) {
+    apiFilters['gte___deadline'] = format(urlFilters.dateRange.from, 'yyyy-MM-dd');
+  }
+  if (urlFilters.dateRange?.to) {
+    apiFilters['lte___deadline'] = format(urlFilters.dateRange.to, 'yyyy-MM-dd');
+  }
+
+  // Handle budget filters - backend expects gte___budget_min, lte___budget_max
+  if (urlFilters.budgetMin) {
+    apiFilters['gte___budget_min'] = urlFilters.budgetMin;
+  }
+  if (urlFilters.budgetMax) {
+    apiFilters['lte___budget_max'] = urlFilters.budgetMax;
+  }
+
   const { data: rfpsData, isLoading } = useMyRfps(apiFilters);
   const deleteRfpMutation = useDeleteRfp();
   const publishRfpMutation = usePublishRfp();
-
-  const handleFilterChange = (newFilters: Filters) => {
-    // Reset to page 1 when filters change
-    setCurrentPage(1);
-    
-    const processedFilters: any = {
-      search: newFilters.search,
-      status: newFilters.status,
-    };
-
-    // Handle date range filters
-    if (newFilters.dateRange?.from) {
-      processedFilters['gte___deadline'] = format(newFilters.dateRange.from, 'yyyy-MM-dd');
-    }
-    if (newFilters.dateRange?.to) {
-      processedFilters['lte___deadline'] = format(newFilters.dateRange.to, 'yyyy-MM-dd');
-    }
-
-    // Handle budget filters
-    if (newFilters.budgetMin) {
-      processedFilters['gte___budget_min'] = newFilters.budgetMin;
-    }
-    if (newFilters.budgetMax) {
-      processedFilters['lte___budget_max'] = newFilters.budgetMax;
-    }
-
-    setFilters(processedFilters);
-  };
 
   const handleViewRfp = (rfpId: string) => {
     navigate(`/rfps/${rfpId}`);
@@ -87,13 +97,13 @@ export const MyRfpsPage: React.FC = () => {
 
   const handleNextPage = () => {
     if (rfpsData && currentPage < Math.ceil(rfpsData.total / pageSize)) {
-      setCurrentPage(currentPage + 1);
+      updateUrlFilters({ page: currentPage + 1 });
     }
   };
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      updateUrlFilters({ page: currentPage - 1 });
     }
   };
 
@@ -127,7 +137,10 @@ export const MyRfpsPage: React.FC = () => {
 
       <div className="space-y-6"> 
         <RfpList
-          handleFilterChange={handleFilterChange}
+          handleFilterChange={(filters: Filters) => {
+            // Reset to page 1 when filters change
+            updateUrlFilters({ ...filters, page: 1 });
+          }}
           rfpStatuses={rfpStatuses}
           rfps={rfpsData?.data || []}
           isLoading={isLoading}
@@ -139,6 +152,8 @@ export const MyRfpsPage: React.FC = () => {
           showCreateButton={true}
           showActions={true}
           page="MyRfpsPage"
+          initialFilters={stableInitialFilters}
+          onClearFilters={clearFilters}
         />
 
         {/* Pagination */}

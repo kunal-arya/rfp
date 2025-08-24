@@ -830,6 +830,18 @@ async function getNewRfpsForSupplierService(supplierId: string) {
           }
         }
       },
+      include: {
+        current_version: {
+            include: {
+                documents: {
+                    where: { deleted_at: null }, // Exclude soft-deleted documents
+                },
+            },
+        },
+        status: true,
+        buyer: true,
+        supplier_responses: true
+      },
       orderBy: { created_at: 'desc' },
     });
   }  

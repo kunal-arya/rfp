@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import { RfpList } from '@/components/rfp/RfpList';
@@ -10,55 +10,64 @@ import { PrintView } from '@/components/shared/PrintView';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useUrlFilters } from '@/hooks/useUrlFilters';
 
 export const BrowseRfpsPage: React.FC = () => {
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(15);
-  const [filters, setFilters] = useState<RfpFilters>({});
   const printRef = useRef<HTMLDivElement>(null);
   
-  // Build API filters including pagination
+  // Use URL-based filters
+  const { filters: urlFilters, updateUrlFilters, clearFilters } = useUrlFilters({
+    page: 1,
+    limit: 15,
+  });
+
+  const currentPage = urlFilters.page || 1;
+  const pageSize = urlFilters.limit || 15;
+  
+  // Memoize the initial filters to prevent unnecessary re-renders
+  const stableInitialFilters = useMemo(() => urlFilters, [
+    urlFilters.search,
+    urlFilters.status,
+    urlFilters.dateRange?.from?.getTime(),
+    urlFilters.dateRange?.to?.getTime(),
+    urlFilters.budgetMin,
+    urlFilters.budgetMax,
+    urlFilters.show_new_rfps,
+    urlFilters.page,
+    urlFilters.limit,
+  ]);
+  
+  // Convert URL filters to API filters
   const apiFilters: RfpFilters = {
-    ...filters,
+    search: urlFilters.search,
+    status: urlFilters.status,
     page: currentPage,
     limit: pageSize,
   };
 
+  // Handle show_new_rfps filter
+  if (urlFilters.show_new_rfps) {
+    apiFilters.show_new_rfps = 1;
+  }
+
+  // Handle date range filters - backend expects gte___created_at, lte___created_at
+  if (urlFilters.dateRange?.from) {
+    apiFilters['gte___created_at'] = format(urlFilters.dateRange.from, 'yyyy-MM-dd');
+  }
+  if (urlFilters.dateRange?.to) {
+    apiFilters['lte___created_at'] = format(urlFilters.dateRange.to, 'yyyy-MM-dd');
+  }
+
+  // Handle budget filters - backend expects gte___budget_min, lte___budget_max
+  if (urlFilters.budgetMin) {
+    apiFilters['gte___budget_min'] = urlFilters.budgetMin;
+  }
+  if (urlFilters.budgetMax) {
+    apiFilters['lte___budget_max'] = urlFilters.budgetMax;
+  }
+
   const { data: rfpsData, isLoading } = useAllRfps(apiFilters);
-
-  const handleFilterChange = (newFilters: Filters) => {
-    // Reset to page 1 when filters change
-    setCurrentPage(1);
-    
-    const processedFilters: RfpFilters = {
-      search: newFilters.search,
-      status: newFilters.status,
-    };
-
-    // Handle show_new_rfps filter
-    if (newFilters.show_new_rfps) {
-      processedFilters.show_new_rfps = 1;
-    }
-
-    // Handle date range filters
-    if (newFilters.dateRange?.from) {
-      processedFilters['gte___created_at'] = format(newFilters.dateRange.from, 'yyyy-MM-dd');
-    }
-    if (newFilters.dateRange?.to) {
-      processedFilters['lte___created_at'] = format(newFilters.dateRange.to, 'yyyy-MM-dd');
-    }
-
-    // Handle budget filters
-    if (newFilters.budgetMin) {
-      processedFilters['gte___budget_min'] = newFilters.budgetMin;
-    }
-    if (newFilters.budgetMax) {
-      processedFilters['lte___budget_max'] = newFilters.budgetMax;
-    }
-
-    setFilters(processedFilters);
-  };
   
   const handleViewRfp = (rfpId: string) => {
     navigate(`/rfps/${rfpId}`);
@@ -71,13 +80,13 @@ export const BrowseRfpsPage: React.FC = () => {
 
   const handleNextPage = () => {
     if (rfpsData && currentPage < Math.ceil(rfpsData.total / pageSize)) {
-      setCurrentPage(currentPage + 1);
+      updateUrlFilters({ page: currentPage + 1 });
     }
   };
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+      updateUrlFilters({ page: currentPage - 1 });
     }
   };
 
@@ -118,9 +127,14 @@ export const BrowseRfpsPage: React.FC = () => {
         onCreateRfp={() => {}}
         showCreateButton={false}
         showActions={false}
-        handleFilterChange={handleFilterChange}
+        handleFilterChange={(filters: Filters) => {
+          // Reset to page 1 when filters change
+          updateUrlFilters({ ...filters, page: 1 });
+        }}
         rfpStatuses={rfpStatuses}
         page="BrowseRfpsPage"
+        initialFilters={stableInitialFilters}
+        onClearFilters={clearFilters}
       />
 
       {/* Pagination */}

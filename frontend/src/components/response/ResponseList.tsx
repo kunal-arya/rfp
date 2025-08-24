@@ -20,7 +20,9 @@ interface ResponseListProps {
   showActions?: boolean;
   showBuyerActions?: boolean;
   handleFilterChange?: (filters: Filters) => void;
+  onClearFilters?: () => void; // Add clearFilters prop
   responseStatuses?: { value: string; label: string }[];
+  initialFilters?: Filters;
 }
 
 export const ResponseList: React.FC<ResponseListProps> = ({
@@ -37,7 +39,9 @@ export const ResponseList: React.FC<ResponseListProps> = ({
   showActions = true,
   showBuyerActions = false,
   handleFilterChange,
+  onClearFilters,
   responseStatuses = [],
+  initialFilters = {},
 }) => {
   const filteredResponses = responses;
 
@@ -93,7 +97,13 @@ export const ResponseList: React.FC<ResponseListProps> = ({
         <div className="flex gap-2 items-center">
           <h2 className="text-2xl font-bold">Responses</h2>
           {handleFilterChange && responseStatuses.length > 0 && (
-            <AdvancedFilterBar page="MyResponsesPage" onFilterChange={handleFilterChange} statuses={responseStatuses} filterType="response" />
+            <AdvancedFilterBar 
+              page="MyResponsesPage" 
+              onFilterChange={handleFilterChange} 
+              onClearFilters={onClearFilters}
+              statuses={responseStatuses}
+              initialFilters={initialFilters}
+            />
           )}
         </div>
         
@@ -186,6 +196,7 @@ export const ResponseList: React.FC<ResponseListProps> = ({
                             <Edit className="h-4 w-4 mr-1" />
                             <span className="hidden sm:inline">Edit</span>
                           </Button>
+                          
                           <Button
                             variant="outline"
                             size="sm"
@@ -195,19 +206,17 @@ export const ResponseList: React.FC<ResponseListProps> = ({
                             <Send className="h-4 w-4 mr-1" />
                             <span className="hidden sm:inline">Submit</span>
                           </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onDeleteResponse(response.id)}
+                            className="flex-1 sm:flex-none text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            <span className="hidden sm:inline">Delete</span>
+                          </Button>
                         </>
-                      )}
-                      
-                      {response.status.code === 'Draft' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onDeleteResponse(response.id)}
-                          className="flex-1 sm:flex-none"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          <span className="hidden sm:inline">Delete</span>
-                        </Button>
                       )}
                       
                       {showBuyerActions && response.status.code === 'Submitted' && (
@@ -216,16 +225,17 @@ export const ResponseList: React.FC<ResponseListProps> = ({
                             variant="outline"
                             size="sm"
                             onClick={() => onApproveResponse(response.id)}
-                            className="flex-1 sm:flex-none bg-green-50 hover:bg-green-100"
+                            className="flex-1 sm:flex-none text-green-600 hover:text-green-700"
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             <span className="hidden sm:inline">Approve</span>
                           </Button>
+                          
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => onRejectResponse(response.id)}
-                            className="flex-1 sm:flex-none bg-red-50 hover:bg-red-100"
+                            className="flex-1 sm:flex-none text-red-600 hover:text-red-700"
                           >
                             <XCircle className="h-4 w-4 mr-1" />
                             <span className="hidden sm:inline">Reject</span>

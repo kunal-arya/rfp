@@ -31,6 +31,9 @@ export interface AuditFilters {
   dateRange?: DateRange;
   page?: number;
   limit?: number;
+  // Backend-specific filter keys
+  'gte___created_at'?: string;
+  'lte___created_at'?: string;
 }
 
 export const auditApi = {

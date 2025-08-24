@@ -17,8 +17,10 @@ interface RfpListProps {
   showCreateButton?: boolean;
   showActions?: boolean;
   handleFilterChange?: (filters: Filters) => void;
+  onClearFilters?: () => void; // Add clearFilters prop
   rfpStatuses?: { value: string; label: string }[];
   page?: "BrowseRfpsPage" | "MyRfpsPage";
+  initialFilters?: Filters;
 }
 
 export const RfpList: React.FC<RfpListProps> = ({
@@ -32,8 +34,10 @@ export const RfpList: React.FC<RfpListProps> = ({
   showCreateButton = true,
   showActions = true,
   handleFilterChange,
+  onClearFilters,
   rfpStatuses,
   page = "MyRfpsPage",
+  initialFilters,
 }) => {
 
   const filteredRfps = rfps
@@ -89,7 +93,13 @@ export const RfpList: React.FC<RfpListProps> = ({
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex gap-2 items-center">
           <h2 className="text-2xl font-bold">RFPs</h2>
-          <AdvancedFilterBar page={page} onFilterChange={handleFilterChange} statuses={rfpStatuses} />
+          <AdvancedFilterBar 
+            page={page} 
+            onFilterChange={handleFilterChange} 
+            onClearFilters={onClearFilters}
+            statuses={rfpStatuses} 
+            initialFilters={initialFilters}
+          />
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">

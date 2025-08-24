@@ -10,7 +10,7 @@ export const modifyGeneralFilterPrisma = (filterObj: any) => {
 
     // helper to cast based on column
     const castDateValue = (col: string, v: any, op: string) => {
-      if (col === "deadline") {
+      if (col === "deadline" || col === "created_at") {
         const date = new Date(v);
         if (op === "lte") {
           // push to end of day
@@ -38,10 +38,10 @@ export const modifyGeneralFilterPrisma = (filterObj: any) => {
         whereObj[columnKey] = { ...(whereObj[columnKey] ?? {}), lt: castDateValue(columnKey, value, "lt") };
         break;
       case key.includes('eq___'):
-        whereObj[columnKey] = { ...(whereObj[columnKey] ?? {}), equals: columnKey === "deadline" ? new Date(value) : value };
+        whereObj[columnKey] = { ...(whereObj[columnKey] ?? {}), equals: (columnKey === "deadline" || columnKey === "created_at") ? new Date(value) : value };
         break;
       case key.includes('neq___'):
-        whereObj[columnKey] = { ...(whereObj[columnKey] ?? {}), not: columnKey === "deadline" ? new Date(value) : value };
+        whereObj[columnKey] = { ...(whereObj[columnKey] ?? {}), not: (columnKey === "deadline" || columnKey === "created_at") ? new Date(value) : value };
         break;
       case key.includes('notnull___'):
         whereObj[columnKey] = { ...(whereObj[columnKey] ?? {}), not: null };

@@ -12,6 +12,7 @@ export const useRegister = () => {
     onSuccess: (response) => {
       const user = {
         id: response.user.id,
+        name: response.user.name,
         email: response.user.email,
         role_id: response.user.role_id,
         role: response.user.role,
