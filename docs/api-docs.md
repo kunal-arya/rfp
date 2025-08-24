@@ -146,7 +146,6 @@ Get role-specific dashboard data.
 {
   "recentRfps": [...],
   "recentResponses": [...],
-  "rfpsNeedingAttention": [...],
   "stats": {
     "totalRfps": 10,
     "publishedRfps": 5,

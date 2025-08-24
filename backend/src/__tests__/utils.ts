@@ -185,13 +185,11 @@ export const mockDashboardData = {
   buyer: {
     recentRfps: [mockRfp],
     recentResponses: [mockResponse],
-    rfpsNeedingAttention: [],
     role: 'Buyer',
   },
   supplier: {
-    availableRfps: [mockRfp],
+    recentRfps: [mockRfp],
     myResponses: [mockResponse],
-    responsesNeedingAttention: [],
     role: 'Supplier',
   },
 };

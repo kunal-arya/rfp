@@ -127,21 +127,19 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({ data, role }) =>
         </CardHeader>
         <CardContent className="space-y-2">
           {(() => {
-            const rfps = isBuyer ? data.recentRfps : data.availableRfps;
+            const rfps = isBuyer ? data.recentRfps : data.publishedRfps;
             return rfps && rfps.length > 0 ? (
               <>
                 {rfps.slice(0, 5).map(renderRfpItem)}
                 {/* View All RFPs */}
-                {isBuyer && (
                 <div className="pt-2">
                   <Link 
-                    to="/rfps/my" 
+                    to={isBuyer ? '/rfps/my' : '/rfps/browse'}
                     className="text-xs text-blue-600 hover:text-blue-800 font-medium"
                   >
                     View All RFPs →
                   </Link>
                 </div>
-                )}
               </>
             ) : (
               <div className="text-center py-4 text-muted-foreground text-sm">

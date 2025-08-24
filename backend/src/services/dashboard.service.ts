@@ -45,7 +45,9 @@ const getBuyerDashboard = async (userId: string) => {
     const recentResponses = await prisma.supplierResponse.findMany({
         where: {
             rfp: { buyer_id: userId , deleted_at: null },
-            status: { code: SUPPLIER_RESPONSE_STATUS.Submitted },
+            status: { code: {
+                not: SUPPLIER_RESPONSE_STATUS.Draft,
+            } },
         },
         include: {
             supplier: true,
@@ -60,34 +62,21 @@ const getBuyerDashboard = async (userId: string) => {
         take: 5,
     });
 
-    // Get RFPs that need attention (published but no responses)
-    const rfpsNeedingAttention = await prisma.rFP.findMany({
-        where: {
-            buyer_id: userId,
-            status: { code: 'Published' },
-            supplier_responses: { none: {} },
-        },
-        include: {
-            current_version: true,
-            status: true,
-        },
-        take: 5,
-    });
-
     return {
         recentRfps,
         recentResponses,
-        rfpsNeedingAttention,
         role: 'Buyer',
     };
 };
 
 const getSupplierDashboard = async (userId: string) => {
     // Get recent RFPs the supplier can respond to
-    const availableRfps = await prisma.rFP.findMany({
+    const publishedRfps = await prisma.rFP.findMany({
         where: {
             deleted_at: null,
-            status: { code: RFP_STATUS.Published },
+            status: { code: {
+               in: [RFP_STATUS.Published],
+            } },
             supplier_responses: {
                 none: { supplier_id: userId },
             },
@@ -117,27 +106,9 @@ const getSupplierDashboard = async (userId: string) => {
         take: 5,
     });
 
-    // Get responses that need attention (draft status)
-    const responsesNeedingAttention = await prisma.supplierResponse.findMany({
-        where: {
-            supplier_id: userId,
-            status: { code: SUPPLIER_RESPONSE_STATUS.Draft },
-        },
-        include: {
-            rfp: {
-                include: {
-                    current_version: true,
-                },
-            },
-            status: true,
-        },
-        take: 5,
-    });
-
     return {
-        availableRfps,
+        publishedRfps,
         myResponses,
-        responsesNeedingAttention,
         role: 'Supplier',
     };
 };

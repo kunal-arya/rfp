@@ -127,10 +127,8 @@ export interface Document {
 export interface DashboardData {
   recentRfps?: RFP[];
   recentResponses?: SupplierResponse[];
-  rfpsNeedingAttention?: RFP[];
-  availableRfps?: RFP[];
   myResponses?: SupplierResponse[];
-  responsesNeedingAttention?: SupplierResponse[];
+  publishedRfps?: RFP[];
   role: string;
 }
 

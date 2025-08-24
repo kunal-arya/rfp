@@ -73,7 +73,7 @@ export const DashboardPage: React.FC = () => {
 
             <div className="grid grid-cols-1 gap-6 sm:gap-8">
               <div>
-                <RecentActivity data={dashboardData || { recentRfps: [], recentResponses: [], rfpsNeedingAttention: [], role: 'Buyer' }} role={user?.role || ''} />
+                <RecentActivity data={dashboardData || { recentRfps: [], recentResponses: [], publishedRfps: [], role: 'Buyer' }} role={user?.role || ''} />
               </div>
             </div>
             
