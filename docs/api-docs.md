@@ -407,6 +407,350 @@ Get audit trail for specific target.
 
 Get all audit trails (admin only).
 
+### Admin Panel
+
+#### `GET /admin/config`
+
+Get system configuration (admin only).
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Responses:**
+- `200 OK`: System configuration retrieved
+- `401 Unauthorized`: Invalid or missing token
+- `403 Forbidden`: Insufficient permissions
+
+#### `PUT /admin/config`
+
+Update system configuration (admin only).
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Request Body:**
+```json
+{
+  "email": {
+    "smtpHost": "smtp.gmail.com",
+    "smtpPort": "587",
+    "emailNotifications": true
+  },
+  "fileUpload": {
+    "maxFileSize": 10,
+    "allowedFileTypes": ["pdf", "doc", "docx"]
+  },
+  "security": {
+    "sessionTimeout": 60,
+    "maxLoginAttempts": 5
+  }
+}
+```
+
+#### `GET /admin/database/stats`
+
+Get database statistics (admin only).
+
+#### `POST /admin/database/test`
+
+Test database connection (admin only).
+
+#### `POST /admin/database/backup`
+
+Create database backup (admin only).
+
+#### `POST /admin/database/optimize`
+
+Optimize database (admin only).
+
+#### `POST /admin/export/users`
+
+Export users data (admin only).
+
+**Request Body:**
+```json
+{
+  "format": "csv",
+  "dateRange": {
+    "start": "2024-01-01",
+    "end": "2024-01-31"
+  },
+  "filters": {
+    "role": "Supplier"
+  }
+}
+```
+
+#### `POST /admin/export/rfps`
+
+Export RFPs data (admin only).
+
+#### `POST /admin/export/responses`
+
+Export responses data (admin only).
+
+#### `POST /admin/export/audit-logs`
+
+Export audit logs data (admin only).
+
+#### `POST /admin/reports/generate`
+
+Generate system report (admin only).
+
+**Request Body:**
+```json
+{
+  "reportType": "user-activity",
+  "format": "pdf",
+  "dateRange": {
+    "start": "2024-01-01",
+    "end": "2024-01-31"
+  }
+}
+```
+
+#### `POST /admin/reports/schedule`
+
+Schedule report generation (admin only).
+
+**Request Body:**
+```json
+{
+  "reportType": "user-activity",
+  "schedule": {
+    "frequency": "weekly",
+    "time": "09:00",
+    "recipients": ["admin@example.com"]
+  }
+}
+```
+
+### User Management
+
+#### `GET /admin/users`
+
+Get all users with pagination and filtering (admin only).
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10)
+- `search` (optional): Search term for name or email
+- `role` (optional): Filter by role (Buyer, Supplier, Admin)
+- `status` (optional): Filter by status (active, inactive)
+
+**Responses:**
+- `200 OK`: Users list with pagination
+- `401 Unauthorized`: Invalid or missing token
+- `403 Forbidden`: Insufficient permissions
+
+#### `GET /admin/users/:id`
+
+Get specific user details (admin only).
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Responses:**
+- `200 OK`: User details
+- `401 Unauthorized`: Invalid or missing token
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: User not found
+
+#### `PUT /admin/users/:id`
+
+Update user information (admin only).
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Request Body:**
+```json
+{
+  "name": "Updated Name",
+  "email": "updated@example.com",
+  "role_id": "role-uuid"
+}
+```
+
+**Responses:**
+- `200 OK`: User updated successfully
+- `401 Unauthorized`: Invalid or missing token
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: User not found
+
+#### `PUT /admin/users/:id/toggle-status`
+
+Toggle user status (activate/deactivate) (admin only).
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Request Body:**
+```json
+{
+  "action": "activate" // or "deactivate"
+}
+```
+
+**Responses:**
+- `200 OK`: User status toggled successfully
+- `401 Unauthorized`: Invalid or missing token
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: User not found
+
+#### `DELETE /admin/users/:id`
+
+Delete user (admin only).
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Responses:**
+- `200 OK`: User deleted successfully
+- `401 Unauthorized`: Invalid or missing token
+- `403 Forbidden`: Insufficient permissions
+- `404 Not Found`: User not found
+
+#### `GET /admin/users/stats`
+
+Get user statistics (admin only).
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Responses:**
+- `200 OK`: User statistics retrieved successfully
+  ```json
+  {
+    "totalUsers": 150,
+    "userGrowthLastMonth": "+12%",
+    "activeUsers": 89,
+    "activeUserGrowthLastWeek": "+5%",
+    "totalBuyers": 45,
+    "totalSuppliers": 105
+  }
+  ```
+- `401 Unauthorized`: Invalid or missing token
+- `403 Forbidden`: Insufficient permissions
+
+#### `POST /admin/users`
+
+Create a new user (admin only).
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password123",
+  "roleName": "Buyer"
+}
+```
+
+**Responses:**
+- `201 Created`: User created successfully
+- `400 Bad Request`: Validation error
+- `409 Conflict`: User with this email already exists
+- `401 Unauthorized`: Invalid or missing token
+- `403 Forbidden`: Insufficient permissions
+
+#### `GET /admin/analytics`
+
+Get comprehensive analytics data (admin only).
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Responses:**
+- `200 OK`: Analytics data retrieved successfully
+  ```json
+  {
+    "totalRfps": 342,
+    "totalResponses": 1289,
+    "newRfpsThisMonth": 23,
+    "newResponsesThisMonth": 45,
+    "monthlyGrowthData": [
+      {
+        "month": "Jan",
+        "users": 12,
+        "rfps": 5,
+        "responses": 18
+      }
+    ],
+    "rfpStatusDistribution": [
+      {
+        "status": "Draft",
+        "count": 25,
+        "percentage": 15
+      }
+    ],
+    "responseMetrics": {
+      "avgResponseTime": "2.3 days",
+      "responseRate": "78%",
+      "successRate": "65%",
+      "avgResponsesPerRfp": 3.8
+    },
+    "systemMetrics": {
+      "totalLogins": 89,
+      "errorRate": "0.1",
+      "avgSessionDuration": "12m 30s"
+    },
+    "topPerformingBuyers": [
+      {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "rfpsCreated": 15
+      }
+    ],
+    "topPerformingSuppliers": [
+      {
+        "name": "Jane Smith",
+        "email": "jane@example.com",
+        "responsesSubmitted": 25
+      }
+    ],
+    "rfpCategoryDistribution": [
+      {
+        "category": "Technology",
+        "count": 45,
+        "percentage": 35
+      }
+    ],
+    "responseTimeMetrics": [
+      {
+        "time_range": "Within 24h",
+        "count": 45
+      }
+    ]
+  }
+  ```
+- `401 Unauthorized`: Invalid or missing token
+- `403 Forbidden`: Insufficient permissions
+}
+```
+
+#### `POST /admin/reports/schedule`
+
+Schedule report generation (admin only).
+
+**Request Body:**
+```json
+{
+  "reportType": "rfp-performance",
+  "schedule": {
+    "frequency": "weekly",
+    "time": "09:00",
+    "recipients": ["admin@example.com"]
+  }
+}
+```
+
 ## Status Codes
 
 ### RFP Statuses

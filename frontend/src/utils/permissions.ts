@@ -50,6 +50,23 @@ export const createPermissionHelpers = (permissions: UserPermissions | null) => 
   // Admin permissions
   canManageUsers: hasPermission(permissions, 'admin', 'manage_users'),
   canManageRoles: hasPermission(permissions, 'admin', 'manage_roles'),
+  canViewAnalytics: hasPermission(permissions, 'admin', 'view_analytics'),
+  canSystemConfig: hasPermission(permissions, 'admin', 'system_config'),
+  canExportData: hasPermission(permissions, 'admin', 'export_data'),
+  
+  // Navigation permissions
+  getNavbarPages: () => {
+    if (!permissions?.navbar) return [];
+    return permissions.navbar.split(',').map(page => page.trim());
+  },
+  canAccessPage: (pageName: string) => {
+    if (!permissions?.navbar) return false;
+    const allowedPages = permissions.navbar.split(',').map(page => page.trim());
+    return allowedPages.includes(pageName);
+  },
+  
+  // Audit permissions
+  canViewAudit: hasPermission(permissions, 'audit', 'view'),
   
   // Generic permission checker
   hasPermission: (resource: string, action: string) => hasPermission(permissions, resource, action),

@@ -203,6 +203,11 @@ export const AUDIT_ACTIONS = {
   // System Actions
   SYSTEM_ERROR: 'SYSTEM_ERROR',
   PERMISSION_DENIED: 'PERMISSION_DENIED',
+  
+  // Admin Actions
+  DATA_EXPORTED: 'DATA_EXPORTED',
+  REPORT_GENERATED: 'REPORT_GENERATED',
+  REPORT_SCHEDULED: 'REPORT_SCHEDULED',
 };
 
 // Helper function to create audit trail entries

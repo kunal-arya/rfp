@@ -5,7 +5,7 @@ import { createAuditEntry, AUDIT_ACTIONS } from './audit.service';
 
 const prisma = new PrismaClient();
 
-export const register = async (name: string, email: string, password: string, roleName: 'Buyer' | 'Supplier') => {
+export const register = async (name: string, email: string, password: string, roleName: 'Buyer' | 'Supplier' | 'Admin') => {
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
         throw new Error('Email already exists');
@@ -75,6 +75,10 @@ export const login = async (email: string, password: string) => {
         throw new Error('Invalid credentials');
     }
 
+    if (user.status === 'inactive') {
+        throw new Error('Your account is inactive, please contact the admin');
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
@@ -99,5 +103,46 @@ export const login = async (email: string, password: string) => {
             role_id: user.role_id,
             role: user.role.name,
         }
+    };
+};
+
+export const createAdminUser = async (name: string, email: string, password: string) => {
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+        throw new Error('Email already exists');
+    }
+
+    const adminRole = await prisma.role.findUnique({ where: { name: 'Admin' } });
+    if (!adminRole) {
+        throw new Error('Admin role not found');
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const user = await prisma.user.create({
+        data: {
+            name,
+            email,
+            password_hash,
+            role_id: adminRole.id,
+        },
+    });
+
+    const { password_hash: _, ...userWithoutPassword } = user;
+    
+    // Create audit trail entry for admin user creation
+    await createAuditEntry(user.id, AUDIT_ACTIONS.USER_REGISTERED, 'User', user.id, {
+        name: user.name,
+        email: user.email,
+        role: 'Admin',
+        created_by: 'system',
+    });
+
+    return {
+        user: {
+            ...userWithoutPassword,
+            role: 'Admin',
+        },
+        permissions: adminRole.permissions,
     };
 };

@@ -35,6 +35,7 @@ describe('Auth Controller', () => {
           email: 'test@example.com', 
           role: 'Buyer',
           role_id: 'buyer-role-id',
+          status: 'active',
           created_at: new Date(),
           updated_at: new Date(),
         },

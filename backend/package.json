@@ -16,9 +16,11 @@
   "dependencies": {
     "@prisma/client": "6.14.0",
     "@sendgrid/mail": "^8.1.5",
+    "@types/bcrypt": "^6.0.0",
     "@types/multer": "^2.0.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^2.7.0",
     "cors": "^2.8.5",

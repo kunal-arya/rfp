@@ -13,6 +13,12 @@ export interface RegisterData {
   roleName: 'Buyer' | 'Supplier';
 }
 
+export interface CreateAdminData {
+  name: string;
+  email: string;
+  password: string;
+}
+
 export const authApi = {
   // Login user
   login: async (data: LoginData): Promise<AuthResponse> => {
@@ -23,6 +29,12 @@ export const authApi = {
   // Register user
   register: async (data: RegisterData): Promise<AuthResponse> => {
     const response = await apiClient.post<AuthResponse>('/auth/register', data);
+    return response.data;
+  },
+
+  // Create admin user
+  createAdmin: async (data: CreateAdminData): Promise<AuthResponse> => {
+    const response = await apiClient.post<AuthResponse>('/auth/create-admin', data);
     return response.data;
   },
 

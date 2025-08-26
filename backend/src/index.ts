@@ -6,6 +6,7 @@ import rfpRouter from './router/rfp.router';
 import dashboardRouter from './router/dashboard.router';
 import notificationRouter from './router/notification.router';
 import auditRouter from './router/audit.router';
+import adminRouter from './router/admin.router';
 import { setupSwagger } from './config/swagger';
 import { initializeWebSocket } from './services/websocket.service';
 import { PrismaClient } from '@prisma/client';
@@ -49,6 +50,7 @@ app.use('/api/rfp', rfpRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api/audit', auditRouter);
+app.use('/api/admin', adminRouter);
 
 setupSwagger(app);
 

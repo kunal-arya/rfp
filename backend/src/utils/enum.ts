@@ -1,6 +1,7 @@
 export enum RoleName {
     Buyer = "Buyer",
-    Supplier = "Supplier"
+    Supplier = "Supplier",
+    Admin = "Admin"
 }
 
 export enum RFP_STATUS {
@@ -18,4 +19,9 @@ export enum SUPPLIER_RESPONSE_STATUS {
     Approved = "Approved",
     Rejected = "Rejected",
     Awarded = "Awarded"
+}
+
+export enum USER_STATUS {
+    Active = "active",
+    Inactive = "inactive"
 }

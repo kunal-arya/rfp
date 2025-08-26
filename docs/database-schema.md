@@ -32,9 +32,14 @@ Represents a user role in the system (e.g., "Buyer", "Supplier").
 | Field         | Type     | Description                                                 |
 |---------------|----------|-------------------------------------------------------------|
 | `id`          | `String` | Unique identifier for the role (UUID).                      |
-| `name`        | `String` | The name of the role (e.g., "Buyer"). Must be unique.        |
+| `name`        | `String` | The name of the role (e.g., "Buyer", "Supplier", "Admin"). Must be unique.        |
 | `description` | `String?`| An optional description of the role.                        |
 | `permissions` | `Json`   | A JSON object defining the permissions for this role.       |
+
+**Available Roles:**
+- **Buyer**: Can create, manage, and award RFPs
+- **Supplier**: Can view and respond to published RFPs
+- **Admin**: Full system access including user management, analytics, and system configuration
 | `users`       | `User[]` | A list of users who have this role.                         |
 
 ---
@@ -46,10 +51,12 @@ Represents a user of the application.
 | Field               | Type                | Description                                                 |
 |---------------------|---------------------|-------------------------------------------------------------|
 | `id`                | `String`            | Unique identifier for the user (UUID).                      |
+| `name`              | `String`            | The user's full name.                                       |
 | `email`             | `String`            | The user's email address. Must be unique.                   |
 | `password_hash`     | `String`            | The user's hashed password.                                 |
 | `role_id`           | `String`            | Foreign key for the user's role.                            |
 | `role`              | `Role`              | The role assigned to the user.                              |
+| `status`            | `String`            | User status ('active' or 'inactive').                       |
 | `created_at`        | `DateTime`          | Timestamp of when the user was created.                     |
 | `updated_at`        | `DateTime`          | Timestamp of when the user was last updated.                |
 | `rfps`              | `RFP[]`             | A list of RFPs created by the user (if Buyer).              |
@@ -64,8 +71,9 @@ Represents a user of the application.
 
 ### Authentication & Authorization
 - **JWT-based Authentication**: Secure token-based authentication
-- **Role-based Access Control (RBAC)**: Dynamic permissions stored in database
+- **Role-based Access Control (RBAC)**: Dynamic permissions stored in database with three roles: Buyer, Supplier, Admin
 - **Permission Middleware**: Fine-grained access control with scopes and status checks
+- **Admin Panel**: Complete administrative interface with system management capabilities
 
 ### Real-time Notifications
 - **WebSocket Integration**: Socket.IO for real-time updates

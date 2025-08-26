@@ -1,0 +1,60 @@
+import apiClient from './client';
+
+// Configuration APIs
+export const getSystemConfig = () => apiClient.get('/admin/config');
+export const updateSystemConfig = (config: any) => apiClient.put('/admin/config', config);
+
+// Database APIs
+export const getDatabaseStats = () => apiClient.get('/admin/database/stats');
+export const testDatabaseConnection = () => apiClient.post('/admin/database/test');
+export const createBackup = () => apiClient.post('/admin/database/backup');
+export const optimizeDatabase = () => apiClient.post('/admin/database/optimize');
+
+// Export APIs
+export const exportUsers = (options: any) => apiClient.post('/admin/export/users', options);
+export const exportRfps = (options: any) => apiClient.post('/admin/export/rfps', options);
+export const exportResponses = (options: any) => apiClient.post('/admin/export/responses', options);
+export const exportAuditLogs = (options: any) => apiClient.post('/admin/export/audit-logs', options);
+
+// Report APIs
+export const generateSystemReport = (options: any) => apiClient.post('/admin/reports/generate', options);
+export const scheduleReport = (options: any) => apiClient.post('/admin/reports/schedule', options);
+
+// Admin Dashboard APIs - Using existing dashboard routes
+// These are handled by the dashboard service based on user role
+
+// User Management APIs
+export const getUsers = (params?: any) => apiClient.get('/admin/users', { params });
+export const getUser = (id: string) => apiClient.get(`/admin/users/get/${id}`);
+export const updateUser = (id: string, data: any) => apiClient.put(`/admin/users/${id}`, data);
+export const deleteUser = (id: string) => apiClient.delete(`/admin/users/${id}`);
+export const toggleUserStatus = (id: string, action: 'activate' | 'deactivate') => 
+  apiClient.put(`/admin/users/${id}/toggle-status`, { action });
+
+export const getUserStats = () => apiClient.get('/admin/users/stats');
+
+export const createUser = (data: { name: string; email: string; password: string; roleName: string }) => 
+  apiClient.post('/admin/users', data);
+
+// Analytics APIs
+export const getAnalytics = (params?: any) => apiClient.get('/admin/analytics', { params });
+
+// Audit APIs
+export const getAuditLogs = (params?: any) => apiClient.get('/admin/audit-logs', { params });
+
+// RFP Management APIs
+export const getAdminRfps = (params?: any) => apiClient.get('/admin/rfps', { params });
+export const getAdminRfp = (id: string) => apiClient.get(`/admin/rfps/${id}`);
+
+// Response Management APIs
+export const getAdminResponses = (params?: any) => apiClient.get('/admin/responses', { params });
+export const getAdminResponse = (id: string) => apiClient.get(`/admin/responses/${id}`);
+
+// Notification APIs
+export const getNotifications = (params?: any) => apiClient.get('/admin/notifications', { params });
+
+// Document APIs
+export const getDocuments = (params?: any) => apiClient.get('/admin/documents', { params });
+
+// Support APIs
+export const getSupportTickets = (params?: any) => apiClient.get('/admin/support/tickets', { params });

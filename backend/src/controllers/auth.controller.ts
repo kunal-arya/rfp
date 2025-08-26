@@ -42,6 +42,31 @@ export const login = async (req: Request, res: Response) => {
         if (error.message === 'Invalid credentials') {
             return res.status(401).json({ message: error.message });
         }
+        if (error.message === 'Your account is inactive, please contact the admin') {
+            return res.status(401).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const createAdmin = async (req: Request, res: Response) => {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+        return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
+
+    try {
+        const user = await authService.createAdminUser(name, email, password);
+        res.status(201).json(user);
+    } catch (error: any) {
+        if (error.message === 'Email already exists') {
+            return res.status(409).json({ message: error.message });
+        }
+        if (error.message === 'Admin role not found') {
+            return res.status(500).json({ message: error.message });
+        }
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }

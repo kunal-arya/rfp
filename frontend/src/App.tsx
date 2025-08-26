@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryProvider } from './contexts/QueryProvider';
 import { AuthProvider } from './contexts/AuthContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
@@ -18,6 +18,19 @@ import { RfpResponsesPage } from './pages/response/RfpResponsesPage';
 import { RfpDetailPage } from './pages/rfp/RfpDetailPage';
 import { ResponseDetailPage } from './pages/response/ResponseDetailPage';
 import { AuditTrailPage } from './pages/audit/AuditTrailPage';
+import AdminLayout from './components/layout/AdminLayout';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import UserManagementPage from './pages/admin/UserManagementPage';
+import AnalyticsPage from './pages/admin/AnalyticsPage';
+import AuditLogsPage from './pages/admin/AuditLogsPage';
+import RfpManagementPage from './pages/admin/RfpManagementPage';
+import ResponseManagementPage from './pages/admin/ResponseManagementPage';
+import ReportsPage from './pages/admin/ReportsPage';
+import NotificationManagementPage from './pages/admin/NotificationManagementPage';
+import DocumentManagementPage from './pages/admin/DocumentManagementPage';
+import SupportPage from './pages/admin/SupportPage';
+import SystemConfigPage from './pages/admin/SystemConfigPage';
+import { RoleBasedRedirect } from './components/layout/RoleBasedRedirect';
 import './App.css';
 
 function App() {
@@ -138,11 +151,33 @@ function App() {
                       } 
                     />
                     
-                    {/* Redirect root to dashboard or login */}
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    {/* Admin routes */}
+                    <Route 
+                      path="/admin/*" 
+                      element={
+                        <ProtectedRoute requiredPermission={{ resource: 'admin', action: 'view_analytics' }}>
+                          <AdminLayout />
+                        </ProtectedRoute>
+                      } 
+                    >
+                      <Route path="" element={<AdminDashboardPage />} />
+                      <Route path="users" element={<UserManagementPage />} />
+                      <Route path="analytics" element={<AnalyticsPage />} />
+                      <Route path="audit" element={<AuditLogsPage />} />
+                      <Route path="rfps" element={<RfpManagementPage />} />
+                      <Route path="responses" element={<ResponseManagementPage />} />
+                      <Route path="reports" element={<ReportsPage />} />
+                      <Route path="notifications" element={<NotificationManagementPage />} />
+                      <Route path="documents" element={<DocumentManagementPage />} />
+                      <Route path="support" element={<SupportPage />} />
+                      <Route path="settings" element={<SystemConfigPage />} />
+                    </Route>
                     
-                    {/* Catch all - redirect to dashboard */}
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                    {/* Redirect root based on role */}
+                    <Route path="/" element={<RoleBasedRedirect />} />
+                    
+                    {/* Catch all - redirect based on role */}
+                    <Route path="*" element={<RoleBasedRedirect />} />
                   </Routes>
                 </RootLayout>
               } />

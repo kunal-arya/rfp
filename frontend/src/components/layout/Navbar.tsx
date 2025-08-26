@@ -25,61 +25,27 @@ export const Navbar: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const buyerNavItems = [
-    {
-      label: 'Dashboard',
-      path: '/dashboard',
-      icon: Home,
-      permission: () => permissionHelpers.hasPermission('dashboard', 'view'),
-    },
-    {
-      label: 'Create RFP',
-      path: '/rfps/create',
-      icon: Plus,
-      permission: () => permissionHelpers.canCreateRfp,
-    },
-    {
-      label: 'My RFPs',
-      path: '/rfps/my',
-      icon: FileText,
-      permission: () => permissionHelpers.canViewRfp,
-    },
-    {
-      label: 'Audit Trail',
-      path: '/audit',
-      icon: Activity,
-      permission: () => permissionHelpers.hasPermission('admin', 'view'),
-    },
-  ];
+  // Navigation configuration
+  const navigationConfig = {
+    dashboard: { label: 'Dashboard', path: '/dashboard', icon: Home },
+    my_rfps: { label: 'My RFPs', path: '/rfps/my', icon: FileText },
+    create_rfp: { label: 'Create RFP', path: '/rfps/create', icon: Plus },
+    browse_rfps: { label: 'Browse RFPs', path: '/rfps/browse', icon: Search },
+    my_responses: { label: 'My Responses', path: '/responses/my', icon: MessageSquare },
+    audit: { label: 'Audit Trail', path: '/audit', icon: Activity },
+  };
 
-  const supplierNavItems = [
-    {
-      label: 'Dashboard',
-      path: '/dashboard',
-      icon: Home,
-      permission: () => permissionHelpers.hasPermission('dashboard', 'view'),
-    },
-    {
-      label: 'Browse RFPs',
-      path: '/rfps/browse',
-      icon: Search,
-      permission: () => permissionHelpers.canViewRfp,
-    },
-    {
-      label: 'My Responses',
-      path: '/responses/my',
-      icon: MessageSquare,
-      permission: () => permissionHelpers.canViewResponse,
-    },
-    {
-      label: 'Audit Trail',
-      path: '/audit',
-      icon: Activity,
-      permission: () => permissionHelpers.hasPermission('admin', 'view'),
-    },
-  ];
-
-  const navItems = user?.role === 'Buyer' ? buyerNavItems : supplierNavItems;
+  // Get allowed pages from permissions
+  const allowedPages = permissionHelpers.getNavbarPages();
+  
+  // Build navigation based on allowed pages
+  const navItems = allowedPages
+    .map(page => navigationConfig[page as keyof typeof navigationConfig])
+    .filter(Boolean)
+    .map(item => ({
+      ...item,
+      permission: () => true, // All items in navbar permission are allowed
+    }));
 
   const handleLogout = () => {
     logout();

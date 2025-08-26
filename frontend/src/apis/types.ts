@@ -4,6 +4,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  status: string;
   role: {
     name: string;
     permissions: Record<string, unknown>;
@@ -129,10 +130,12 @@ export interface DashboardData {
   recentResponses?: SupplierResponse[];
   myResponses?: SupplierResponse[];
   publishedRfps?: RFP[];
+  recentUsers?: User[];
   role: string;
 }
 
 export interface DashboardStats {
+  // Buyer/Supplier stats
   totalRfps?: number;
   publishedRfps?: number;
   draftRfps?: number;
@@ -148,6 +151,18 @@ export interface DashboardStats {
   submittedResponses?: number;
   underReviewResponses?: number;
   availableRfps?: number;
+  
+  // Admin stats
+  totalUsers?: number;
+  activeUsers?: number;
+  newUsersThisMonth?: number;
+  newRfpsThisMonth?: number;
+  avgResponseTime?: string;
+  successRate?: string;
+  avgResponsesPerRfp?: string;
+  activeUsersGrowth?: string;
+  platformHealth?: string;
+  
   role: string;
 }
 
@@ -156,6 +171,15 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
   data: T[];
+}
+
+export interface UserStats {
+  totalUsers: number;
+  userGrowthLastMonth: string;
+  activeUsers: number;
+  activeUserGrowthLastWeek: string;
+  totalBuyers: number;
+  totalSuppliers: number;
 }
 
 export interface ApiError {

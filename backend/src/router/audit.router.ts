@@ -123,6 +123,6 @@ router.get('/target/:targetType/:targetId', protect, hasPermission('audit', 'vie
  *       403:
  *         description: Forbidden - Admin access required
  */
-router.get('/all', protect, hasPermission('admin', 'view'), auditController.getAllAuditTrails);
+router.get('/all', protect, hasPermission('audit', 'view'), auditController.getAllAuditTrails);
 
 export default router;

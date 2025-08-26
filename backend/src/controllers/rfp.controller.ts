@@ -216,13 +216,15 @@ export const getMyRfps = async (req: AuthenticatedRequest, res: Response) => {
         const generalFilters = modifyGeneralFilterPrisma(rfpFilters);
         const versionGeneralFilters = modifyGeneralFilterPrisma(versionFilters);
 
+        // For admin users, get all RFPs; for others, get their own RFPs
         const rfps = await rfpService.getMyRfps(
             user.userId,
             generalFilters,
             versionGeneralFilters,
             offset,
             limit,
-            search as string | undefined
+            search as string | undefined,
+            user.role // Pass user role to service
         );
 
         res.json(rfps);

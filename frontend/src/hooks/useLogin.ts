@@ -19,7 +19,7 @@ export const useLogin = () => {
       };
 
       login(user, response.permissions, response.token);
-      navigate('/dashboard');
+      navigate('/');
     },
     onError: (error) => {
       console.error('Login failed:', error);

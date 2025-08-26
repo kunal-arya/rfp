@@ -80,12 +80,17 @@ export const getMyRfps = async (
     versionFilters: any,
     offset: number,
     limit: number,
-    search?: string
+    search?: string,
+    userRole?: string
 ) => {
     const whereClause: any = {
-        buyer_id: userId,
         ...rfpFilters,
     };
+
+    // For admin users, get all RFPs; for others, get their own RFPs
+    if (userRole !== 'Admin') {
+        whereClause.buyer_id = userId;
+    }
 
     // Apply version filters to current_version
     if (Object.keys(versionFilters).length > 0) {

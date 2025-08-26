@@ -34,13 +34,13 @@ router.get(
  * @swagger
  * /rfps:
  *   get:
- *     summary: Get user's own RFPs (Buyers)
+ *     summary: Get user's own RFPs (Buyers) or all RFPs (Admin)
  *     tags: [RFPs]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: A list of user's RFPs
+ *         description: A list of user's RFPs or all RFPs for admin
  *       401:
  *         description: Unauthorized
  */

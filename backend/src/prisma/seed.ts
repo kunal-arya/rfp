@@ -35,7 +35,8 @@ const buyerPermissions = {
   },
   search: { allowed: true },
   audit: { view: { allowed: true, scope: 'own' } },
-  admin: { manage_users: false, manage_roles: false }
+  admin: { manage_users: false, manage_roles: false },
+  navbar: "dashboard,my_rfps,create_rfp,browse_rfps,audit"
 };
 
 const supplierPermissions = {
@@ -72,6 +73,50 @@ const supplierPermissions = {
         manage_users: false,
         manage_roles: false,
     },
+    navbar: "dashboard,browse_rfps,my_responses,audit"
+};
+
+const adminPermissions = {
+    dashboard: { view: { allowed: true } },
+    rfp: {
+        create: { allowed: true },
+        view: { allowed: true },
+        edit: { allowed: true },
+        publish: { allowed: true },
+        close: { allowed: true },
+        pause: { allowed: true },
+        resume: { allowed: true },
+        cancel: { allowed: true },
+        award: { allowed: true },
+        review_responses: { allowed: true },
+        read_responses: { allowed: true },
+        manage_documents: { allowed: true },
+    },
+    supplier_response: {
+        create: { allowed: true },
+        submit: { allowed: true },
+        view: { allowed: true },
+        edit: { allowed: true },
+        manage_documents: { allowed: true },
+        review: { allowed: true },
+        approve: { allowed: true },
+        reject: { allowed: true },
+        award: { allowed: true },
+    },
+    documents: {
+        upload_for_rfp: { allowed: true },
+        upload_for_response: { allowed: true },
+    },
+    search: { allowed: true },
+    audit: { view: { allowed: true } },
+    admin: {
+        manage_users: { allowed: true },
+        manage_roles: { allowed: true },
+        view_analytics: { allowed: true },
+        system_config: { allowed: true },
+        export_data: { allowed: true },
+    },
+    navbar: "dashboard,users,analytics,audit,rfps,responses"
 };
 
 
@@ -99,6 +144,17 @@ async function main() {
     },
   });
   console.log('Supplier role created/updated.');
+
+  await prisma.role.upsert({
+    where: { name: 'Admin' },
+    update: { permissions: adminPermissions },
+    create: {
+      name: 'Admin',
+      description: 'System administrators with full access.',
+      permissions: adminPermissions,
+    },
+  });
+  console.log('Admin role created/updated.');
 
   for (const status of Object.values(RFP_STATUS)) {
     await prisma.rFPStatus.upsert({

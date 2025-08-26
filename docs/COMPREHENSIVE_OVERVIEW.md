@@ -40,7 +40,7 @@
 
 **Users & Authentication:**
 - `User` - User accounts with email/password
-- `Role` - User roles (Buyer/Supplier)
+- `Role` - User roles (Buyer/Supplier/Admin)
 - `Permission` - Granular permissions system
 - `UserRole` - Many-to-many relationship between users and roles
 
@@ -84,7 +84,7 @@ interface Permission {
 ### Permission Examples
 - **Buyers:** Can create, edit, publish RFPs; review responses
 - **Suppliers:** Can browse published RFPs; submit responses
-- **Admin:** Full system access with audit trail viewing
+- **Admin:** Full system access including user management, analytics, system configuration, and audit trail viewing
 
 ---
 
@@ -327,6 +327,7 @@ frontend/
 - **Documents:** File upload and management
 - **Audit:** Activity logging and retrieval
 - **Notifications:** In-app notification management
+- **Admin Panel:** System configuration, user management, analytics, exports
 
 ---
 
@@ -343,6 +344,7 @@ frontend/
 - **Dashboard:** Role-specific dashboards with analytics
 - **Search & Filtering:** Advanced search capabilities
 - **Version Control:** RFP versioning system
+- **Admin Panel:** Complete administrative interface with system management
 - **Testing:** Comprehensive test coverage
 
 ### 🚀 Advanced Features
@@ -352,6 +354,7 @@ frontend/
 - **Export Capabilities:** PDF and Excel export
 - **Mobile Responsive:** Optimized for all devices
 - **Performance Optimized:** Fast loading and efficient operations
+- **Admin Panel:** Complete system administration with analytics and monitoring
 
 ---
 
@@ -370,6 +373,76 @@ frontend/
 - **Load Balancing:** Horizontal scaling support
 - **CDN Integration:** Global content delivery
 - **Database Sharding:** Multi-tenant architecture support
+
+---
+
+## 🛠️ Admin Panel
+
+### Overview
+The Admin Panel provides comprehensive system administration capabilities with a modern, intuitive interface designed for system administrators.
+
+### Core Features
+
+#### **User Management**
+- **User Overview:** Complete user listing with search and filtering
+- **Role Management:** Assign and modify user roles (Buyer, Supplier, Admin)
+- **User Statistics:** Registration trends, active users, user activity metrics
+- **User Actions:** Activate/deactivate users, reset passwords, view user details
+
+#### **System Analytics**
+- **Dashboard Analytics:** Real-time system metrics and performance indicators
+- **Business Intelligence:** RFP performance, response rates, user engagement
+- **Trend Analysis:** Monthly growth, user activity patterns, system usage
+- **Performance Metrics:** Response times, system health, database statistics
+
+#### **Audit & Security**
+- **Audit Logs:** Complete system activity logging with search and filtering
+- **Security Monitoring:** Failed login attempts, suspicious activities
+- **Activity Tracking:** User actions, system changes, data modifications
+- **Compliance:** Audit trail for regulatory and security compliance
+
+#### **System Configuration**
+- **Email Settings:** SMTP configuration, notification preferences
+- **File Upload:** File size limits, allowed file types, storage settings
+- **Security Settings:** Session timeouts, password policies, 2FA settings
+- **System Settings:** Maintenance mode, debug settings, backup configuration
+
+#### **Data Management**
+- **RFP Management:** Oversee all RFPs, force close/cancel if needed
+- **Response Management:** Monitor responses, quality metrics, performance
+- **Document Management:** Storage analytics, file type distribution, cleanup
+- **Export Tools:** Data export in multiple formats (CSV, Excel, PDF, JSON)
+
+#### **Reporting & Monitoring**
+- **Report Generation:** Custom reports with scheduling capabilities
+- **System Monitoring:** Database health, API performance, error tracking
+- **Support Tools:** Support ticket management, system diagnostics
+- **Backup Management:** Automated backups, restore procedures
+
+### Technical Implementation
+
+#### **Backend Services**
+- **Configuration Service:** System settings management and database operations
+- **Export Service:** Data export and report generation with scheduling
+- **Admin Controllers:** RESTful API endpoints for all admin operations
+- **Permission System:** Role-based access control for admin features
+
+#### **Frontend Components**
+- **Admin Layout:** Professional sidebar navigation with role-based access
+- **11 Admin Pages:** Complete interfaces for all administrative functions
+- **React Query Integration:** Optimized data fetching and caching
+- **Real-time Updates:** Live system monitoring and notifications
+
+#### **Security Features**
+- **Admin Authentication:** Secure admin login with JWT tokens
+- **Permission Middleware:** Fine-grained access control for admin routes
+- **Audit Logging:** Complete logging of all admin actions
+- **Session Management:** Secure session handling with timeout
+
+### Admin User Access
+- **Email:** talkskunal@gmail.com
+- **Role:** Admin
+- **Permissions:** Full system access including user management, analytics, system configuration, and audit trail viewing
 
 ---
 

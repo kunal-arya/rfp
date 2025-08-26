@@ -18,7 +18,9 @@ export interface UserPermissions {
   supplier_response?: ResourcePermissions;
   documents?: ResourcePermissions;
   search?: ResourcePermissions;
+  audit?: ResourcePermissions;
   admin?: ResourcePermissions;
+  navbar?: string;
 }
 
 export interface AuthUser {
