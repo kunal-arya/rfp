@@ -38,8 +38,14 @@ export const authApi = {
     return response.data;
   },
 
-  // Logout (client-side)
-  logout: () => {
+  // Logout user (server-side with audit trail)
+  logout: async (): Promise<{ message: string; logout_time: string }> => {
+    const response = await apiClient.post<{ message: string; logout_time: string }>('/auth/logout');
+    return response.data;
+  },
+
+  // Clear local storage (client-side cleanup)
+  clearLocalStorage: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   },

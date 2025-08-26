@@ -10,6 +10,7 @@ import adminRouter from './router/admin.router';
 import { setupSwagger } from './config/swagger';
 import { initializeWebSocket } from './services/websocket.service';
 import { PrismaClient } from '@prisma/client';
+import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 
 const prisma = new PrismaClient();
 
@@ -170,6 +171,10 @@ app.get('/api/health', async (req, res) => {
 
 // Initialize WebSocket
 initializeWebSocket(server);
+
+// Error handling middleware (must be last)
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`);

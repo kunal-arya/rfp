@@ -1,4 +1,5 @@
 import apiClient from './client';
+import { User, UserStats } from './types';
 
 // Configuration APIs
 export const getSystemConfig = () => apiClient.get('/admin/config');
@@ -58,3 +59,29 @@ export const getDocuments = (params?: any) => apiClient.get('/admin/documents', 
 
 // Support APIs
 export const getSupportTickets = (params?: any) => apiClient.get('/admin/support/tickets', { params });
+
+// Admin Audit APIs
+export interface AdminAuditFilters {
+  user_id?: string;
+  action?: string;
+  target_type?: string;
+  target_id?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+  'gte___created_at'?: string;
+  'lte___created_at'?: string;
+}
+
+export interface AdminAuditResponse {
+  data: any[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export const getAdminAuditTrails = (filters?: AdminAuditFilters) => 
+  apiClient.get<AdminAuditResponse>('/audit/all', { params: filters });
+
+export const getAdminAuditStats = () => 
+  apiClient.get('/admin/audit/stats');

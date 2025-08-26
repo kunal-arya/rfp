@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as auditService from './audit.service';
-import { USER_STATUS } from '../utils/enum';
+import { USER_STATUS, AUDIT_ACTIONS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
@@ -47,7 +47,7 @@ export const getUsers = async (params: {
     orderBy: { created_at: 'desc' },
   });
 
-  const total = await prisma.user.count({ where: whereClause });
+  const total = await prisma.user.count({ where: { ...whereClause } });
 
   return {
     data: users,
@@ -187,7 +187,7 @@ export const getUserStats = async () => {
     prisma.auditTrail.groupBy({
       by: ['user_id'],
       where: {
-        action: 'USER_LOGIN',
+        action: AUDIT_ACTIONS.USER_LOGIN,
         created_at: { gte: lastWeek },
       },
     }).then(result => result.length),
@@ -196,7 +196,7 @@ export const getUserStats = async () => {
     prisma.auditTrail.groupBy({
       by: ['user_id'],
       where: {
-        action: 'USER_LOGIN',
+        action: AUDIT_ACTIONS.USER_LOGIN,
         created_at: { gte: twoWeeksAgo, lt: lastWeek },
       },
     }).then(result => result.length),

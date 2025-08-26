@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { RFP_STATUS, RoleName, SUPPLIER_RESPONSE_STATUS } from '../utils/enum';
+import { RFP_STATUS, RoleName, SUPPLIER_RESPONSE_STATUS, AUDIT_ACTIONS, USER_STATUS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
@@ -366,6 +366,7 @@ const getAdminStats = async (userId: string) => {
                 updated_at: {
                     gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
                 },
+                status: { equals: USER_STATUS.Active }
             },
         }),
         
@@ -428,7 +429,7 @@ const getAdminStats = async (userId: string) => {
             const totalRfps = await prisma.rFP.count({
                 where: {
                     deleted_at: null,
-                    status: { code: { in: [RFP_STATUS.Closed, RFP_STATUS.Awarded, RFP_STATUS.Cancelled] } },
+                    status: { code: RFP_STATUS.Awarded },
                 },
             });
 
@@ -464,7 +465,7 @@ const getAdminStats = async (userId: string) => {
             const activeUsersLastWeekResult = await prisma.auditTrail.groupBy({
                 by: ['user_id'],
                 where: {
-                    action: 'USER_LOGIN',
+                    action: AUDIT_ACTIONS.USER_LOGIN,
                     created_at: { gte: oneWeekAgo },
                 },
             });
@@ -474,7 +475,7 @@ const getAdminStats = async (userId: string) => {
             const activeUsersPreviousWeekResult = await prisma.auditTrail.groupBy({
                 by: ['user_id'],
                 where: {
-                    action: 'USER_LOGIN',
+                    action: AUDIT_ACTIONS.USER_LOGIN,
                     created_at: { 
                         gte: twoWeeksAgo, 
                         lt: oneWeekAgo 

@@ -45,7 +45,7 @@ export const rfpApi = {
 
   // Get user's own RFPs (for buyers)
   getMyRfps: async (filters?: RfpFilters): Promise<PaginatedResponse<RFP>> => {
-    const response = await apiClient.get<PaginatedResponse<RFP>>('/rfp', { params: filters });
+    const response = await apiClient.get<PaginatedResponse<RFP>>('/rfp/my', { params: filters });
     return response.data;
   },
 

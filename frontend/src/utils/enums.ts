@@ -1,31 +1,3 @@
-export enum RoleName {
-    Buyer = "Buyer",
-    Supplier = "Supplier",
-    Admin = "Admin"
-}
-
-export enum RFP_STATUS {
-    Draft = "Draft",
-    Published = "Published",
-    Closed = "Closed",
-    Awarded = "Awarded",
-    Cancelled = "Cancelled"
-}
-
-export enum SUPPLIER_RESPONSE_STATUS {
-    Draft = "Draft",
-    Submitted = "Submitted",
-    Under_Review = "Under Review",
-    Approved = "Approved",
-    Rejected = "Rejected",
-    Awarded = "Awarded"
-}
-
-export enum USER_STATUS {
-    Active = "active",
-    Inactive = "inactive"
-}
-
 export enum AUDIT_ACTIONS {
     // RFP Actions
     RFP_CREATED = "RFP_CREATED",
@@ -70,3 +42,19 @@ export enum AUDIT_ACTIONS {
     REPORT_GENERATED = "REPORT_GENERATED",
     REPORT_SCHEDULED = "REPORT_SCHEDULED"
 }
+
+// Helper function to get display name for audit actions
+export const getAuditActionDisplayName = (action: string): string => {
+    return action.replace(/_/g, ' ');
+};
+
+// Helper function to get action category
+export const getAuditActionCategory = (action: string): string => {
+    if (action.includes('RFP_')) return 'RFP';
+    if (action.includes('RESPONSE_')) return 'Response';
+    if (action.includes('DOCUMENT_')) return 'Document';
+    if (action.includes('USER_')) return 'User';
+    if (action.includes('ERROR') || action.includes('SYSTEM_') || action.includes('PERMISSION_')) return 'System';
+    if (action.includes('DATA_') || action.includes('REPORT_')) return 'Admin';
+    return 'Other';
+};

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { USER_STATUS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
@@ -106,7 +107,8 @@ export const notificationService = {
             where: {
                 role: {
                     name: roleName
-                }
+                },
+                status: { equals: USER_STATUS.Active }
             }
         });
 

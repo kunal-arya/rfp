@@ -16,10 +16,12 @@ import {
   Bell,
   HelpCircle
 } from 'lucide-react';
+import { useLogout } from '@/hooks/useLogout';
 
 const AdminLayout: React.FC = () => {
-  const { user, logout, permissionHelpers } = useAuth();
+  const { user, permissionHelpers } = useAuth();
   const location = useLocation();
+  const logoutMutation = useLogout();
 
   // Navigation configuration
   const navigationConfig = {
@@ -47,7 +49,7 @@ const AdminLayout: React.FC = () => {
     console.log(allowedPages);
 
   const handleLogout = () => {
-    logout();
+    logoutMutation.mutate();
   };
 
   return (
@@ -98,9 +100,13 @@ const AdminLayout: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={handleLogout}
+              disabled={logoutMutation.isPending}
               className="text-gray-500 hover:text-gray-700"
             >
               <LogOut className="h-4 w-4" />
+              {logoutMutation.isPending && (
+                <span className="ml-2 text-xs">Logging out...</span>
+              )}
             </Button>
           </div>
         </div>

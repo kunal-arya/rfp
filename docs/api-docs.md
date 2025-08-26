@@ -130,6 +130,24 @@ Logs in a user and returns a JWT.
 - `200 OK`: Login successful. Returns a JWT.
 - `401 Unauthorized`: Invalid credentials.
 
+#### `POST /auth/logout`
+
+Logout a user (creates audit trail).
+
+**Headers:**
+- `Authorization: Bearer <token>` (required)
+
+**Responses:**
+- `200 OK`: Logout successful
+  ```json
+  {
+    "message": "Logged out successfully",
+    "logout_time": "2024-01-15T10:30:00.000Z"
+  }
+  ```
+- `401 Unauthorized`: Invalid or missing token
+- `500 Internal Server Error`: Server error
+
 ### Dashboard
 
 #### `GET /dashboard`

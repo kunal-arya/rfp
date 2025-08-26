@@ -1,7 +1,8 @@
 import { PrismaClient, Role, User } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { createAuditEntry, AUDIT_ACTIONS } from './audit.service';
+import { createAuditEntry } from './audit.service';
+import { AUDIT_ACTIONS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
@@ -144,5 +145,21 @@ export const createAdminUser = async (name: string, email: string, password: str
             role: 'Admin',
         },
         permissions: adminRole.permissions,
+    };
+};
+
+export const logout = async (userId?: string) => {
+    if (!userId) {
+        throw new Error('User ID is required for logout');
+    }
+
+    // Create audit trail entry for logout
+    await createAuditEntry(userId, AUDIT_ACTIONS.USER_LOGOUT, 'User', userId, {
+        logout_time: new Date().toISOString(),
+    });
+
+    return {
+        message: 'Logged out successfully',
+        logout_time: new Date().toISOString(),
     };
 };

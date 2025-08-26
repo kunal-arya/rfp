@@ -45,7 +45,7 @@ router.get(
  *         description: Unauthorized
  */
 router.get(
-    '/',
+    '/my',
     hasPermission('rfp', 'view'),
     rfpController.getMyRfps
 );

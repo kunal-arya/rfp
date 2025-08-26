@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import * as authService from '../services/auth.service';
 import { registerSchema, loginSchema } from '../validations/auth.validation';
+import { AuthenticatedRequest } from '../middleware/auth.middleware';
 
 export const register = async (req: Request, res: Response) => {
     const validationResult = registerSchema.safeParse(req.body);
@@ -67,6 +68,16 @@ export const createAdmin = async (req: Request, res: Response) => {
         if (error.message === 'Admin role not found') {
             return res.status(500).json({ message: error.message });
         }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const logout = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const result = await authService.logout(req.user?.userId);
+        res.json(result);
+    } catch (error: any) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { AUDIT_ACTIONS, RFP_STATUS, RoleName, USER_STATUS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
@@ -9,35 +10,18 @@ export const getAnalyticsData = async () => {
 
   const [
     totalRfps,
-    totalResponses,
-    newRfpsThisMonth,
-    newResponsesThisMonth,
     rfpStatusDistribution,
     monthlyGrowthData,
     responseMetrics,
     systemMetrics,
     topPerformingBuyers,
     topPerformingSuppliers,
-    rfpCategoryDistribution,
     responseTimeMetrics
   ] = await Promise.all([
     // Total RFPs
-    prisma.rFP.count(),
-    
-    // Total Responses
-    prisma.supplierResponse.count(),
-    
-    // New RFPs this month
     prisma.rFP.count({
       where: {
-        created_at: { gte: lastMonth }
-      }
-    }),
-    
-    // New Responses this month
-    prisma.supplierResponse.count({
-      where: {
-        created_at: { gte: lastMonth }
+        deleted_at: null
       }
     }),
     
@@ -46,6 +30,9 @@ export const getAnalyticsData = async () => {
       by: ['status_id'],
       _count: {
         status_id: true
+      },
+      where: {
+        deleted_at: null
       }
     }),
     
@@ -64,7 +51,8 @@ export const getAnalyticsData = async () => {
           }),
           prisma.rFP.count({
             where: {
-              created_at: { gte: monthStart, lte: monthEnd }
+              created_at: { gte: monthStart, lte: monthEnd },
+              deleted_at: null
             }
           }),
           prisma.supplierResponse.count({
@@ -91,7 +79,8 @@ export const getAnalyticsData = async () => {
         where: {
           supplier_responses: {
             some: {}
-          }
+          },
+          deleted_at: null
         },
         include: {
           supplier_responses: {
@@ -106,7 +95,7 @@ export const getAnalyticsData = async () => {
       // Calculate average response time
       let totalResponseTime = 0;
       let responseCount = 0;
-      
+
       rfpsWithFirstResponse.forEach(rfp => {
         if (rfp.supplier_responses.length > 0) {
           const responseTime = rfp.supplier_responses[0].created_at.getTime() - rfp.created_at.getTime();
@@ -120,14 +109,16 @@ export const getAnalyticsData = async () => {
       // Response Rate (RFPs with at least one response)
       const rfpsWithResponses = await prisma.rFP.count({
         where: {
-          supplier_responses: { some: {} }
+          supplier_responses: { some: {} },
+          deleted_at: null
         }
       });
       
       // Success Rate (RFPs that have an awarded response)
       const awardedRfps = await prisma.rFP.count({
         where: {
-          awarded_response_id: { not: null }
+          deleted_at: null,
+          status: { code: RFP_STATUS.Awarded }
         }
       });
 
@@ -137,6 +128,9 @@ export const getAnalyticsData = async () => {
           _count: {
             select: { supplier_responses: true }
           }
+        },
+        where: {
+          deleted_at: null
         }
       });
 
@@ -153,11 +147,11 @@ export const getAnalyticsData = async () => {
     
     // System Performance Metrics
     (async () => {
-      const [totalLogins, errorCount] = await Promise.all([
+      const [totalLogins, errorCount, loginEvents, logoutEvents] = await Promise.all([
         // Total logins in last week
         prisma.auditTrail.count({
           where: {
-            action: 'USER_LOGIN',
+            action: AUDIT_ACTIONS.USER_LOGIN,
             created_at: { gte: lastWeek }
           }
         }),
@@ -165,23 +159,58 @@ export const getAnalyticsData = async () => {
         // Error count in last week
         prisma.auditTrail.count({
           where: {
-            action: { contains: 'ERROR' },
+            action: { in: [AUDIT_ACTIONS.SYSTEM_ERROR, AUDIT_ACTIONS.CLIENT_ERROR, AUDIT_ACTIONS.AUTHORIZATION_ERROR, AUDIT_ACTIONS.VALIDATION_ERROR, AUDIT_ACTIONS.PERMISSION_DENIED] },
             created_at: { gte: lastWeek }
           }
+        }),
+
+        prisma.auditTrail.findMany({
+          where: {
+            action: AUDIT_ACTIONS.USER_LOGIN,
+            created_at: { gte: lastWeek }
+          },
+          select: { user_id: true, created_at: true },
+          orderBy: { created_at: 'asc' }
+        }),
+
+        prisma.auditTrail.findMany({
+          where: {
+            action: AUDIT_ACTIONS.USER_LOGOUT,
+            created_at: { gte: lastWeek }
+          },
+          select: { user_id: true, created_at: true },
+          orderBy: { created_at: 'asc' }
         })
       ]);
+
+      let sessions: number[] = [];
+
+      // Simple pairing: for each login, find the next logout by the same user
+      loginEvents.forEach(login => {
+        const matchingLogout = logoutEvents.find(logout => 
+          logout.user_id === login.user_id && logout.created_at > login.created_at
+        );
+
+        console.log({matchingLogout,logoutEvents});
+        
+        if (matchingLogout) {
+          sessions.push(matchingLogout.created_at.getTime() - login.created_at.getTime());
+        }
+      });
       
+      const averageDuration = sessions.length > 0 ? sessions.reduce((sum, duration) => sum + duration, 0) / sessions.length : 0;
       return {
         totalLogins,
         errorRate: totalLogins > 0 ? ((errorCount / totalLogins) * 100).toFixed(1) : '0',
-        avgSessionDuration: '12m 30s' // Mock data for now
+        avgSessionDuration: `${Math.round(averageDuration / (1000 * 60))}m ${Math.round((averageDuration % (1000 * 60)) / 1000)}s`
       };
     })(),
     
     // Top Performing Buyers (by RFPs created)
     prisma.user.findMany({
       where: {
-        role: { name: 'Buyer' }
+        role: { name: RoleName.Buyer },
+        status: { equals: USER_STATUS.Active }
       },
       include: {
         _count: {
@@ -197,7 +226,8 @@ export const getAnalyticsData = async () => {
     // Top Performing Suppliers (by responses submitted)
     prisma.user.findMany({
       where: {
-        role: { name: 'Supplier' }
+        role: { name: RoleName.Supplier },
+        status: { equals: USER_STATUS.Active }
       },
       include: {
         _count: {
@@ -210,22 +240,14 @@ export const getAnalyticsData = async () => {
       take: 5
     }),
     
-    // RFP Category Distribution (mock data for now)
-    Promise.resolve([
-      { category: 'Technology', count: 45, percentage: 35 },
-      { category: 'Services', count: 38, percentage: 30 },
-      { category: 'Products', count: 25, percentage: 20 },
-      { category: 'Consulting', count: 15, percentage: 12 },
-      { category: 'Other', count: 5, percentage: 3 }
-    ]),
-    
     // Response Time Metrics using Prisma queries
     (async () => {
       const rfpsWithResponses = await prisma.rFP.findMany({
         where: {
           supplier_responses: {
             some: {}
-          }
+          },
+          deleted_at: null
         },
         include: {
           supplier_responses: {
@@ -291,17 +313,11 @@ export const getAnalyticsData = async () => {
   const responseRatePercentage = totalRfps > 0 ? Math.round((responseMetrics.responseRate / totalRfps) * 100) : 0;
   const successRatePercentage = totalRfps > 0 ? Math.round((responseMetrics.successRate / totalRfps) * 100) : 0;
 
-  return {
-    // Key Metrics
-    totalRfps,
-    totalResponses,
-    newRfpsThisMonth,
-    newResponsesThisMonth,
-    
+  
+  return {    
     // Charts Data
     monthlyGrowthData,
     rfpStatusDistribution: rfpStatusWithPercentages,
-    rfpCategoryDistribution,
     responseTimeMetrics,
     
     // Performance Metrics

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,12 +16,13 @@ import {
   Activity
 } from 'lucide-react';
 import { NotificationBell } from '@/components/shared/NotificationBell';
+import { useLogout } from '@/hooks/useLogout';
 
 export const Navbar: React.FC = () => {
-  const { user, logout, permissionHelpers } = useAuth();
+  const { user, permissionHelpers } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const logoutMutation = useLogout();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -48,8 +49,7 @@ export const Navbar: React.FC = () => {
     }));
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    logoutMutation.mutate();
   };
 
   return (
@@ -111,10 +111,11 @@ export const Navbar: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={handleLogout}
+              disabled={logoutMutation.isPending}
               className="hover:bg-red-50 hover:text-red-600 hover:border-red-200"
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
             </Button>
           </div>
 
@@ -174,10 +175,11 @@ export const Navbar: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleLogout}
+                  disabled={logoutMutation.isPending}
                   className="w-full justify-start hover:bg-red-50 hover:text-red-600 hover:border-red-200"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  Logout
+                  {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
                 </Button>
               </div>
             </div>

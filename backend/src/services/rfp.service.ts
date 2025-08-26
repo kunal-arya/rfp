@@ -1,11 +1,12 @@
 import { PrismaClient, User } from '@prisma/client';
 import { CreateRfpData, SubmitResponseData } from '../validations/rfp.validation';
 import { uploadToCloudinary } from '../utils/cloudinary';
-import { RFP_STATUS, RoleName, SUPPLIER_RESPONSE_STATUS } from '../utils/enum';
+import { RFP_STATUS, RoleName, SUPPLIER_RESPONSE_STATUS, USER_STATUS } from '../utils/enum';
 import { sendRfpPublishedNotification, sendResponseSubmittedNotification, sendRfpStatusChangeNotification, sendResponseMovedToReviewNotification, sendResponseApprovedNotification, sendResponseRejectedNotification, sendResponseAwardedNotification } from './email.service';
 import { notificationService } from './notification.service';
 import { notifyRfpPublished, notifyResponseSubmitted, notifyRfpStatusChanged, notifyRfpCreated, notifyRfpUpdated, notifyRfpDeleted, notifyResponseMovedToReview, notifyResponseApproved, notifyResponseRejected, notifyResponseAwarded, notifyRfpAwarded } from './websocket.service';
-import { createAuditEntry, AUDIT_ACTIONS } from './audit.service';
+import { createAuditEntry } from './audit.service';
+import { AUDIT_ACTIONS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
@@ -496,7 +497,7 @@ export const publishRfp = async (rFPId: string, userId: string) => {
     
     if (rfpWithDetails) {
         // Create notifications for all suppliers
-        await notificationService.createNotificationForRole('Supplier', 'RFP_PUBLISHED', {
+        await notificationService.createNotificationForRole('Supplier', AUDIT_ACTIONS.RFP_PUBLISHED, {
             rfp_title: rfpWithDetails.title,
             buyer_name: rfpWithDetails.buyer.email,
             deadline: rfpWithDetails.current_version?.deadline ? new Date(rfpWithDetails.current_version.deadline).toLocaleDateString() : 'N/A',
@@ -975,7 +976,7 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
     });
     if (responseWithDetails) {
         // Create notification for the buyer
-        await notificationService.createNotificationForUser(responseWithDetails.rfp.buyer_id, 'RESPONSE_SUBMITTED', {
+        await notificationService.createNotificationForUser(responseWithDetails.rfp.buyer_id, AUDIT_ACTIONS.RESPONSE_SUBMITTED, {
             rfp_title: responseWithDetails.rfp.title,
             supplier_name: responseWithDetails.supplier.email,
             response_id: responseWithDetails.id
@@ -1058,7 +1059,7 @@ export const moveResponseToReview = async (responseId: string, buyerId: string) 
     await sendResponseMovedToReviewNotification(responseId);
 
     // Create notification for the supplier
-    await notificationService.createNotificationForUser(updatedResponse.supplier_id, 'RESPONSE_MOVED_TO_REVIEW', {
+            await notificationService.createNotificationForUser(updatedResponse.supplier_id, AUDIT_ACTIONS.RESPONSE_MOVED_TO_REVIEW, {
         rfp_title: updatedResponse.rfp.title,
         supplier_name: updatedResponse.supplier.email,
         response_id: updatedResponse.id
@@ -1618,7 +1619,7 @@ export const getResponseById = async (responseId: string, userId: string) => {
     // Check if user can view this response
     // Suppliers can view their own responses, Buyers can view responses to their RFPs
     const user = await prisma.user.findUnique({
-        where: { id: userId },
+        where: { id: userId, status: USER_STATUS.Active },
         include: { role: true },
     });
 

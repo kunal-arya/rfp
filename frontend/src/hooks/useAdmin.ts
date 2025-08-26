@@ -29,6 +29,9 @@ import {
   getNotifications,
   getDocuments,
   getSupportTickets,
+  getAdminAuditTrails,
+  getAdminAuditStats,
+  AdminAuditFilters,
 } from '../apis/admin';
 
 // Configuration hooks
@@ -171,4 +174,15 @@ export const useDocuments = (params?: any) => useQuery({
 export const useSupportTickets = (params?: any) => useQuery({ 
   queryKey: ['admin-support-tickets', params], 
   queryFn: () => getSupportTickets(params) 
+});
+
+// Admin Audit hooks
+export const useAdminAuditTrails = (filters?: AdminAuditFilters) => useQuery({ 
+  queryKey: ['admin-audit', filters], 
+  queryFn: () => getAdminAuditTrails(filters).then(res => res.data) 
+});
+
+export const useAdminAuditStats = () => useQuery({ 
+  queryKey: ['admin-audit-stats'], 
+  queryFn: () => getAdminAuditStats().then(res => res.data) 
 });

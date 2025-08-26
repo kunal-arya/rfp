@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Mail } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Shield, 
   Search, 
@@ -12,9 +14,21 @@ import {
   Clock,
   User,
   Activity,
-  Loader2
+  Loader2,
+  Calendar,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Info,
+  FileText,
+  Users,
+  Settings,
+  Database
 } from 'lucide-react';
-import { useAllAuditTrails } from '@/hooks/useAudit';
+import { useAdminAuditTrails, useUsers } from '@/hooks/useAdmin';
+import { useDebounce } from '@/hooks/useDebounce';
+import { format } from 'date-fns';
+import { AUDIT_ACTIONS, getAuditActionDisplayName, getAuditActionCategory } from '@/utils/enums';
 
 interface AuditLog {
   id: number;
@@ -30,25 +44,45 @@ interface AuditLog {
   };
 }
 
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}
+
 const AuditLogsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState('all');
   const [userFilter, setUserFilter] = useState('all');
+  const [targetTypeFilter, setTargetTypeFilter] = useState('all');
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit] = useState(20);
 
-  // Use real API data
-  const { data: auditData, isLoading, error } = useAllAuditTrails({
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Get all users for the user filter dropdown
+  const { data: usersResponse } = useUsers({ limit: 1000 });
+  const usersData = usersResponse?.data?.data || [];
+
+  // Use admin audit trails with filters
+  const { data: auditData, isLoading, error } = useAdminAuditTrails({
     page,
     limit,
-    search: searchTerm || undefined,
+    search: debouncedSearchTerm || undefined,
     action: actionFilter !== 'all' ? actionFilter : undefined,
     user_id: userFilter !== 'all' ? userFilter : undefined,
+    target_type: targetTypeFilter !== 'all' ? targetTypeFilter : undefined,
   });
 
   const auditLogs = auditData?.data || [];
   const total = auditData?.total || 0;
   const totalPages = Math.ceil(total / limit);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm, actionFilter, userFilter, targetTypeFilter]);
 
   if (isLoading) {
     return (
@@ -73,21 +107,267 @@ const AuditLogsPage: React.FC = () => {
   }
 
   const getActionBadgeColor = (action: string) => {
-    switch (action) {
-      case 'USER_LOGIN': return 'bg-green-100 text-green-800';
-      case 'USER_REGISTERED': return 'bg-blue-100 text-blue-800';
-      case 'RFP_CREATED': return 'bg-purple-100 text-purple-800';
-      case 'RESPONSE_SUBMITTED': return 'bg-orange-100 text-orange-800';
-      case 'USER_DELETED': return 'bg-red-100 text-red-800';
-      case 'DOCUMENT_UPLOADED': return 'bg-indigo-100 text-indigo-800';
-      default: return 'bg-gray-100 text-gray-800';
+    const category = getAuditActionCategory(action);
+    switch (category) {
+      case 'User': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'RFP': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'Response': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'Document': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      case 'System': return 'bg-red-100 text-red-800 border-red-200';
+      case 'Admin': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  const getSeverityColor = (action: string) => {
-    if (action.includes('DELETE') || action.includes('FAILED')) return 'text-red-600';
-    if (action.includes('LOGIN') || action.includes('CREATED')) return 'text-green-600';
-    return 'text-blue-600';
+  const getActionIcon = (action: string) => {
+    const category = getAuditActionCategory(action);
+    switch (category) {
+      case 'User': 
+        if (action.includes('LOGIN')) return <CheckCircle className="h-4 w-4 text-green-600" />;
+        if (action.includes('LOGOUT')) return <XCircle className="h-4 w-4 text-blue-600" />;
+        return <Users className="h-4 w-4 text-blue-600" />;
+      case 'RFP': return <FileText className="h-4 w-4 text-purple-600" />;
+      case 'Response': return <Shield className="h-4 w-4 text-orange-600" />;
+      case 'Document': return <Database className="h-4 w-4 text-indigo-600" />;
+      case 'System': return <AlertTriangle className="h-4 w-4 text-red-600" />;
+      case 'Admin': return <Settings className="h-4 w-4 text-green-600" />;
+      default: return <Activity className="h-4 w-4 text-gray-600" />;
+    }
+  };
+
+  const formatDetails = (details: Record<string, unknown> | string | null) => {
+    if (!details) return null;
+    
+    try {
+      if (typeof details === 'string') {
+        return details;
+      }
+      
+      // For error logs, format them nicely
+      if (details.stack) {
+        return {
+          type: 'error',
+          message: details.message || 'Error occurred',
+          url: details.url,
+          method: details.method,
+          statusCode: details.statusCode,
+          stack: details.stack
+        };
+      }
+      
+      // For regular details, return as is
+      return details;
+    } catch {
+      return null;
+    }
+  };
+
+
+const renderDetails = (details: Record<string, unknown> | string | null, action: string) => {
+    if (!details) return null;
+  
+    const formattedDetails = formatDetails(details);
+    
+    // Handle error logs with special formatting
+    if (formattedDetails && typeof formattedDetails === 'object' && formattedDetails.type === 'error') {
+      return (
+        <div className="mt-3 space-y-2">
+          <div className="bg-red-50 border border-red-200 rounded-md p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <span className="text-sm font-medium text-red-800">Error Details</span>
+            </div>
+            <div className="space-y-1 text-sm">
+              <div><span className="font-medium">Message:</span> {String(formattedDetails.message || '')}</div>
+              <div><span className="font-medium">URL:</span> {String(formattedDetails.url || '')}</div>
+              <div><span className="font-medium">Method:</span> {String(formattedDetails.method || '')}</div>
+              <div><span className="font-medium">Status:</span> {String(formattedDetails.statusCode || '')}</div>
+            </div>
+            {formattedDetails.stack && (
+              <details className="mt-2">
+                <summary className="text-sm font-medium text-red-700 cursor-pointer">Stack Trace</summary>
+                <pre className="mt-1 text-xs text-red-600 bg-red-100 p-2 rounded">
+                  {String(formattedDetails.stack)}
+                </pre>
+              </details>
+            )}
+          </div>
+        </div>
+      );
+    }
+  
+    // Handle specific action types with custom formatting
+    if (formattedDetails && typeof formattedDetails === 'object') {
+      // USER LOGIN details
+      if (action.includes('LOGIN') && formattedDetails.role && formattedDetails.email) {
+        return (
+          <div className="mt-3">
+            <div className="bg-green-50 border border-green-200 rounded-md p-3">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium text-green-800">Login Success</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-green-600" />
+                  <span className="font-medium">Role:</span>
+                  <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                    {String(formattedDetails.role)}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-green-600" />
+                  <span className="font-medium">Email:</span>
+                  <span className="text-green-700">{String(formattedDetails.email)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+  
+      // USER LOGOUT details
+      if (action.includes('LOGOUT') && formattedDetails.logout_time) {
+        return (
+          <div className="mt-3">
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+              <div className="flex items-center gap-2 mb-3">
+                <XCircle className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-800">Session Ended</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="h-4 w-4 text-blue-600" />
+                <span className="font-medium">Logout Time:</span>
+                <span className="text-blue-700">
+                  {format(new Date(String(formattedDetails.logout_time)), 'MMM dd, yyyy HH:mm:ss')}
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      }
+  
+      // RFP related actions
+      if (action.includes('RFP')) {
+        return (
+          <div className="mt-3">
+            <div className="bg-purple-50 border border-purple-200 rounded-md p-3">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="h-4 w-4 text-purple-600" />
+                <span className="text-sm font-medium text-purple-800">RFP Activity</span>
+              </div>
+              <div className="space-y-2 text-sm">
+                {Object.entries(formattedDetails).map(([key, value]) => (
+                  <div key={key} className="flex items-start gap-2">
+                    <span className="font-medium capitalize text-purple-700">
+                      {key.replace(/_/g, ' ')}:
+                    </span>
+                    <span className="text-purple-600">{String(value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+  
+      // Document related actions
+      if (action.includes('DOCUMENT')) {
+        return (
+          <div className="mt-3">
+            <div className="bg-indigo-50 border border-indigo-200 rounded-md p-3">
+              <div className="flex items-center gap-2 mb-3">
+                <Database className="h-4 w-4 text-indigo-600" />
+                <span className="text-sm font-medium text-indigo-800">Document Activity</span>
+              </div>
+              <div className="space-y-2 text-sm">
+                {formattedDetails.filename && (
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-indigo-600" />
+                    <span className="font-medium">File:</span>
+                    <span className="text-indigo-700">{String(formattedDetails.filename)}</span>
+                  </div>
+                )}
+                {formattedDetails.size && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Size:</span>
+                    <span className="text-indigo-700">{String(formattedDetails.size)} bytes</span>
+                  </div>
+                )}
+                {Object.entries(formattedDetails)
+                  .filter(([key]) => !['filename', 'size'].includes(key))
+                  .map(([key, value]) => (
+                  <div key={key} className="flex items-start gap-2">
+                    <span className="font-medium capitalize text-indigo-700">
+                      {key.replace(/_/g, ' ')}:
+                    </span>
+                    <span className="text-indigo-600">{String(value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+  
+      // Admin actions
+      if (action.includes('ADMIN') || action.includes('USER_CREATE') || action.includes('USER_UPDATE')) {
+        return (
+          <div className="mt-3">
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+              <div className="flex items-center gap-2 mb-3">
+                <Settings className="h-4 w-4 text-amber-600" />
+                <span className="text-sm font-medium text-amber-800">Admin Action</span>
+              </div>
+              <div className="space-y-2 text-sm">
+                {Object.entries(formattedDetails).map(([key, value]) => (
+                  <div key={key} className="flex items-start gap-2">
+                    <span className="font-medium capitalize text-amber-700">
+                      {key.replace(/_/g, ' ')}:
+                    </span>
+                    <span className="text-amber-600">
+                      {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
+  
+    // Fallback for any other details - but make it more readable
+    return (
+      <div className="mt-3">
+        <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Info className="h-4 w-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">Additional Details</span>
+          </div>
+          
+          {/* Try to render as key-value pairs if it's an object */}
+          {formattedDetails && typeof formattedDetails === 'object' ? (
+            <div className="space-y-2">
+              {Object.entries(formattedDetails).map(([key, value]) => (
+                <div key={key} className="flex items-start gap-2 text-sm">
+                  <span className="font-medium text-gray-700 capitalize min-w-0 flex-shrink-0">
+                    {key.replace(/_/g, ' ')}:
+                  </span>
+                  <span className="text-gray-600 break-words">
+                    {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-600">
+              {String(formattedDetails)}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -104,76 +384,18 @@ const AuditLogsPage: React.FC = () => {
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Logs</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{auditLogs.length}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">+12%</span> from last hour
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Set(auditLogs.map(log => log.user)).size}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Unique users today
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Security Events</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {auditLogs.filter(log => log.action.includes('LOGIN') || log.action.includes('DELETE')).length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Authentication & security
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {auditLogs.filter(log => {
-                const logTime = new Date(log.created_at);
-                const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-                return logTime > oneHourAgo;
-              }).length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Last hour
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Filters */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Search</label>
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -184,30 +406,57 @@ const AuditLogsPage: React.FC = () => {
                 />
               </div>
             </div>
-            <select
-              value={actionFilter}
-              onChange={(e) => setActionFilter(e.target.value)}
-              className="px-3 py-2 border rounded-md"
-            >
-              <option value="all">All Actions</option>
-              <option value="USER_LOGIN">User Login</option>
-              <option value="USER_REGISTERED">User Registration</option>
-              <option value="RFP_CREATED">RFP Created</option>
-              <option value="RESPONSE_SUBMITTED">Response Submitted</option>
-              <option value="USER_DELETED">User Deleted</option>
-              <option value="DOCUMENT_UPLOADED">Document Uploaded</option>
-            </select>
-            <select
-              value={userFilter}
-              onChange={(e) => setUserFilter(e.target.value)}
-              className="px-3 py-2 border rounded-md"
-            >
-              <option value="all">All Users</option>
-              {Array.from(new Set(auditLogs.map(log => log.user?.email || log.user_id))).map(user => (
-                <option key={user} value={user}>{user}</option>
-              ))}
-            </select>
 
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Action</label>
+              <Select value={actionFilter} onValueChange={setActionFilter}>
+                <SelectTrigger className='w-full'>
+                  <SelectValue placeholder="All Actions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Actions</SelectItem>
+                  {Object.values(AUDIT_ACTIONS).map((action) => (
+                    <SelectItem key={action} value={action}>
+                      {getAuditActionDisplayName(action)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">User</label>
+              <Select value={userFilter} onValueChange={setUserFilter}>
+                <SelectTrigger  className='w-full'>
+                  <SelectValue placeholder="All Users" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Users</SelectItem>
+                  {usersData?.map((user: User) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Target Type</label>
+              <Select value={targetTypeFilter} onValueChange={setTargetTypeFilter}>
+                <SelectTrigger className='w-full'>
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="User">User</SelectItem>
+                  <SelectItem value="RFP">RFP</SelectItem>
+                  <SelectItem value="SupplierResponse">Response</SelectItem>
+                  <SelectItem value="Document">Document</SelectItem>
+                  <SelectItem value="API_ENDPOINT">API Endpoint</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -215,29 +464,46 @@ const AuditLogsPage: React.FC = () => {
       {/* Audit Logs Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Audit Trail ({auditLogs.length})</CardTitle>
+          <CardTitle>Audit Trail ({total.toLocaleString()} total logs)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {auditLogs.map((log) => (
-              <div key={log.id} className="border rounded-lg p-4 hover:bg-gray-50">
+            {auditLogs.map((log: AuditLog) => (
+              <div key={log.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <Badge className={getActionBadgeColor(log.action)}>
-                        {log.action}
-                      </Badge>
-                      <span className="text-sm font-medium">{log.user?.email || log.user_id}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(log.created_at).toLocaleString()}
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="flex items-center space-x-2">
+                        {getActionIcon(log.action)}
+                        <Badge variant="outline" className={getActionBadgeColor(log.action)}>
+                          {getAuditActionDisplayName(log.action)}
+                        </Badge>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900">
+                        {log.user?.email || log.user_id}
+                      </span>
+                      <span className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {format(new Date(log.created_at), 'MMM dd, yyyy HH:mm:ss')}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-700 mb-2">{JSON.stringify(log.details)}</p>
-                    <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                      <span>Target: {log.target_type} ({log.target_id})</span>
-                      <span>User ID: {log.user_id}</span>
+                    
+                    {renderDetails(log.details, log.action)}
+                    
+                    <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-3">
+                      {log.target_type && (
+                        <span className="flex items-center gap-1">
+                          <span className="font-medium">Target:</span>
+                          {log.target_type} {log.target_id && `(${log.target_id})`}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <span className="font-medium">User ID:</span>
+                        {log.user_id}
+                      </span>
                     </div>
                   </div>
+                  
                   <div className="flex items-center space-x-2">
                     <Button variant="ghost" size="sm">
                       <Eye className="h-4 w-4" />
@@ -247,33 +513,48 @@ const AuditLogsPage: React.FC = () => {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Security Alerts */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Security Alerts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-yellow-800">Multiple Failed Login Attempts</p>
-                <p className="text-xs text-yellow-600">User: john@example.com - 5 failed attempts in 10 minutes</p>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-muted-foreground">
+                Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, total)} of {total} results
               </div>
-              <span className="text-xs text-yellow-600">2 min ago</span>
-            </div>
-            <div className="flex items-center space-x-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-red-800">Suspicious Activity Detected</p>
-                <p className="text-xs text-red-600">Unusual access pattern from IP: 192.168.1.105</p>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(page - 1)}
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={page === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(page + 1)}
+                  disabled={page === totalPages}
+                >
+                  Next
+                </Button>
               </div>
-              <span className="text-xs text-red-600">15 min ago</span>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

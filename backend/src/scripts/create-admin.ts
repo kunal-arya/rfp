@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { USER_STATUS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
@@ -11,7 +12,9 @@ async function createAdminUser() {
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email,
+        status: { equals: USER_STATUS.Active }
+      },
     });
 
     if (existingUser) {

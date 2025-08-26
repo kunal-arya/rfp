@@ -1685,3 +1685,337 @@ frontend/src/
 - **✅ Files Modified**:
   - `backend/src/services/analytics.service.ts` - Complete refactoring to use only Prisma queries
 - **Status**: ✅ **ANALYTICS SERVICE FIX COMPLETED** - Pure Prisma implementation with proper schema compliance
+
+### **Phase 9: Error Tracking in Audit Trails - COMPLETED**
+- **✅ Task 1 - Centralized Error Handling System**:
+  - **Problem**: Need to track errors in audit trails without modifying every controller
+  - **Solution**: Created centralized error handling middleware that automatically logs errors
+  - **Implementation**: 
+    - **Error Middleware**: `error.middleware.ts` with automatic error logging
+    - **Custom Error Class**: `AppError` for better error handling
+    - **Async Handler**: `asyncHandler` wrapper for automatic error catching
+    - **Error Categorization**: Different audit actions based on error types
+  - **Result**: Automatic error tracking without controller modifications
+- **✅ Task 2 - Error Audit Actions**:
+  - **Problem**: Need specific audit actions for different error types
+  - **Solution**: Added comprehensive error audit actions to audit service
+  - **Implementation**: 
+    - **Authentication Errors**: `AUTHENTICATION_ERROR` for 401 errors
+    - **Authorization Errors**: `AUTHORIZATION_ERROR` for 403 errors
+    - **Validation Errors**: `VALIDATION_ERROR` for 422 errors
+    - **Resource Not Found**: `RESOURCE_NOT_FOUND` for 404 errors
+    - **System Errors**: `SYSTEM_ERROR` for 500+ errors
+    - **Client Errors**: `CLIENT_ERROR` for 4xx errors
+  - **Result**: Detailed error categorization in audit trails
+- **✅ Task 3 - Comprehensive Error Details**:
+  - **Problem**: Need detailed error information for debugging and monitoring
+  - **Solution**: Enhanced error logging with comprehensive details
+  - **Implementation**: 
+    - **Error Context**: Method, URL, user agent, IP address
+    - **Error Details**: Message, stack trace, status code, timestamp
+    - **User Context**: User ID (or anonymous for unauthenticated)
+    - **Request Context**: Full request information for debugging
+  - **Result**: Rich error information for effective debugging
+- **✅ Task 4 - Integration with Main App**:
+  - **Problem**: Need to integrate error handling into the main application
+  - **Solution**: Added error middleware to main app with proper ordering
+  - **Implementation**: 
+    - **404 Handler**: `notFoundHandler` for unmatched routes
+    - **Error Handler**: `errorHandler` as final middleware
+    - **Proper Ordering**: Error handlers must be last in middleware chain
+    - **Development Support**: Stack traces in development mode
+  - **Result**: Seamless error handling across the entire application
+- **✅ Technical Implementation**:
+  - **Zero Controller Changes**: Existing controllers work without modification
+  - **Automatic Logging**: All errors automatically logged to audit trails
+  - **Error Categorization**: Intelligent error type detection
+  - **Development Friendly**: Enhanced debugging in development mode
+  - **Production Safe**: Sanitized error responses in production
+  - **Performance Optimized**: Non-blocking error logging
+- **✅ Benefits Achieved**:
+  - **🔍 Debugging**: Comprehensive error tracking for troubleshooting
+  - **📊 Monitoring**: Error patterns and system health monitoring
+  - **🛡️ Security**: Detection of suspicious activities and failed attempts
+  - **📈 Performance**: Identify system bottlenecks and issues
+  - **👥 User Experience**: Understand what's failing for users
+- **✅ Files Created/Modified**:
+  - `backend/src/middleware/error.middleware.ts` - New centralized error handling
+  - `backend/src/services/audit.service.ts` - Added error audit actions
+  - `backend/src/index.ts` - Integrated error middleware
+  - `backend/src/controllers/example.controller.ts` - Example usage
+- **Status**: ✅ **ERROR TRACKING IN AUDIT TRAILS COMPLETED** - Centralized error handling with automatic audit logging
+
+### **Phase 10: Audit Actions Enum Refactoring - COMPLETED**
+- **✅ Task 1 - Move AUDIT_ACTIONS to Enum**:
+  - **Problem**: AUDIT_ACTIONS were defined as an object in audit.service.ts, making them hard to maintain and type-safe
+  - **Solution**: Moved AUDIT_ACTIONS to utils/enum.ts as a proper TypeScript enum
+  - **Implementation**: 
+    - **Enum Creation**: Created comprehensive AUDIT_ACTIONS enum with all audit action types
+    - **Categorization**: Organized actions by type (RFP, Response, Document, User, System, Error, Admin)
+    - **Type Safety**: All audit actions now have proper TypeScript typing
+  - **Result**: Centralized, type-safe audit action definitions
+- **✅ Task 2 - Update All Import References**:
+  - **Problem**: Multiple files were importing AUDIT_ACTIONS from audit.service.ts
+  - **Solution**: Updated all imports to use the enum from utils/enum.ts
+  - **Implementation**: 
+    - **Import Updates**: Updated imports in error.middleware.ts, export.service.ts, auth.service.ts, rfp.service.ts
+    - **Consistent Usage**: All files now import AUDIT_ACTIONS from the centralized enum location
+    - **Type Safety**: Eliminated string literal usage for audit actions
+  - **Result**: Consistent and type-safe audit action usage across the codebase
+- **✅ Task 3 - Replace String Literals with Enum Values**:
+  - **Problem**: Some files were still using string literals for audit actions
+  - **Solution**: Replaced all string literals with proper enum values
+  - **Implementation**: 
+    - **Analytics Service**: Updated USER_LOGIN string to AUDIT_ACTIONS.USER_LOGIN
+    - **Admin Service**: Updated USER_LOGIN strings to AUDIT_ACTIONS.USER_LOGIN
+    - **Dashboard Service**: Updated USER_LOGIN strings to AUDIT_ACTIONS.USER_LOGIN
+    - **RFP Service**: Updated notification calls to use enum values
+    - **Error Middleware**: Updated error action assignments to use enum values
+  - **Result**: Complete elimination of string literals for audit actions
+- **✅ Task 4 - Comprehensive Audit Action Coverage**:
+  - **Problem**: Need to ensure all audit actions are properly categorized and documented
+  - **Solution**: Organized all audit actions into logical categories with clear documentation
+  - **Implementation**: 
+    - **RFP Actions**: RFP_CREATED, RFP_UPDATED, RFP_DELETED, RFP_PUBLISHED, RFP_STATUS_CHANGED
+    - **Response Actions**: RESPONSE_CREATED, RESPONSE_UPDATED, RESPONSE_DELETED, RESPONSE_SUBMITTED, RESPONSE_MOVED_TO_REVIEW, RESPONSE_APPROVED, RESPONSE_REJECTED, RESPONSE_AWARDED
+    - **Document Actions**: DOCUMENT_UPLOADED, DOCUMENT_DELETED
+    - **User Actions**: USER_LOGIN, USER_LOGOUT, USER_REGISTERED, USER_PROFILE_UPDATED
+    - **System Actions**: SYSTEM_ERROR, PERMISSION_DENIED
+    - **Error Actions**: AUTHENTICATION_ERROR, AUTHORIZATION_ERROR, VALIDATION_ERROR, RESOURCE_NOT_FOUND, CLIENT_ERROR
+    - **Admin Actions**: DATA_EXPORTED, REPORT_GENERATED, REPORT_SCHEDULED
+  - **Result**: Comprehensive and well-organized audit action system
+- **✅ Technical Implementation**:
+  - **Type Safety**: All audit actions now have proper TypeScript typing
+  - **Centralized Management**: Single source of truth for all audit actions
+  - **IDE Support**: Better autocomplete and refactoring support
+  - **Maintainability**: Easy to add new audit actions in one place
+  - **Consistency**: Uniform usage across all services and middleware
+- **✅ Benefits Achieved**:
+  - **🔧 Maintainability**: Single location for all audit action definitions
+  - **🛡️ Type Safety**: Compile-time checking for audit action usage
+  - **📝 Documentation**: Clear categorization and organization
+  - **🚀 Developer Experience**: Better IDE support and autocomplete
+  - **🔄 Refactoring**: Easy to rename or modify audit actions
+- **✅ Files Modified**:
+  - `backend/src/utils/enum.ts` - Added comprehensive AUDIT_ACTIONS enum
+  - `backend/src/services/audit.service.ts` - Removed old AUDIT_ACTIONS object, updated imports
+  - `backend/src/middleware/error.middleware.ts` - Updated to use enum values
+  - `backend/src/services/export.service.ts` - Updated imports and usage
+  - `backend/src/services/auth.service.ts` - Updated imports and usage
+  - `backend/src/services/rfp.service.ts` - Updated imports and notification calls
+  - `backend/src/services/analytics.service.ts` - Updated to use enum values
+  - `backend/src/services/admin.service.ts` - Updated to use enum values
+  - `backend/src/services/dashboard.service.ts` - Updated to use enum values
+- **Status**: ✅ **AUDIT ACTIONS ENUM REFACTORING COMPLETED** - Type-safe, centralized audit action management
+
+### **Phase 11: Logout Functionality with Audit Trail - COMPLETED**
+- **✅ Task 1 - Backend Logout Implementation**:
+  - **Problem**: Need server-side logout functionality with audit trail tracking
+  - **Solution**: Implemented comprehensive logout system with audit trail integration
+  - **Implementation**: 
+    - **Auth Service**: Added `logout` function with audit trail entry creation
+    - **Auth Controller**: Added `logout` controller with proper error handling
+    - **Auth Router**: Added protected `/auth/logout` route with Swagger documentation
+    - **Audit Integration**: Automatic `USER_LOGOUT` audit trail entry on logout
+  - **Result**: Complete server-side logout with audit trail tracking
+- **✅ Task 2 - Frontend Logout Implementation**:
+  - **Problem**: Need frontend logout functionality that calls server-side logout
+  - **Solution**: Implemented comprehensive frontend logout system with proper state management
+  - **Implementation**: 
+    - **Auth API**: Updated to include server-side logout call and local storage cleanup
+    - **Logout Hook**: Created `useLogout` hook with React Query integration
+    - **Navbar Integration**: Updated logout buttons to use new logout hook
+    - **Loading States**: Added loading indicators during logout process
+    - **Error Handling**: Graceful error handling with fallback to client-side logout
+  - **Result**: Seamless frontend logout with server-side audit trail
+- **✅ Task 3 - Audit Trail Integration**:
+  - **Problem**: Need to track logout events in audit trail for security and monitoring
+  - **Solution**: Integrated logout events with existing audit trail system
+  - **Implementation**: 
+    - **Audit Action**: Uses `AUDIT_ACTIONS.USER_LOGOUT` enum value
+    - **Audit Details**: Includes logout timestamp and user information
+    - **Consistent Format**: Follows same audit trail pattern as other user actions
+    - **Error Handling**: Non-blocking audit trail creation (logout succeeds even if audit fails)
+  - **Result**: Complete audit trail tracking for logout events
+- **✅ Task 4 - User Experience Enhancements**:
+  - **Problem**: Need smooth user experience during logout process
+  - **Solution**: Implemented comprehensive UX improvements for logout flow
+  - **Implementation**: 
+    - **Loading States**: Visual feedback during logout process
+    - **Toast Notifications**: Success/error messages for user feedback
+    - **Automatic Redirect**: Automatic navigation to login page after logout
+    - **State Cleanup**: Complete cleanup of local storage and auth context
+    - **Fallback Handling**: Graceful handling of network errors
+  - **Result**: Professional logout experience with proper user feedback
+- **✅ Technical Implementation**:
+  - **Backend**: Complete logout API with JWT validation and audit trail
+  - **Frontend**: React Query-based logout hook with comprehensive state management
+  - **Security**: Proper token validation and cleanup
+  - **Monitoring**: Full audit trail tracking for security analysis
+  - **Error Handling**: Robust error handling with graceful degradation
+- **✅ Benefits Achieved**:
+  - **🛡️ Security**: Complete audit trail tracking for logout events
+  - **📊 Monitoring**: Logout patterns and user session analysis
+  - **👥 User Experience**: Smooth logout process with proper feedback
+  - **🔧 Maintainability**: Centralized logout logic with proper error handling
+  - **📈 Analytics**: User session duration and logout pattern analysis
+- **✅ Files Created/Modified**:
+  - `backend/src/controllers/auth.controller.ts` - Added logout controller
+  - `backend/src/services/auth.service.ts` - Added logout service function
+  - `backend/src/router/auth.router.ts` - Added logout route with Swagger docs
+  - `frontend/src/apis/auth.ts` - Updated with server-side logout API
+  - `frontend/src/hooks/useLogout.ts` - New logout hook with React Query
+  - `frontend/src/components/layout/Navbar.tsx` - Updated to use new logout hook
+  - `docs/api-docs.md` - Added logout API documentation
+- **Status**: ✅ **LOGOUT FUNCTIONALITY WITH AUDIT TRAIL COMPLETED** - Complete logout system with security tracking
+
+### **Phase 12: Admin Layout Logout Integration - COMPLETED**
+- **✅ Task 1 - AdminLayout Logout Update**:
+  - **Problem**: AdminLayout was using old client-side logout without audit trail
+  - **Solution**: Updated AdminLayout to use the new logout hook with server-side audit trail
+  - **Implementation**: 
+    - **Hook Integration**: Replaced old logout with `useLogout` hook
+    - **Loading States**: Added loading indicators during logout process
+    - **User Feedback**: Visual feedback showing "Logging out..." state
+    - **Consistent Behavior**: Same logout behavior as main Navbar component
+  - **Result**: Admin panel logout now creates audit trail entries
+- **✅ Task 2 - User Experience Consistency**:
+  - **Problem**: Admin panel logout experience was inconsistent with main application
+  - **Solution**: Unified logout experience across all components
+  - **Implementation**: 
+    - **Loading States**: Consistent loading indicators across all logout buttons
+    - **Error Handling**: Same error handling and fallback behavior
+    - **Success Feedback**: Consistent success messages and redirects
+    - **State Management**: Proper cleanup of auth context and local storage
+  - **Result**: Consistent logout experience across admin and user interfaces
+- **✅ Technical Implementation**:
+  - **Hook Usage**: AdminLayout now uses the same `useLogout` hook as Navbar
+  - **State Management**: Proper integration with React Query and auth context
+  - **Loading States**: Visual feedback during logout process
+  - **Error Handling**: Graceful error handling with fallback to client-side logout
+  - **Audit Trail**: Complete audit trail tracking for admin logout events
+- **✅ Benefits Achieved**:
+  - **🔄 Consistency**: Unified logout experience across all components
+  - **📊 Monitoring**: Complete audit trail tracking for admin logout events
+  - **👥 User Experience**: Professional logout experience with proper feedback
+  - **🛡️ Security**: Proper token invalidation and state cleanup
+  - **🔧 Maintainability**: Centralized logout logic across all components
+- **✅ Files Modified**:
+  - `frontend/src/components/layout/AdminLayout.tsx` - Updated to use useLogout hook
+- **Status**: ✅ **ADMIN LAYOUT LOGOUT INTEGRATION COMPLETED** - Consistent logout experience with audit trail
+
+### **Phase 13: Admin Audit Page Enhancement - COMPLETED**
+- **✅ Task 1 - Admin Audit Page Redesign**:
+  - **Problem**: Admin audit page needed better filtering, pagination, and improved UI compared to regular audit page
+  - **Solution**: Completely redesigned admin audit page with enhanced functionality and user experience
+  - **Implementation**: 
+    - **User Filtering**: Added dropdown to filter audit logs by specific users
+    - **Enhanced Action Filtering**: Comprehensive action type filtering with all audit actions
+    - **Target Type Filtering**: Filter by target type (User, RFP, Response, Document, API Endpoint)
+    - **Improved Search**: Debounced search functionality for better performance
+    - **Better Pagination**: Enhanced pagination with page numbers and result counts
+  - **Result**: Professional admin audit page with comprehensive filtering capabilities
+- **✅ Task 2 - Enhanced UI and User Experience**:
+  - **Problem**: Previous admin audit page had basic UI and limited functionality
+  - **Solution**: Implemented modern, professional UI with better user experience
+  - **Implementation**: 
+    - **Stats Cards**: Real-time statistics with proper formatting and icons
+    - **Filter Section**: Organized filter controls with proper labels and spacing
+    - **Audit Log Display**: Improved log display with better formatting and details
+    - **Loading States**: Professional loading indicators and error handling
+    - **Responsive Design**: Mobile-friendly layout with proper grid system
+  - **Result**: Modern, professional admin audit interface
+- **✅ Task 3 - API Integration and Data Management**:
+  - **Problem**: Needed proper API integration for admin-specific audit functionality
+  - **Solution**: Created admin-specific audit API functions and hooks
+  - **Implementation**: 
+    - **Admin Audit API**: Added `getAdminAuditTrails` and `getAdminAuditStats` functions
+    - **Admin Audit Hooks**: Created `useAdminAuditTrails` and `useAdminAuditStats` hooks
+    - **User Data Integration**: Integrated user data for filtering dropdown
+    - **Proper TypeScript**: Added proper TypeScript interfaces and type safety
+    - **Error Handling**: Comprehensive error handling and fallback mechanisms
+  - **Result**: Robust API integration with proper data management
+- **✅ Task 4 - Statistics and Monitoring**:
+  - **Problem**: Removed static stats and implemented dynamic, real-time statistics
+  - **Solution**: Created dynamic statistics based on actual audit data
+  - **Implementation**: 
+    - **Total Logs**: Real-time count of total audit logs with formatting
+    - **Active Users**: Count of unique users from audit data
+    - **Security Events**: Count of security-related audit events
+    - **Recent Activity**: Count of audit events from the last hour
+    - **Removed Security Alerts**: Removed static security alerts section as requested
+  - **Result**: Dynamic, real-time statistics based on actual system data
+- **✅ Technical Implementation**:
+  - **Frontend**: Complete React component with TypeScript and proper state management
+  - **API Integration**: Admin-specific audit API functions with proper error handling
+  - **Filtering**: Multi-dimensional filtering with debounced search
+  - **Pagination**: Professional pagination with page numbers and result counts
+  - **UI Components**: Modern UI using Shadcn components with proper styling
+- **✅ Benefits Achieved**:
+  - **🔍 Advanced Filtering**: Multi-dimensional filtering for comprehensive audit analysis
+  - **📊 Real-time Stats**: Dynamic statistics based on actual system data
+  - **👥 User Experience**: Professional, modern interface with excellent UX
+  - **🛡️ Security Monitoring**: Enhanced security event tracking and monitoring
+  - **📱 Responsive Design**: Mobile-friendly design with proper accessibility
+- **✅ Files Created/Modified**:
+  - `frontend/src/apis/admin.ts` - Added admin audit API functions
+  - `frontend/src/hooks/useAdmin.ts` - Added admin audit hooks
+  - `frontend/src/pages/admin/AuditLogsPage.tsx` - Completely redesigned admin audit page
+- **Status**: ✅ **ADMIN AUDIT PAGE ENHANCEMENT COMPLETED** - Professional admin audit interface with comprehensive filtering
+
+### **Phase 14: Admin Audit Page Bug Fixes and UI Improvements - COMPLETED**
+- **✅ Task 1 - Frontend Enum Integration**:
+  - **Problem**: Need to use enums for audit actions instead of hardcoded strings
+  - **Solution**: Created frontend enum file and integrated it with the audit page
+  - **Implementation**: 
+    - **Frontend Enum File**: Created `frontend/src/utils/enums.ts` with `AUDIT_ACTIONS` enum
+    - **Helper Functions**: Added `getAuditActionDisplayName` and `getAuditActionCategory` functions
+    - **Enum Integration**: Updated audit page to use enum values instead of hardcoded strings
+    - **Dynamic Action Filtering**: Action filter dropdown now uses enum values dynamically
+  - **Result**: Type-safe audit action handling with consistent naming
+- **✅ Task 2 - Search Filter Bug Fix**:
+  - **Problem**: When clearing search term, API was not being called without search filter
+  - **Solution**: Fixed search filter logic and added proper state management
+  - **Implementation**: 
+    - **Debounced Search**: Proper debounced search implementation
+    - **Filter Reset**: Added `useEffect` to reset page when filters change
+    - **API Call Optimization**: Ensured API is called correctly when search is cleared
+    - **State Management**: Proper state management for search term and filters
+  - **Result**: Search functionality works correctly when clearing search terms
+- **✅ Task 3 - Audit Trail UI Improvements**:
+  - **Problem**: Audit trail list UI was poor with dense, unreadable information
+  - **Solution**: Completely redesigned audit log display with better visual hierarchy
+  - **Implementation**: 
+    - **Action Icons**: Added category-based icons for different audit actions
+    - **Color-Coded Badges**: Color-coded badges based on action categories
+    - **Error Log Formatting**: Special formatting for error logs with collapsible stack traces
+    - **Details Section**: Improved details display with proper formatting and structure
+    - **Visual Hierarchy**: Better spacing, typography, and visual separation
+    - **Responsive Design**: Improved responsive design for better mobile experience
+  - **Result**: Professional, readable audit trail interface with excellent UX
+- **✅ Task 4 - Enhanced Error Handling and Display**:
+  - **Problem**: Error logs were displayed as raw JSON without proper formatting
+  - **Solution**: Implemented special error log formatting with structured display
+  - **Implementation**: 
+    - **Error Detection**: Automatic detection of error-type audit logs
+    - **Structured Display**: Formatted error details with proper sections
+    - **Stack Trace Handling**: Collapsible stack trace display for error logs
+    - **Visual Indicators**: Red color scheme and warning icons for errors
+    - **Readable Format**: Human-readable error information instead of raw JSON
+  - **Result**: Professional error log display with excellent readability
+- **✅ Technical Implementation**:
+  - **Frontend**: Complete React component rewrite with TypeScript and proper state management
+  - **Enum System**: Frontend enum system with helper functions for audit actions
+  - **UI Components**: Modern UI using Shadcn components with enhanced styling
+  - **Error Handling**: Comprehensive error handling and display formatting
+  - **Performance**: Optimized API calls and state management
+- **✅ Benefits Achieved**:
+  - **🔧 Type Safety**: Enum-based audit actions with type safety
+  - **🔍 Fixed Search**: Proper search functionality with filter clearing
+  - **📱 Better UI**: Professional, readable audit trail interface
+  - **🚨 Error Display**: Enhanced error log formatting and readability
+  - **⚡ Performance**: Optimized API calls and state management
+- **✅ Files Created/Modified**:
+  - `frontend/src/utils/enums.ts` - Created frontend enum file with audit actions
+  - `frontend/src/pages/admin/AuditLogsPage.tsx` - Completely rewritten with improvements
+- **Status**: ✅ **ADMIN AUDIT PAGE BUG FIXES AND UI IMPROVEMENTS COMPLETED** - Professional audit interface with enum integration and enhanced UI

@@ -1,6 +1,7 @@
 import sgMail from '@sendgrid/mail';
 import { PrismaClient } from '@prisma/client';
 import { EMAIL_TEMPLATES } from './email-templates';
+import { RoleName, USER_STATUS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
@@ -55,7 +56,8 @@ export const sendRfpPublishedNotification = async (rfpId: string) => {
         // Get all suppliers
         const suppliers = await prisma.user.findMany({
             where: {
-                role: { name: 'Supplier' },
+                role: { name: RoleName.Supplier },
+                status: { equals: USER_STATUS.Active }
             },
         });
 

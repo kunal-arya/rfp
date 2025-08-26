@@ -22,7 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useMyRfps } from '@/hooks/useRfp';
+import { useAllRfps, useMyRfps } from '@/hooks/useRfp';
 
 interface Rfp {
   id: string;
@@ -52,7 +52,7 @@ const RfpManagementPage: React.FC = () => {
   const [limit] = useState(10);
 
   // Use real API data
-  const { data: rfpsData, isLoading, error } = useMyRfps({
+  const { data: rfpsData, isLoading, error } = useAllRfps({
     page,
     limit,
     search: searchTerm || undefined,

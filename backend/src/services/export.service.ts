@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { createAuditEntry, AUDIT_ACTIONS } from './audit.service';
+import { createAuditEntry } from './audit.service';
+import { AUDIT_ACTIONS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
