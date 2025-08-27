@@ -16,16 +16,13 @@ export interface UpdateRfpData extends Partial<CreateRfpData> {
 }
 
 export interface RfpFilters {
-  status?: string;
-  search?: string;
-  budget_min?: number;
-  budget_max?: number;
-  deadline_from?: string;
-  deadline_to?: string;
   page?: number;
   limit?: number;
-  show_new_rfps?: 1 | 0;
-  // Backend-specific filter keys
+  search?: string;
+  status?: string;
+  show_new_rfps?: number;
+  includeStats?: boolean;
+  // Backend-specific filter keys with ___ prefixes
   'gte___deadline'?: string;
   'lte___deadline'?: string;
   'gte___created_at'?: string;
@@ -34,6 +31,9 @@ export interface RfpFilters {
   'lte___budget_min'?: number;
   'gte___budget_max'?: number;
   'lte___budget_max'?: number;
+  'eq___buyer_id'?: string;
+  'contains___title'?: string;
+  'contains___description'?: string;
 }
 
 export const rfpApi = {

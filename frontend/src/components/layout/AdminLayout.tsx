@@ -1,41 +1,38 @@
-import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
 import { 
+  LayoutDashboard, 
   Users, 
-  BarChart3, 
-  Shield, 
-  Settings, 
   FileText, 
   MessageSquare, 
-  Folder, 
-  Activity,
+  Settings, 
+  BarChart3, 
+  Shield, 
+  Database,
   LogOut,
-  Home,
-  Bell,
-  HelpCircle
+  Menu,
+  X
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useLogout } from '@/hooks/useLogout';
 
 const AdminLayout: React.FC = () => {
   const { user, permissionHelpers } = useAuth();
   const location = useLocation();
   const logoutMutation = useLogout();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Navigation configuration
   const navigationConfig = {
-    dashboard: { name: 'Dashboard', href: '/admin', icon: Home },
-    users: { name: 'Users', href: '/admin/users', icon: Users },
-    analytics: { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-    audit: { name: 'Audit Logs', href: '/admin/audit', icon: Shield },
-    rfps: { name: 'RFPs', href: '/admin/rfps', icon: FileText },
-    responses: { name: 'Responses', href: '/admin/responses', icon: MessageSquare },
-    reports: { name: 'Reports', href: '/admin/reports', icon: Activity },
-    notifications: { name: 'Notifications', href: '/admin/notifications', icon: Bell },
-    documents: { name: 'Documents', href: '/admin/documents', icon: Folder },
-    support: { name: 'Support', href: '/admin/support', icon: HelpCircle },
-    settings: { name: 'Settings', href: '/admin/settings', icon: Settings },
+    dashboard: { name: 'Dashboard', href: '/admin', icon: LayoutDashboard, permission: 'admin' },
+    users: { name: 'User Management', href: '/admin/users', icon: Users, permission: 'admin' },
+    analytics: { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, permission: 'admin' },
+    audit: { name: 'Audit Logs', href: '/admin/audit', icon: Shield, permission: 'admin' },
+    rfps: { name: 'RFP Management', href: '/admin/rfps', icon: FileText, permission: 'admin' },
+    responses: { name: 'Response Management', href: '/admin/responses', icon: MessageSquare, permission: 'admin' },
+    config: { name: 'System Config', href: '/admin/config', icon: Settings, permission: 'admin' },
+    database: { name: 'Database', href: '/admin/database', icon: Database, permission: 'admin' }
   };
 
   // Get allowed pages from permissions
@@ -46,21 +43,48 @@ const AdminLayout: React.FC = () => {
     .map(page => navigationConfig[page as keyof typeof navigationConfig])
     .filter(Boolean);
 
-    console.log(allowedPages);
+  console.log('Allowed pages:', allowedPages);
+  console.log('Navigation:', navigation);
 
   const handleLogout = () => {
     logoutMutation.mutate();
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Mobile overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-[#00000050] z-40 lg:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg">
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
         <div className="flex h-16 items-center justify-between px-6 border-b">
           <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={closeSidebar}
+            className="lg:hidden"
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
         
-        <nav className="mt-6 px-3">
+        <nav className="mt-6 px-3 flex-1 overflow-y-auto">
           <div className="space-y-1">
             {navigation.map((item) => {
               const isActive = location.pathname === item.href;
@@ -68,6 +92,7 @@ const AdminLayout: React.FC = () => {
                 <Link
                   key={item.name}
                   to={item.href}
+                  onClick={closeSidebar}
                   className={`group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
                     isActive
                       ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-700'
@@ -113,15 +138,31 @@ const AdminLayout: React.FC = () => {
       </div>
 
       {/* Main content */}
-      <div className="pl-64">
-        {/* Top header */}
-        <header className="bg-white shadow-sm border-b">
-          <div className="px-6 py-4">
-            <h2 className="text-2xl font-semibold text-gray-900">
-              {navigation.find(item => item.href === location.pathname)?.name || 'Admin Panel'}
-            </h2>
+      <div className="lg:pl-64">
+        {/* Top bar with hamburger */}
+        <div className="sticky top-0 z-30 bg-white border-b border-gray-200">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSidebar}
+                className="lg:hidden mr-3"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {navigation.find(item => item.href === location.pathname)?.name || 'Admin Panel'}
+              </h2>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-500">
+                <span>Welcome back,</span>
+                <span className="font-medium text-gray-900">{user?.name}</span>
+              </div>
+            </div>
           </div>
-        </header>
+        </div>
 
         {/* Page content */}
         <main className="p-6">

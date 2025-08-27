@@ -11,6 +11,7 @@ import { setupSwagger } from './config/swagger';
 import { initializeWebSocket } from './services/websocket.service';
 import { PrismaClient } from '@prisma/client';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
+import * as path from 'path';
 
 const prisma = new PrismaClient();
 
@@ -45,6 +46,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Serve static files from exports directory
+app.use('/exports', express.static(path.join(__dirname, '../exports')));
 
 app.use('/api/auth', authRouter);
 app.use('/api/rfp', rfpRouter);

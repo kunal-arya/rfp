@@ -1,9 +1,13 @@
 import { Request, Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { PrismaClient } from '@prisma/client';
 import * as configService from '../services/config.service';
 import * as exportService from '../services/export.service';
 import * as adminService from '../services/admin.service';
 import * as analyticsService from '../services/analytics.service';
+import * as rfpService from '../services/rfp.service';
+
+const prisma = new PrismaClient();
 
 // Configuration Controllers
 export const getSystemConfig = async (req: AuthenticatedRequest, res: Response) => {
@@ -272,5 +276,109 @@ export const getAnalytics = async (req: AuthenticatedRequest, res: Response) => 
   } catch (error: any) {
     console.error('Error getting analytics data:', error);
     res.status(500).json({ message: 'Failed to get analytics data' });
+  }
+};
+
+// Response Management Controllers
+export const getAdminResponses = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const offset = (page - 1) * limit;
+    const search = req.query.search as string;
+    const status = req.query.status as string;
+
+    // Create filters for admin to get all responses
+    const responseFilters: any = {};
+    if (status) {
+      const statusRecord = await prisma.supplierResponseStatus.findUnique({
+        where: { code: status }
+      });
+      if (statusRecord) {
+        responseFilters.status_id = statusRecord.id;
+      }
+    }
+
+    const responses = await prisma.supplierResponse.findMany({
+      where: {
+        ...responseFilters,
+        ...(search && {
+          OR: [
+            { cover_letter: { contains: search, mode: 'insensitive' } },
+            { rfp: { title: { contains: search, mode: 'insensitive' } } },
+            { supplier: { email: { contains: search, mode: 'insensitive' } } },
+          ],
+        }),
+      },
+      skip: offset,
+      take: limit,
+      include: {
+        rfp: {
+          include: {
+            current_version: true,
+            status: true,
+            buyer: true,
+          },
+        },
+        status: true,
+        supplier: true,
+        documents: true,
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    const total = await prisma.supplierResponse.count({
+      where: {
+        ...responseFilters,
+        ...(search && {
+          OR: [
+            { cover_letter: { contains: search, mode: 'insensitive' } },
+            { rfp: { title: { contains: search, mode: 'insensitive' } } },
+            { supplier: { email: { contains: search, mode: 'insensitive' } } },
+          ],
+        }),
+      },
+    });
+
+    res.json({ 
+      data: responses, 
+      total, 
+      page, 
+      limit 
+    });
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to get responses' });
+  }
+};
+
+export const getAdminResponse = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    const response = await prisma.supplierResponse.findUnique({
+      where: { id },
+      include: {
+        rfp: {
+          include: {
+            current_version: true,
+            status: true,
+            buyer: true,
+          },
+        },
+        status: true,
+        supplier: true,
+        documents: true,
+      },
+    });
+
+    if (!response) {
+      return res.status(404).json({ message: 'Response not found' });
+    }
+
+    res.json(response);
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to get response details' });
   }
 };

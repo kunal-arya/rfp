@@ -248,6 +248,73 @@ router.post('/export/responses', protect, hasPermission('admin', 'export_data'),
  */
 router.post('/export/audit-logs', protect, hasPermission('admin', 'export_data'), adminController.exportAuditLogs);
 
+// Response Management Routes
+/**
+ * @swagger
+ * /admin/responses:
+ *   get:
+ *     summary: Get all responses (admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by status
+ *     responses:
+ *       200:
+ *         description: Responses retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - requires admin permissions
+ */
+router.get('/responses', protect, hasPermission('admin', 'view_analytics'), adminController.getAdminResponses);
+
+/**
+ * @swagger
+ * /admin/responses/{id}:
+ *   get:
+ *     summary: Get response details (admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Response ID
+ *     responses:
+ *       200:
+ *         description: Response details retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - requires admin permissions
+ *       404:
+ *         description: Response not found
+ */
+router.get('/responses/:id', protect, hasPermission('admin', 'view_analytics'), adminController.getAdminResponse);
+
 /**
  * @swagger
  * /admin/reports/generate:

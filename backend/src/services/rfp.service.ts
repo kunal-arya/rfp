@@ -454,10 +454,6 @@ export const publishRfp = async (rFPId: string, userId: string) => {
         throw new Error('RFP not found');
     }
 
-    if (rFP.buyer_id !== userId) {
-        throw new Error('You are not authorized to publish this RFP');
-    }
-
     if (rFP.status.code !== 'Draft') {
         throw new Error('RFP can only be published from Draft status');
     }
@@ -729,7 +725,8 @@ export const getAllRfps = async (
     limit: number,
     search?: string,
     user?: any,
-    show_new_rfps?: any
+    show_new_rfps?: any,
+    includeStats?: boolean
 ) => {
 
     if (user?.role === RoleName.Supplier && show_new_rfps) {
@@ -797,6 +794,33 @@ export const getAllRfps = async (
     // This assumes rfpFilters are additional AND conditions
     Object.assign(baseWhere, rfpFilters);
 
+    // Get stats if requested
+    let stats = null;
+    if (includeStats) {
+        const [totalRfps, publishedRfps, awardedRfps, totalResponses] = await Promise.all([
+            prisma.rFP.count({ where: { deleted_at: null } }),
+            prisma.rFP.count({ 
+                where: { 
+                    deleted_at: null,
+                    status: { code: RFP_STATUS.Published }
+                } 
+            }),
+            prisma.rFP.count({ 
+                where: { 
+                    deleted_at: null,
+                    status: { code: RFP_STATUS.Awarded }
+                } 
+            }),
+            prisma.supplierResponse.count()
+        ]);
+
+        stats = {
+            totalRfps,
+            publishedRfps,
+            awardedRfps,
+            totalResponses
+        };
+    }
 
     const rfps = await prisma.rFP.findMany({
         where: baseWhere,
@@ -817,11 +841,20 @@ export const getAllRfps = async (
         orderBy: { created_at: 'desc' }
     });
 
-    const total = await prisma.rFP.count({
-        where: baseWhere // Use the same baseWhere for total count
-    });
+    const total = await prisma.rFP.count({ where: baseWhere });
 
-    return { total, page: Math.floor(offset / limit) + 1, limit, data: rfps };
+    const result: any = {
+        data: rfps,
+        total,
+        page: Math.floor(offset / limit) + 1,
+        limit
+    };
+
+    if (stats) {
+        result.stats = stats;
+    }
+
+    return result;
 };
 
 async function getNewRfpsForSupplierService(supplierId: string) {

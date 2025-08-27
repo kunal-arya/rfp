@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { auditService } from '../services/audit.service';
+import { modifyGeneralFilterPrisma } from '../utils/filters';
 
 // Get user's own audit trails
 export const getUserAuditTrails = async (req: AuthenticatedRequest, res: Response) => {
@@ -54,17 +55,21 @@ export const getAllAuditTrails = async (req: AuthenticatedRequest, res: Response
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    
-    // Parse filters from query parameters
-    const filters: any = {};
-    if (req.query.user_id) filters.user_id = req.query.user_id as string;
-    if (req.query.action) filters.action = req.query.action as string;
-    if (req.query.target_type) filters.target_type = req.query.target_type as string;
-    if (req.query.target_id) filters.target_id = req.query.target_id as string;
+    let { page: pageNumber, limit: limitNumber, search, ...filters } = req.query;
 
-    const auditTrails = await auditService.getAllAuditTrails(page, limit, filters);
+    const page: number = pageNumber ? parseInt(pageNumber as string) : 1;
+    const limit: number = limitNumber ? parseInt(limitNumber as string) : 10;
+    const offset = (page - 1) * limit;
+
+    // Process filters using the same pattern as getAllRfps
+    const generalFilters = modifyGeneralFilterPrisma(filters);
+
+    const auditTrails = await auditService.getAllAuditTrails(
+      page, 
+      limit, 
+      generalFilters, 
+      search as string | undefined
+    );
     res.json(auditTrails);
   } catch (error: any) {
     console.error('Failed to get all audit trails:', error);

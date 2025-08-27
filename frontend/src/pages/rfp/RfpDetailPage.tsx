@@ -79,6 +79,7 @@ export const RfpDetailPage: React.FC = () => {
   const canCreateResponse = permissionHelpers.hasPermission('supplier_response', 'create');
   const canEditRfp = permissionHelpers.hasPermission('rfp', 'edit');
   const canPublishRfp = permissionHelpers.hasPermission('rfp', 'publish');
+  console.log(user?.id, rfp?.buyer?.id);
   const isOwner = user?.id === rfp?.buyer?.id;
   const isPublished = rfp?.status.code === 'Published';
   const isDraft = rfp?.status.code === 'Draft';

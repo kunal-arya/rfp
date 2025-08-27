@@ -151,6 +151,7 @@ export const RfpVersioning: React.FC<RfpVersioningProps> = ({
                 
                       <RfpForm
                         mode="create"
+                        hideHeader={true}
                         initialData={{
                           title: rfp.title,
                           description: rfp.current_version?.description || "",

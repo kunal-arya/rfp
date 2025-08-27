@@ -576,3 +576,17 @@ This checklist is derived from the `docs/requirements.md` file to track our impl
 - [X] AdminDashboardPage Changes -
     - [X] Copy the UI for "Recent Activity" from <DashboardPage />
     - [X] "Platform Health" is static, check if it is implemented in backend or not, if not implement it and then use it in frontend.
+- [ ] AuditLogsPage Changes -
+    - [ ] "Export Logs" Button, we have not integrated anything with this
+    - [ ] "getAllAuditTrails" Controller and Service needs to change, make the filters dynamic, read "getAllRfps" controller and service plus "filters.ts" and apply these filters. change frontend accordingly 
+- [ ] RfpManagementPage Changes - 
+    - [ ] use "RfpForm" component to show as a dialog when clicked on "Create RFP", just add "Buyer" Field for "Admin" role
+    - [ ] API "/rfp/all", will return data as well as following stats and integrate them in the frontend Admin page -
+        - [ ] Total RFPs
+        - [ ] RFPs Published
+        - [ ] Total Responses
+        - [ ] Awarded RFPs
+    - [ ] remove "Schedule Review" Quick Action
+    - [ ] Integrate Properly "Award RFPs" and "View Responses"
+- [ ] Remove anything related to "Paused" status of RFPs ( search the whole frontend and backend )
+ 

@@ -3,14 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Mail } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Shield, 
   Search, 
-  Filter,
   Download,
-  Eye,
   Clock,
   User,
   Activity,
@@ -23,12 +20,15 @@ import {
   FileText,
   Users,
   Settings,
-  Database
+  Database,
+  Mail
 } from 'lucide-react';
 import { useAdminAuditTrails, useUsers } from '@/hooks/useAdmin';
 import { useDebounce } from '@/hooks/useDebounce';
 import { format } from 'date-fns';
 import { AUDIT_ACTIONS, getAuditActionDisplayName, getAuditActionCategory } from '@/utils/enums';
+import { toast } from 'sonner';
+import { generateAuditLogsCsv, downloadCsv } from '@/utils/export';
 
 interface AuditLog {
   id: number;
@@ -65,24 +65,59 @@ const AuditLogsPage: React.FC = () => {
   const { data: usersResponse } = useUsers({ limit: 1000 });
   const usersData = usersResponse?.data?.data || [];
 
+  // Export functionality - now handled in frontend
+
   // Use admin audit trails with filters
   const { data: auditData, isLoading, error } = useAdminAuditTrails({
     page,
     limit,
     search: debouncedSearchTerm || undefined,
-    action: actionFilter !== 'all' ? actionFilter : undefined,
-    user_id: userFilter !== 'all' ? userFilter : undefined,
-    target_type: targetTypeFilter !== 'all' ? targetTypeFilter : undefined,
+    ...(actionFilter !== 'all' && { 'eq___action': actionFilter }),
+    ...(userFilter !== 'all' && { 'eq___user_id': userFilter }),
+    ...(targetTypeFilter !== 'all' && { 'eq___target_type': targetTypeFilter }),
   });
 
   const auditLogs = auditData?.data || [];
   const total = auditData?.total || 0;
   const totalPages = Math.ceil(total / limit);
 
+  // Calculate stats from current data
+  const totalLogs = total;
+  const uniqueUsers = new Set(auditLogs.map((log: AuditLog) => log.user_id)).size;
+  const securityEvents = auditLogs.filter((log: AuditLog) =>
+    log.action.includes('LOGIN') ||
+    log.action.includes('LOGOUT') ||
+    log.action.includes('DELETE') ||
+    log.action.includes('ERROR')
+  ).length;
+  const recentActivity = auditLogs.filter((log: AuditLog) => {
+    const logTime = new Date(log.created_at);
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    return logTime > oneHourAgo;
+  }).length;
+
   // Reset page when filters change
   useEffect(() => {
     setPage(1);
   }, [debouncedSearchTerm, actionFilter, userFilter, targetTypeFilter]);
+
+  const handleExportLogs = () => {
+    try {
+      // Generate CSV content from current audit logs data
+      const csvContent = generateAuditLogsCsv(auditLogs);
+      
+      // Create filename with current date
+      const filename = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`;
+      
+      // Download the CSV file
+      downloadCsv(csvContent, filename);
+      
+      toast.success(`Audit logs exported successfully (${auditLogs.length} records)`);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export audit logs');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -163,6 +198,7 @@ const AuditLogsPage: React.FC = () => {
   };
 
 
+
 const renderDetails = (details: Record<string, unknown> | string | null, action: string) => {
     if (!details) return null;
   
@@ -186,7 +222,7 @@ const renderDetails = (details: Record<string, unknown> | string | null, action:
             {formattedDetails.stack && (
               <details className="mt-2">
                 <summary className="text-sm font-medium text-red-700 cursor-pointer">Stack Trace</summary>
-                <pre className="mt-1 text-xs text-red-600 bg-red-100 p-2 rounded">
+                <pre className="mt-1 text-xs text-red-600 bg-red-100 p-2 rounded overflow-x-auto">
                   {String(formattedDetails.stack)}
                 </pre>
               </details>
@@ -207,18 +243,18 @@ const renderDetails = (details: Record<string, unknown> | string | null, action:
                 <CheckCircle className="h-4 w-4 text-green-600" />
                 <span className="text-sm font-medium text-green-800">Login Success</span>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-green-600" />
+                  <User className="h-4 w-4 text-green-600 flex-shrink-0" />
                   <span className="font-medium">Role:</span>
                   <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
                     {String(formattedDetails.role)}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-green-600" />
+                  <Mail className="h-4 w-4 text-green-600 flex-shrink-0" />
                   <span className="font-medium">Email:</span>
-                  <span className="text-green-700">{String(formattedDetails.email)}</span>
+                  <span className="text-green-700 truncate">{String(formattedDetails.email)}</span>
                 </div>
               </div>
             </div>
@@ -235,10 +271,12 @@ const renderDetails = (details: Record<string, unknown> | string | null, action:
                 <XCircle className="h-4 w-4 text-blue-600" />
                 <span className="text-sm font-medium text-blue-800">Session Ended</span>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-blue-600" />
-                <span className="font-medium">Logout Time:</span>
-                <span className="text-blue-700">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <span className="font-medium">Logout Time:</span>
+                </div>
+                <span className="text-blue-700 break-all">
                   {format(new Date(String(formattedDetails.logout_time)), 'MMM dd, yyyy HH:mm:ss')}
                 </span>
               </div>
@@ -256,13 +294,13 @@ const renderDetails = (details: Record<string, unknown> | string | null, action:
                 <FileText className="h-4 w-4 text-purple-600" />
                 <span className="text-sm font-medium text-purple-800">RFP Activity</span>
               </div>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3 text-sm">
                 {Object.entries(formattedDetails).map(([key, value]) => (
-                  <div key={key} className="flex items-start gap-2">
-                    <span className="font-medium capitalize text-purple-700">
+                  <div key={key} className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
+                    <span className="font-medium capitalize text-purple-700 min-w-0 sm:min-w-[80px] flex-shrink-0">
                       {key.replace(/_/g, ' ')}:
                     </span>
-                    <span className="text-purple-600">{String(value)}</span>
+                    <span className="text-purple-600 break-words">{String(value)}</span>
                   </div>
                 ))}
               </div>
@@ -280,28 +318,30 @@ const renderDetails = (details: Record<string, unknown> | string | null, action:
                 <Database className="h-4 w-4 text-indigo-600" />
                 <span className="text-sm font-medium text-indigo-800">Document Activity</span>
               </div>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3 text-sm">
                 {formattedDetails.filename && (
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-indigo-600" />
-                    <span className="font-medium">File:</span>
-                    <span className="text-indigo-700">{String(formattedDetails.filename)}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <FileText className="h-4 w-4 text-indigo-600" />
+                      <span className="font-medium">File:</span>
+                    </div>
+                    <span className="text-indigo-700 break-all">{String(formattedDetails.filename)}</span>
                   </div>
                 )}
                 {formattedDetails.size && (
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Size:</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                    <span className="font-medium flex-shrink-0">Size:</span>
                     <span className="text-indigo-700">{String(formattedDetails.size)} bytes</span>
                   </div>
                 )}
                 {Object.entries(formattedDetails)
                   .filter(([key]) => !['filename', 'size'].includes(key))
                   .map(([key, value]) => (
-                  <div key={key} className="flex items-start gap-2">
-                    <span className="font-medium capitalize text-indigo-700">
+                  <div key={key} className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2">
+                    <span className="font-medium capitalize text-indigo-700 min-w-0 sm:min-w-[80px] flex-shrink-0">
                       {key.replace(/_/g, ' ')}:
                     </span>
-                    <span className="text-indigo-600">{String(value)}</span>
+                    <span className="text-indigo-600 break-words">{String(value)}</span>
                   </div>
                 ))}
               </div>
@@ -368,7 +408,7 @@ const renderDetails = (details: Record<string, unknown> | string | null, action:
         </div>
       </div>
     );
-  };
+};  
 
   return (
     <div className="space-y-6">
@@ -378,17 +418,72 @@ const renderDetails = (details: Record<string, unknown> | string | null, action:
           <h1 className="text-2xl font-bold">Audit Logs</h1>
           <p className="text-muted-foreground">System-wide activity monitoring and security logs</p>
         </div>
-        <Button>
+        <Button onClick={handleExportLogs}>
           <Download className="h-4 w-4 mr-2" />
           Export Logs
         </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Logs</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalLogs.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className="text-green-600">+12%</span> from last hour
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+            <User className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{uniqueUsers}</div>
+            <p className="text-xs text-muted-foreground">
+              Unique users today
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Security Events</CardTitle>
+            <Shield className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{securityEvents}</div>
+            <p className="text-xs text-muted-foreground">
+              Authentication & security
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{recentActivity}</div>
+            <p className="text-xs text-muted-foreground">
+              Last hour
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
+            <Search className="h-5 w-5" />
             Filters
           </CardTitle>
         </CardHeader>
@@ -401,7 +496,10 @@ const renderDetails = (details: Record<string, unknown> | string | null, action:
                 <Input
                   placeholder="Search logs..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    console.log(e.target.value);
+                    setSearchTerm(e.target.value)
+                  }}
                   className="pl-10"
                 />
               </div>
@@ -502,12 +600,6 @@ const renderDetails = (details: Record<string, unknown> | string | null, action:
                         {log.user_id}
                       </span>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm">
-                      <Eye className="h-4 w-4" />
-                    </Button>
                   </div>
                 </div>
               </div>

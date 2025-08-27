@@ -122,25 +122,23 @@ export const auditService = {
   },
 
   // Get all audit trails (admin only)
-  getAllAuditTrails: async (page: number = 1, limit: number = 10, filters?: any) => {
+  getAllAuditTrails: async (page: number = 1, limit: number = 10, filters?: any, search?: string) => {
     const offset = (page - 1) * limit;
     
     const whereClause: any = {};
     
-    if (filters?.user_id) {
-      whereClause.user_id = filters.user_id;
+    // Apply search filter
+    if (search) {
+      whereClause.OR = [
+        { action: { contains: search, mode: 'insensitive' } },
+        { details: { path: ['$'], string_contains: search } },
+        { user: { email: { contains: search, mode: 'insensitive' }, name: { contains: search, mode: 'insensitive' } } },
+      ];
     }
     
-    if (filters?.action) {
-      whereClause.action = { contains: filters.action, mode: 'insensitive' };
-    }
-    
-    if (filters?.target_type) {
-      whereClause.target_type = filters.target_type;
-    }
-    
-    if (filters?.target_id) {
-      whereClause.target_id = filters.target_id;
+    // Apply additional filters using the filter utility
+    if (filters) {
+      Object.assign(whereClause, filters);
     }
 
     const [auditTrails, total] = await Promise.all([
@@ -151,6 +149,7 @@ export const auditService = {
             select: {
               id: true,
               email: true,
+              name: true,
             },
           },
         },

@@ -3,6 +3,64 @@ import autoTable, { RowInput } from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { RFP, SupplierResponse } from '@/apis/types';
 
+// CSV Export Functions
+export const generateAuditLogsCsv = (auditLogs: any[]): string => {
+  const headers = [
+    'ID',
+    'User ID',
+    'User Email',
+    'User Name',
+    'Action',
+    'Target Type',
+    'Target ID',
+    'Details',
+    'Created At',
+  ];
+
+  const rows = auditLogs.map(log => [
+    log.id,
+    log.user_id,
+    log.user?.email || '',
+    log.user?.name || '',
+    log.action,
+    log.target_type || '',
+    log.target_id || '',
+    JSON.stringify(log.details || {}),
+    new Date(log.created_at).toISOString(),
+  ]);
+
+  // Combine headers and rows
+  const csvRows = [headers, ...rows];
+  
+  // Convert to CSV format
+  return csvRows.map(row => 
+    row.map(cell => {
+      // Escape quotes and wrap in quotes if contains comma, quote, or newline
+      const cellStr = String(cell).replace(/"/g, '""');
+      if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+        return `"${cellStr}"`;
+      }
+      return cellStr;
+    }).join(',')
+  ).join('\n');
+};
+
+export const downloadCsv = (csvContent: string, filename: string) => {
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+};
+
 // PDF Export Functions
 export const exportRfpToPdf = (rfp: RFP) => {
   const doc = new jsPDF();

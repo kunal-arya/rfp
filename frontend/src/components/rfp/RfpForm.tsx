@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CreateRfpData } from '@/apis/rfp';
 import { FileText, AlertCircle } from 'lucide-react';
 
@@ -19,6 +20,7 @@ const rfpSchema = z.object({
   budget_max: z.number().min(0, 'Maximum budget must be positive').optional(),
   deadline: z.string().min(1, 'Deadline is required'),
   notes: z.string().optional(),
+  buyer_id: z.string().optional(), // Optional for admin users
 }).refine((data) => {
   if (data.budget_min && data.budget_max) {
     return data.budget_max >= data.budget_min;
@@ -37,6 +39,9 @@ interface RfpFormProps {
   isLoading?: boolean;
   error?: string | null;
   mode: 'create' | 'edit';
+  isAdmin?: boolean;
+  buyers?: Array<{ id: string; email: string; name?: string }>;
+  hideHeader?: boolean;
 }
 
 export const RfpForm: React.FC<RfpFormProps> = ({
@@ -45,6 +50,9 @@ export const RfpForm: React.FC<RfpFormProps> = ({
   isLoading = false,
   error,
   mode,
+  isAdmin = false,
+  buyers = [],
+  hideHeader = false,
 }) => {
   const {
     register,
@@ -61,6 +69,7 @@ export const RfpForm: React.FC<RfpFormProps> = ({
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
+      {!hideHeader && (
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
@@ -70,9 +79,10 @@ export const RfpForm: React.FC<RfpFormProps> = ({
           {mode === 'create' 
             ? 'Fill in the details below to create a new Request for Proposal'
             : 'Update the RFP details below'
-          }
-        </CardDescription>
-      </CardHeader>
+            }
+          </CardDescription>
+        </CardHeader>
+      )}
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           {error && (
@@ -82,17 +92,44 @@ export const RfpForm: React.FC<RfpFormProps> = ({
             </Alert>
           )}
 
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              placeholder="Enter RFP title"
-              {...register('title')}
-              className={errors.title ? 'border-destructive' : ''}
-            />
-            {errors.title && (
-              <p className="text-sm text-destructive">{errors.title.message}</p>
+          {/* Title and Buyer (for admin) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title *</Label>
+              <Input
+                id="title"
+                placeholder="Enter RFP title"
+                {...register('title')}
+                className={errors.title ? 'border-destructive' : ''}
+              />
+              {errors.title && (
+                <p className="text-sm text-destructive">{errors.title.message}</p>
+              )}
+            </div>
+            
+            {isAdmin && (
+              <div className="space-y-2">
+                <Label htmlFor="buyer_id">Buyer *</Label>
+                <Select onValueChange={(value) => {
+                  // Update the form value
+                  const event = { target: { value } } as any;
+                  register('buyer_id').onChange(event);
+                }}>
+                  <SelectTrigger className={errors.buyer_id ? 'border-destructive w-full' : 'w-full'}>
+                    <SelectValue placeholder="Select buyer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {buyers.map((buyer) => (
+                      <SelectItem key={buyer.id} value={buyer.id}>
+                        <span className="font-medium">{buyer.name}</span> <span className="text-xs text-muted-foreground">({buyer.email})</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.buyer_id && (
+                  <p className="text-sm text-destructive">{errors.buyer_id.message}</p>
+                )}
+              </div>
             )}
           </div>
 

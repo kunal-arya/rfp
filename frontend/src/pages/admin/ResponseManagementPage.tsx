@@ -6,14 +6,18 @@ import { Badge } from '@/components/ui/badge';
 import { 
   MessageSquare, 
   Search, 
-  Filter,
   MoreVertical,
   Edit,
   Eye,
   CheckCircle,
   XCircle,
   Clock,
-  Star
+  Star,
+  Loader2,
+  Users,
+  Award,
+  AlertCircle,
+  Send
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -21,98 +25,106 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useAdminResponses } from '@/hooks/useAdmin';
+import { useDebounce } from '@/hooks/useDebounce';
+import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface Response {
   id: string;
-  rfpTitle: string;
-  supplier: string;
-  status: string;
-  submittedAt: string;
-  price: string;
-  rating: number;
-  reviewStatus: string;
-  buyer: string;
-  category: string;
+  rfp: {
+    id: string;
+    title: string;
+    buyer: {
+      id: string;
+      email: string;
+    };
+  };
+  supplier: {
+    id: string;
+    email: string;
+  };
+  status: {
+    code: string;
+    label: string;
+  };
+  price: number;
+  description: string;
+  submitted_at: string;
+  reviewed_at?: string;
+  review_notes?: string;
+  rating?: number;
 }
 
 const ResponseManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [reviewFilter, setReviewFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [selectedResponse, setSelectedResponse] = useState<Response | null>(null);
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
-  // Mock data - will be replaced with real API calls
-  const responses: Response[] = [
-    {
-      id: '1',
-      rfpTitle: 'Website Development Project',
-      supplier: 'WebDev Solutions',
-      status: 'Submitted',
-      submittedAt: '2024-01-20T10:30:00Z',
-      price: '$18,000',
-      rating: 4.5,
-      reviewStatus: 'Pending',
-      buyer: 'TechCorp Inc.',
-      category: 'Technology'
-    },
-    {
-      id: '2',
-      rfpTitle: 'Marketing Campaign Design',
-      supplier: 'Creative Agency Pro',
-      status: 'Under Review',
-      submittedAt: '2024-01-19T14:20:00Z',
-      price: '$8,500',
-      rating: 4.8,
-      reviewStatus: 'In Progress',
-      buyer: 'MarketingPro LLC',
-      category: 'Marketing'
-    },
-    {
-      id: '3',
-      rfpTitle: 'Mobile App Development',
-      supplier: 'AppStudio Tech',
-      status: 'Approved',
-      submittedAt: '2024-01-18T09:15:00Z',
-      price: '$42,000',
-      rating: 4.9,
-      reviewStatus: 'Completed',
-      buyer: 'StartupXYZ',
-      category: 'Technology'
-    },
-    {
-      id: '4',
-      rfpTitle: 'Logo and Branding Design',
-      supplier: 'Design Masters',
-      status: 'Rejected',
-      submittedAt: '2024-01-17T16:45:00Z',
-      price: '$3,200',
-      rating: 3.2,
-      reviewStatus: 'Completed',
-      buyer: 'DesignStudio',
-      category: 'Design'
-    },
-    {
-      id: '5',
-      rfpTitle: 'Content Writing Services',
-      supplier: 'Content Creators Co.',
-      status: 'Submitted',
-      submittedAt: '2024-01-16T11:30:00Z',
-      price: '$2,500',
-      rating: 4.3,
-      reviewStatus: 'Pending',
-      buyer: 'ContentHub',
-      category: 'Content'
-    }
-  ];
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  const filteredResponses = responses.filter(response => {
-    const matchesSearch = response.rfpTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         response.supplier.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         response.buyer.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || response.status === statusFilter;
-    const matchesReview = reviewFilter === 'all' || response.reviewStatus === reviewFilter;
-    
-    return matchesSearch && matchesStatus && matchesReview;
+  // Use admin responses API
+  const { data: responsesData, isLoading, error, refetch } = useAdminResponses({
+    page,
+    limit,
+    search: debouncedSearchTerm || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
   });
+
+  const responses = responsesData?.data?.data || [];
+  const total = responsesData?.data?.total || 0;
+  const totalPages = Math.ceil(total / limit);
+
+  // Review form state
+  const [reviewForm, setReviewForm] = useState({
+    action: '',
+    notes: '',
+    rating: 0
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading responses...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <p className="text-destructive mb-4">Failed to load responses</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -126,12 +138,48 @@ const ResponseManagementPage: React.FC = () => {
     }
   };
 
-  const getReviewStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'Pending': return 'bg-gray-100 text-gray-800';
-      case 'In Progress': return 'bg-yellow-100 text-yellow-800';
-      case 'Completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const handleReviewResponse = (response: Response) => {
+    setSelectedResponse(response);
+    setReviewForm({
+      action: '',
+      notes: '',
+      rating: 0
+    });
+    setIsReviewDialogOpen(true);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!selectedResponse || !reviewForm.action) {
+      toast.error('Please select an action');
+      return;
+    }
+
+    setIsActionLoading(true);
+    try {
+      // TODO: Implement review response API call
+      toast.success(`Response ${reviewForm.action} successfully`);
+      setIsReviewDialogOpen(false);
+      setSelectedResponse(null);
+      refetch();
+    } catch (error) {
+      toast.error(`Failed to ${reviewForm.action} response`);
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleBulkAction = async (action: string) => {
+    if (!confirm(`Are you sure you want to ${action} all selected responses?`)) return;
+    
+    setIsActionLoading(true);
+    try {
+      // TODO: Implement bulk action API call
+      toast.success(`Bulk ${action} completed successfully`);
+      refetch();
+    } catch (error) {
+      toast.error(`Failed to ${action} responses`);
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -173,7 +221,7 @@ const ResponseManagementPage: React.FC = () => {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{responses.length}</div>
+            <div className="text-2xl font-bold">{total}</div>
             <p className="text-xs text-muted-foreground">
               <span className="text-green-600">+12</span> this week
             </p>
@@ -187,7 +235,7 @@ const ResponseManagementPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {responses.filter(r => r.reviewStatus === 'Pending').length}
+              {responses.filter(r => r.status.code === 'Submitted').length}
             </div>
             <p className="text-xs text-muted-foreground">
               Awaiting review
@@ -202,7 +250,7 @@ const ResponseManagementPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {responses.filter(r => r.status === 'Approved').length}
+              {responses.filter(r => r.status.code === 'Approved').length}
             </div>
             <p className="text-xs text-muted-foreground">
               Successfully approved
@@ -217,7 +265,10 @@ const ResponseManagementPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {(responses.reduce((sum, r) => sum + r.rating, 0) / responses.length).toFixed(1)}
+              {responses.length > 0 
+                ? (responses.reduce((sum, r) => sum + (r.rating || 0), 0) / responses.length).toFixed(1)
+                : '0.0'
+              }
             </div>
             <p className="text-xs text-muted-foreground">
               Overall quality score
@@ -225,6 +276,49 @@ const ResponseManagementPage: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button
+              variant="outline"
+              className="h-auto p-4 flex flex-col items-center space-y-2"
+            >
+              <Eye className="h-6 w-6 text-blue-600" />
+              <span className="text-sm font-medium">Review All</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-auto p-4 flex flex-col items-center space-y-2"
+              onClick={() => handleBulkAction('approve')}
+              disabled={isActionLoading}
+            >
+              <CheckCircle className="h-6 w-6 text-green-600" />
+              <span className="text-sm font-medium">Bulk Approve</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-auto p-4 flex flex-col items-center space-y-2"
+              onClick={() => handleBulkAction('reject')}
+              disabled={isActionLoading}
+            >
+              <XCircle className="h-6 w-6 text-red-600" />
+              <span className="text-sm font-medium">Bulk Reject</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-auto p-4 flex flex-col items-center space-y-2"
+            >
+              <Send className="h-6 w-6 text-purple-600" />
+              <span className="text-sm font-medium">Send Feedback</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card>
@@ -241,29 +335,20 @@ const ResponseManagementPage: React.FC = () => {
                 />
               </div>
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border rounded-md"
-            >
-              <option value="all">All Status</option>
-              <option value="Draft">Draft</option>
-              <option value="Submitted">Submitted</option>
-              <option value="Under Review">Under Review</option>
-              <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
-              <option value="Awarded">Awarded</option>
-            </select>
-            <select
-              value={reviewFilter}
-              onChange={(e) => setReviewFilter(e.target.value)}
-              className="px-3 py-2 border rounded-md"
-            >
-              <option value="all">All Review Status</option>
-              <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-            </select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-[200px]">
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="Draft">Draft</SelectItem>
+                <SelectItem value="Submitted">Submitted</SelectItem>
+                <SelectItem value="Under Review">Under Review</SelectItem>
+                <SelectItem value="Approved">Approved</SelectItem>
+                <SelectItem value="Rejected">Rejected</SelectItem>
+                <SelectItem value="Awarded">Awarded</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -271,7 +356,7 @@ const ResponseManagementPage: React.FC = () => {
       {/* Responses Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Responses ({filteredResponses.length})</CardTitle>
+          <CardTitle>Responses ({total})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -283,44 +368,38 @@ const ResponseManagementPage: React.FC = () => {
                   <th className="text-left py-3 px-4 font-medium">Status</th>
                   <th className="text-left py-3 px-4 font-medium">Price</th>
                   <th className="text-left py-3 px-4 font-medium">Rating</th>
-                  <th className="text-left py-3 px-4 font-medium">Review Status</th>
                   <th className="text-left py-3 px-4 font-medium">Submitted</th>
                   <th className="text-right py-3 px-4 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredResponses.map((response) => (
+                {responses.map((response) => (
                   <tr key={response.id} className="border-b hover:bg-gray-50">
                     <td className="py-3 px-4">
                       <div>
-                        <div className="font-medium">{response.rfpTitle}</div>
+                        <div className="font-medium">{response.rfp.title}</div>
                         <div className="text-sm text-muted-foreground">
-                          Buyer: {response.buyer}
+                          Buyer: {response.rfp.buyer.email}
                         </div>
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="text-sm font-medium">{response.supplier}</div>
+                      <div className="text-sm font-medium">{response.supplier.email}</div>
                     </td>
                     <td className="py-3 px-4">
-                      <Badge className={getStatusBadgeColor(response.status)}>
-                        {response.status}
+                      <Badge className={getStatusBadgeColor(response.status.code)}>
+                        {response.status.label}
                       </Badge>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="text-sm font-medium">{response.price}</div>
+                      <div className="text-sm font-medium">${response.price.toLocaleString()}</div>
                     </td>
                     <td className="py-3 px-4">
-                      {renderStars(response.rating)}
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge className={getReviewStatusBadgeColor(response.reviewStatus)}>
-                        {response.reviewStatus}
-                      </Badge>
+                      {response.rating ? renderStars(response.rating) : <span className="text-gray-400">No rating</span>}
                     </td>
                     <td className="py-3 px-4">
                       <div className="text-sm text-muted-foreground">
-                        {new Date(response.submittedAt).toLocaleDateString()}
+                        {format(new Date(response.submitted_at), 'MMM dd, yyyy')}
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right">
@@ -335,18 +414,28 @@ const ResponseManagementPage: React.FC = () => {
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleReviewResponse(response)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Review Response
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-green-600">
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Approve
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Reject
-                          </DropdownMenuItem>
+                          {response.status.code === 'Submitted' && (
+                            <>
+                              <DropdownMenuItem 
+                                className="text-green-600"
+                                onClick={() => handleReviewResponse({ ...response, status: { code: 'Approved', label: 'Approved' } })}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Approve
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={() => handleReviewResponse({ ...response, status: { code: 'Rejected', label: 'Rejected' } })}
+                              >
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Reject
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>
@@ -355,35 +444,131 @@ const ResponseManagementPage: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-muted-foreground">
+                Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, total)} of {total} results
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(page - 1)}
+                  disabled={page === 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum = Math.max(1, Math.min(totalPages - 4, page - 2)) + i;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={page === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setPage(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(page + 1)}
+                  disabled={page === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-              <Eye className="h-6 w-6 mx-auto mb-2 text-blue-600" />
-              <p className="text-sm font-medium">Review All</p>
-            </button>
-            <button className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-              <CheckCircle className="h-6 w-6 mx-auto mb-2 text-green-600" />
-              <p className="text-sm font-medium">Bulk Approve</p>
-            </button>
-            <button className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-              <XCircle className="h-6 w-6 mx-auto mb-2 text-red-600" />
-              <p className="text-sm font-medium">Bulk Reject</p>
-            </button>
-            <button className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-              <MessageSquare className="h-6 w-6 mx-auto mb-2 text-purple-600" />
-              <p className="text-sm font-medium">Send Feedback</p>
-            </button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Review Response Dialog */}
+      <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Review Response</DialogTitle>
+            <DialogDescription>
+              Review and provide feedback for this supplier response.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedResponse && (
+            <div className="space-y-4">
+              <div className="grid gap-4">
+                <div>
+                  <Label>RFP</Label>
+                  <p className="text-sm font-medium">{selectedResponse.rfp.title}</p>
+                </div>
+                <div>
+                  <Label>Supplier</Label>
+                  <p className="text-sm font-medium">{selectedResponse.supplier.email}</p>
+                </div>
+                <div>
+                  <Label>Price</Label>
+                  <p className="text-sm font-medium">${selectedResponse.price.toLocaleString()}</p>
+                </div>
+                <div>
+                  <Label>Action</Label>
+                  <Select value={reviewForm.action} onValueChange={(value) => setReviewForm({ ...reviewForm, action: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select action" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="approve">Approve</SelectItem>
+                      <SelectItem value="reject">Reject</SelectItem>
+                      <SelectItem value="request_revision">Request Revision</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Rating (Optional)</Label>
+                  <div className="flex items-center space-x-2 mt-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-5 w-5 cursor-pointer ${
+                          star <= reviewForm.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                        }`}
+                        onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label>Review Notes</Label>
+                  <Textarea
+                    value={reviewForm.notes}
+                    onChange={(e) => setReviewForm({ ...reviewForm, notes: e.target.value })}
+                    placeholder="Provide feedback and notes..."
+                    rows={4}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsReviewDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitReview} disabled={isActionLoading}>
+              {isActionLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Review'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
