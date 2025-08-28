@@ -3,16 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MessageSquare, 
-  Search, 
+import {
+  MessageSquare,
+  Search,
   MoreVertical,
   Edit,
   Eye,
   CheckCircle,
   XCircle,
   Clock,
-  Star,
+  Award,
   Loader2
 } from 'lucide-react';
 import {
@@ -22,23 +22,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useAdminResponses } from '@/hooks/useAdmin';
+import { useApproveResponse, useRejectResponse, useAwardResponse, useMoveResponseToReview, useReopenResponseForEdit } from '@/hooks/useResponse';
 import { useDebounce } from '@/hooks/useDebounce';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -75,9 +66,6 @@ const ResponseManagementPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
-  const [selectedResponse, setSelectedResponse] = useState<Response | null>(null);
-  const [isActionLoading, setIsActionLoading] = useState(false);
   const navigate = useNavigate();
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -90,16 +78,17 @@ const ResponseManagementPage: React.FC = () => {
     status: statusFilter !== 'all' ? statusFilter : undefined,
   });
 
+  // Action hooks
+  const approveResponseMutation = useApproveResponse();
+  const rejectResponseMutation = useRejectResponse();
+  const awardResponseMutation = useAwardResponse();
+  const moveToReviewMutation = useMoveResponseToReview();
+  const reopenResponseMutation = useReopenResponseForEdit();
+
   const responses = responsesData?.data?.data || [];
   const total = responsesData?.data?.total || 0;
   const totalPages = Math.ceil(total / limit);
-
-  // Review form state
-  const [reviewForm, setReviewForm] = useState({
-    action: '',
-    notes: '',
-    rating: 0
-  });
+  const stats = responsesData?.data?.stats || {};
 
   if (isLoading) {
     return (
@@ -135,35 +124,7 @@ const ResponseManagementPage: React.FC = () => {
     }
   };
 
-  const handleReviewResponse = (response: Response) => {
-    setSelectedResponse(response);
-    setReviewForm({
-      action: '',
-      notes: '',
-      rating: 0
-    });
-    setIsReviewDialogOpen(true);
-  };
 
-  const handleSubmitReview = async () => {
-    if (!selectedResponse || !reviewForm.action) {
-      toast.error('Please select an action');
-      return;
-    }
-
-    setIsActionLoading(true);
-    try {
-      // TODO: Implement review response API call
-      toast.success(`Response ${reviewForm.action} successfully`);
-      setIsReviewDialogOpen(false);
-      setSelectedResponse(null);
-      refetch();
-    } catch (error) {
-      toast.error(`Failed to ${reviewForm.action} response`);
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -183,9 +144,9 @@ const ResponseManagementPage: React.FC = () => {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{total}</div>
+            <div className="text-2xl font-bold">{stats.total_responses || total}</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600">+12</span> this week
+              Total responses in system
             </p>
           </CardContent>
         </Card>
@@ -197,7 +158,7 @@ const ResponseManagementPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {responses.filter(r => r.status.code === 'Submitted').length}
+              {stats.pending_review || 0}
             </div>
             <p className="text-xs text-muted-foreground">
               Awaiting review
@@ -212,7 +173,7 @@ const ResponseManagementPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {responses.filter(r => r.status.code === 'Approved').length}
+              {stats.approved || 0}
             </div>
             <p className="text-xs text-muted-foreground">
               Successfully approved
@@ -220,23 +181,7 @@ const ResponseManagementPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Rating</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {responses.length > 0 
-                ? (responses.reduce((sum, r) => sum + (r.rating || 0), 0) / responses.length).toFixed(1)
-                : '0.0'
-              }
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Overall quality score
-            </p>
-          </CardContent>
-        </Card>
+
       </div>
 
       {/* Filters */}
@@ -314,7 +259,7 @@ const ResponseManagementPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="text-sm text-muted-foreground">
-                        {format(new Date(response.created_at), 'MMM dd, yyyy')}
+                        {format(new Date(response.submitted_at), 'MMM dd, yyyy')}
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right">
@@ -329,23 +274,119 @@ const ResponseManagementPage: React.FC = () => {
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
+
+                          {/* Actions based on status - similar to Response Detail page */}
                           {response.status.code === 'Submitted' && (
+                            <DropdownMenuItem
+                              className="text-blue-600"
+                              onClick={() => {
+                                if (window.confirm('Are you sure you want to move this response to review? This will allow you to approve or reject it.')) {
+                                  moveToReviewMutation.mutate(response.id, {
+                                    onSuccess: () => {
+                                      toast.success('Response moved to review successfully');
+                                      refetch();
+                                    },
+                                    onError: () => {
+                                      toast.error('Failed to move response to review');
+                                    }
+                                  });
+                                }
+                              }}
+                            >
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Move to Review
+                            </DropdownMenuItem>
+                          )}
+
+                          {response.status.code === 'Under Review' && (
                             <>
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 className="text-green-600"
-                                onClick={() => handleReviewResponse({ ...response, status: { code: 'Approved', label: 'Approved' } })}
+                                onClick={() => {
+                                  if (window.confirm('Are you sure you want to approve this response?')) {
+                                    approveResponseMutation.mutate(response.id, {
+                                      onSuccess: () => {
+                                        toast.success('Response approved successfully');
+                                        refetch();
+                                      },
+                                      onError: () => {
+                                        toast.error('Failed to approve response');
+                                      }
+                                    });
+                                  }
+                                }}
                               >
                                 <CheckCircle className="h-4 w-4 mr-2" />
-                                Approve
+                                Approve Response
                               </DropdownMenuItem>
-                              <DropdownMenuItem 
+                              <DropdownMenuItem
                                 className="text-red-600"
-                                onClick={() => handleReviewResponse({ ...response, status: { code: 'Rejected', label: 'Rejected' } })}
+                                onClick={() => {
+                                  const reason = prompt('Please provide a rejection reason:');
+                                  if (reason && reason.trim()) {
+                                    rejectResponseMutation.mutate({
+                                      responseId: response.id,
+                                      rejectionReason: reason.trim()
+                                    }, {
+                                      onSuccess: () => {
+                                        toast.success('Response rejected successfully');
+                                        refetch();
+                                      },
+                                      onError: () => {
+                                        toast.error('Failed to reject response');
+                                      }
+                                    });
+                                  }
+                                }}
                               >
                                 <XCircle className="h-4 w-4 mr-2" />
-                                Reject
+                                Reject Response
                               </DropdownMenuItem>
                             </>
+                          )}
+
+                          {response.status.code === 'Approved' && (
+                            <DropdownMenuItem
+                              className="text-purple-600"
+                              onClick={() => {
+                                if (window.confirm('Are you sure you want to award this response? This will award the RFP to this supplier.')) {
+                                  awardResponseMutation.mutate(response.id, {
+                                    onSuccess: () => {
+                                      toast.success('Response awarded successfully');
+                                      refetch();
+                                    },
+                                    onError: () => {
+                                      toast.error('Failed to award response');
+                                    }
+                                  });
+                                }
+                              }}
+                            >
+                              <Award className="h-4 w-4 mr-2" />
+                              Award Response
+                            </DropdownMenuItem>
+                          )}
+
+                          {response.status.code === 'Rejected' && (
+                            <DropdownMenuItem
+                              className="text-orange-600"
+                              onClick={() => {
+                                if (window.confirm('Are you sure you want to reopen this response for editing? The supplier will be able to modify their response.')) {
+                                  reopenResponseMutation.mutate(response.id, {
+                                    onSuccess: () => {
+                                      toast.success('Response reopened for editing');
+                                      refetch();
+                                    },
+                                    onError: () => {
+                                      toast.error('Failed to reopen response');
+                                    }
+                                  });
+                                }
+                              }}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Reopen for Editing
+                            </DropdownMenuItem>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -400,86 +441,7 @@ const ResponseManagementPage: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Review Response Dialog */}
-      <Dialog open={isReviewDialogOpen} onOpenChange={setIsReviewDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Review Response</DialogTitle>
-            <DialogDescription>
-              Review and provide feedback for this supplier response.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedResponse && (
-            <div className="space-y-4">
-              <div className="grid gap-4">
-                <div>
-                  <Label>RFP</Label>
-                  <p className="text-sm font-medium">{selectedResponse.rfp.title}</p>
-                </div>
-                <div>
-                  <Label>Supplier</Label>
-                  <p className="text-sm font-medium">{selectedResponse.supplier.email}</p>
-                </div>
-                <div>
-                  <Label>Proposed Budget</Label>
-                  <p className="text-sm font-medium">${selectedResponse.proposed_budget.toLocaleString()}</p>
-                </div>
-                <div>
-                  <Label>Action</Label>
-                  <Select value={reviewForm.action} onValueChange={(value) => setReviewForm({ ...reviewForm, action: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select action" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="approve">Approve</SelectItem>
-                      <SelectItem value="reject">Reject</SelectItem>
-                      <SelectItem value="request_revision">Request Revision</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Rating (Optional)</Label>
-                  <div className="flex items-center space-x-2 mt-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`h-5 w-5 cursor-pointer ${
-                          star <= reviewForm.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                        }`}
-                        onClick={() => setReviewForm({ ...reviewForm, rating: star })}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <Label>Review Notes</Label>
-                  <Textarea
-                    value={reviewForm.notes}
-                    onChange={(e) => setReviewForm({ ...reviewForm, notes: e.target.value })}
-                    placeholder="Provide feedback and notes..."
-                    rows={4}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsReviewDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmitReview} disabled={isActionLoading}>
-              {isActionLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                'Submit Review'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 };

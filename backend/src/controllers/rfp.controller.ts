@@ -3,9 +3,6 @@ import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import * as rfpService from '../services/rfp.service';
 import { createRfpSchema, getRfpResponsesSchema, submitResponseSchema, reviewResponseSchema } from '../validations/rfp.validation';
 import { modifyGeneralFilterPrisma, processStatusFilters } from '../utils/filters';
-import { User, PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 export const createRfp = async (req: AuthenticatedRequest, res: Response) => {
     const validationResult = createRfpSchema.safeParse(req.body);
@@ -147,36 +144,17 @@ export const getAllRfps = async (req: AuthenticatedRequest, res: Response) => {
 
         const page: number = pageNumber ? parseInt(pageNumber as string) : 1;
         const limit: number = limitNumber ? parseInt(limitNumber as string) : 10;
-        const offset = (page - 1) * limit;
 
-        // Process status filters first
-        const processedFilters = await processStatusFilters(prisma, filters);
-        
-        // Split filters for RFP vs RFPVersion fields
-        const rfpFilterKeys = ['title', 'status_id', 'buyer_id', 'created_at'];
-        const versionFilterKeys = ['budget_min', 'budget_max', 'deadline', 'description', 'requirements'];
-
-        const rfpFilters: any = {};
-        const versionFilters: any = {};
-
-        for (let key in processedFilters) {
-            const columnKey = key.split('___')[1];
-            if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = processedFilters[key];
-            else if (versionFilterKeys.includes(columnKey)) versionFilters[key] = processedFilters[key];
-        }
-
-        const generalFilters = modifyGeneralFilterPrisma(rfpFilters);
-        const versionGeneralFilters = modifyGeneralFilterPrisma(versionFilters);
-
-        const rfps = await rfpService.getAllRfps(
-            generalFilters,
-            versionGeneralFilters,
-            offset,
-            limit,
-            search as string | undefined,
-            req.user as any,
-            show_new_rfps,
-            includeStats === 'true'
+        const rfps = await rfpService.getAllRfpsPaginated(
+            {
+                page,
+                limit,
+                search: search as string | undefined,
+                show_new_rfps,
+                includeStats: includeStats === 'true',
+                filters,
+                user: req.user as any
+            }
         );
 
         res.json(rfps);
@@ -197,36 +175,15 @@ export const getMyRfps = async (req: AuthenticatedRequest, res: Response) => {
 
         const page: number = pageNumber ? parseInt(pageNumber as string) : 1;
         const limit: number = limitNumber ? parseInt(limitNumber as string) : 10;
-        const offset = (page - 1) * limit;
 
-        // Process status filters first
-        const processedFilters = await processStatusFilters(prisma, filters);
-        // Split filters for RFP vs RFPVersion fields
-        const rfpFilterKeys = ['title', 'status_id', 'buyer_id', 'created_at'];
-        const versionFilterKeys = ['budget_min', 'budget_max', 'deadline', 'description', 'requirements'];
-
-        const rfpFilters: any = {};
-        const versionFilters: any = {};
-
-        for (let key in processedFilters) {
-            const columnKey = key.split('___')[1];
-            if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = processedFilters[key];
-            else if (versionFilterKeys.includes(columnKey)) versionFilters[key] = processedFilters[key];
-        }
-
-        const generalFilters = modifyGeneralFilterPrisma(rfpFilters);
-        const versionGeneralFilters = modifyGeneralFilterPrisma(versionFilters);
-
-        // For admin users, get all RFPs; for others, get their own RFPs
-        const rfps = await rfpService.getMyRfps(
-            user.userId,
-            generalFilters,
-            versionGeneralFilters,
-            offset,
+        const rfps = await rfpService.getMyRfpsPaginated({
+            userId: user.userId,
+            page,
             limit,
-            search as string | undefined,
-            user.role // Pass user role to service
-        );
+            search: search as string | undefined,
+            filters,
+            userRole: user.role
+        });
 
         res.json(rfps);
     } catch (error: any) {
@@ -716,35 +673,14 @@ export const getMyResponses = async (req: AuthenticatedRequest, res: Response) =
 
         const page: number = pageNumber ? parseInt(pageNumber as string) : 1;
         const limit: number = limitNumber ? parseInt(limitNumber as string) : 10;
-        const offset = (page - 1) * limit;
 
-        // Process status filters first
-        const processedFilters = await processStatusFilters(prisma, filters);
-        
-        // Split filters for response vs RFP fields
-        const responseFilterKeys = ['proposed_budget', 'timeline', 'cover_letter', 'created_at', 'status_id'];
-        const rfpFilterKeys = ['title', 'status_id', 'buyer_id'];
-
-        const responseFilters: any = {};
-        const rfpFilters: any = {};
-
-        for (let key in processedFilters) {
-            const columnKey = key.split('___')[1];
-            if (responseFilterKeys.includes(columnKey)) responseFilters[key] = processedFilters[key];
-            else if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = processedFilters[key];
-        }
-
-        const generalFilters = modifyGeneralFilterPrisma(responseFilters);
-        const rfpGeneralFilters = modifyGeneralFilterPrisma(rfpFilters);
-
-        const responses = await rfpService.getMyResponses(
-            user.userId,
-            generalFilters,
-            rfpGeneralFilters,
-            offset,
+        const responses = await rfpService.getMyResponsesPaginated({
+            userId: user.userId,
+            page,
             limit,
-            search as string | undefined
-        );
+            search: search as string | undefined,
+            filters
+        });
 
         res.json(responses);
     } catch (error: any) {

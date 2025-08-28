@@ -141,6 +141,94 @@ export const getMyRfps = async (
     return { total, page: Math.floor(offset / limit) + 1, limit, data: rfps };
 };
 
+// New method for getMyRfps with updated signature
+export const getMyRfpsPaginated = async (params: {
+    userId: string;
+    page: number;
+    limit: number;
+    search?: string;
+    filters: any;
+    userRole?: string;
+}) => {
+    const { userId, page, limit, search, filters, userRole } = params;
+    const offset = (page - 1) * limit;
+
+    // Import the filter processing utilities
+    const { processStatusFilters, modifyGeneralFilterPrisma } = await import('../utils/filters');
+
+    // Process status filters first
+    const processedFilters = await processStatusFilters(prisma, filters);
+
+    // Split filters for RFP vs RFPVersion fields
+    const rfpFilterKeys = ['title', 'status_id', 'buyer_id', 'created_at'];
+    const versionFilterKeys = ['budget_min', 'budget_max', 'deadline', 'description', 'requirements'];
+
+    const rfpFilters: any = {};
+    const versionFilters: any = {};
+
+    for (let key in processedFilters) {
+        const columnKey = key.split('___')[1];
+        if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = processedFilters[key];
+        else if (versionFilterKeys.includes(columnKey)) versionFilters[key] = processedFilters[key];
+    }
+
+    const generalFilters = modifyGeneralFilterPrisma(rfpFilters);
+    const versionGeneralFilters = modifyGeneralFilterPrisma(versionFilters);
+
+    return await getMyRfps(
+        userId,
+        generalFilters,
+        versionGeneralFilters,
+        offset,
+        limit,
+        search,
+        userRole
+    );
+};
+
+// New method for getMyResponses with updated signature
+export const getMyResponsesPaginated = async (params: {
+    userId: string;
+    page: number;
+    limit: number;
+    search?: string;
+    filters: any;
+}) => {
+    const { userId, page, limit, search, filters } = params;
+    const offset = (page - 1) * limit;
+
+    // Import the filter processing utilities
+    const { processStatusFilters, modifyGeneralFilterPrisma } = await import('../utils/filters');
+
+    // Process status filters first
+    const processedFilters = await processStatusFilters(prisma, filters);
+
+    // Split filters for response vs RFP fields
+    const responseFilterKeys = ['proposed_budget', 'timeline', 'cover_letter', 'created_at', 'status_id'];
+    const rfpFilterKeys = ['title', 'status_id', 'buyer_id'];
+
+    const responseFilters: any = {};
+    const rfpFilters: any = {};
+
+    for (let key in processedFilters) {
+        const columnKey = key.split('___')[1];
+        if (responseFilterKeys.includes(columnKey)) responseFilters[key] = processedFilters[key];
+        else if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = processedFilters[key];
+    }
+
+    const generalFilters = modifyGeneralFilterPrisma(responseFilters);
+    const rfpGeneralFilters = modifyGeneralFilterPrisma(rfpFilters);
+
+    return await getMyResponses(
+        userId,
+        generalFilters,
+        rfpGeneralFilters,
+        offset,
+        limit,
+        search
+    );
+};
+
 export const getRfpById = async (rfpId: string, userId: string) => {
     const rfp = await prisma.rFP.findUnique({
         where: { id: rfpId, deleted_at: null },
@@ -706,6 +794,7 @@ export const awardRfp = async (rFPId: string, responseId: string, buyerId: strin
     return updatedRfp;
 };
 
+// Keep the original method for backward compatibility
 export const getAllRfps = async (
     rfpFilters: any,
     versionFilters: any,
@@ -721,7 +810,7 @@ export const getAllRfps = async (
         const newRfps = await getNewRfpsForSupplierService(user.userId);
         return { total: newRfps.length, page: 1, limit: newRfps.length, data: newRfps };
     }
-    
+
     // Apply version filters to current_version
     if (Object.keys(versionFilters).length > 0) {
         rfpFilters.current_version = { ...versionFilters };
@@ -787,17 +876,17 @@ export const getAllRfps = async (
     if (includeStats) {
         const [totalRfps, publishedRfps, awardedRfps, totalResponses] = await Promise.all([
             prisma.rFP.count({ where: { deleted_at: null } }),
-            prisma.rFP.count({ 
-                where: { 
+            prisma.rFP.count({
+                where: {
                     deleted_at: null,
                     status: { code: RFP_STATUS.Published }
-                } 
+                }
             }),
-            prisma.rFP.count({ 
-                where: { 
+            prisma.rFP.count({
+                where: {
                     deleted_at: null,
                     status: { code: RFP_STATUS.Awarded }
-                } 
+                }
             }),
             prisma.supplierResponse.count()
         ]);
@@ -843,6 +932,53 @@ export const getAllRfps = async (
     }
 
     return result;
+};
+
+// New method with updated signature
+export const getAllRfpsPaginated = async (params: {
+    page: number;
+    limit: number;
+    search?: string;
+    show_new_rfps?: any;
+    includeStats?: boolean;
+    filters: any;
+    user: any;
+}) => {
+    const { page, limit, search, show_new_rfps, includeStats, filters, user } = params;
+    const offset = (page - 1) * limit;
+
+    // Import the filter processing utilities
+    const { processStatusFilters, modifyGeneralFilterPrisma } = await import('../utils/filters');
+
+    // Process status filters first
+    const processedFilters = await processStatusFilters(prisma, filters);
+
+    // Split filters for RFP vs RFPVersion fields
+    const rfpFilterKeys = ['title', 'status_id', 'buyer_id', 'created_at'];
+    const versionFilterKeys = ['budget_min', 'budget_max', 'deadline', 'description', 'requirements'];
+
+    const rfpFilters: any = {};
+    const versionFilters: any = {};
+
+    for (let key in processedFilters) {
+        const columnKey = key.split('___')[1];
+        if (rfpFilterKeys.includes(columnKey)) rfpFilters[key] = processedFilters[key];
+        else if (versionFilterKeys.includes(columnKey)) versionFilters[key] = processedFilters[key];
+    }
+
+    const generalFilters = modifyGeneralFilterPrisma(rfpFilters);
+    const versionGeneralFilters = modifyGeneralFilterPrisma(versionFilters);
+
+    return await getAllRfps(
+        generalFilters,
+        versionGeneralFilters,
+        offset,
+        limit,
+        search,
+        user,
+        show_new_rfps,
+        includeStats
+    );
 };
 
 async function getNewRfpsForSupplierService(supplierId: string) {

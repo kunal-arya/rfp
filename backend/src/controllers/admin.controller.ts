@@ -1,11 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
-import { PrismaClient } from '@prisma/client';
 import * as adminService from '../services/admin.service';
 import * as analyticsService from '../services/analytics.service';
-
-
-const prisma = new PrismaClient();
 
 // User Management Controllers
 export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
@@ -143,68 +139,17 @@ export const getAdminResponses = async (req: AuthenticatedRequest, res: Response
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
-    const offset = (page - 1) * limit;
     const search = req.query.search as string;
     const status = req.query.status as string;
 
-    // Create filters for admin to get all responses
-    const responseFilters: any = {};
-    if (status) {
-      const statusRecord = await prisma.supplierResponseStatus.findUnique({
-        where: { code: status }
-      });
-      if (statusRecord) {
-        responseFilters.status_id = statusRecord.id;
-      }
-    }
-
-    const responses = await prisma.supplierResponse.findMany({
-      where: {
-        ...responseFilters,
-        ...(search && {
-          OR: [
-            { cover_letter: { contains: search, mode: 'insensitive' } },
-            { rfp: { title: { contains: search, mode: 'insensitive' } } },
-            { supplier: { email: { contains: search, mode: 'insensitive' } } },
-          ],
-        }),
-      },
-      skip: offset,
-      take: limit,
-      include: {
-        rfp: {
-          include: {
-            current_version: true,
-            status: true,
-            buyer: true,
-          },
-        },
-        status: true,
-        supplier: true,
-        documents: true,
-      },
-      orderBy: { created_at: 'desc' },
+    const result = await adminService.getAdminResponses({
+      page,
+      limit,
+      search,
+      status
     });
 
-    const total = await prisma.supplierResponse.count({
-      where: {
-        ...responseFilters,
-        ...(search && {
-          OR: [
-            { cover_letter: { contains: search, mode: 'insensitive' } },
-            { rfp: { title: { contains: search, mode: 'insensitive' } } },
-            { supplier: { email: { contains: search, mode: 'insensitive' } } },
-          ],
-        }),
-      },
-    });
-
-    res.json({ 
-      data: responses, 
-      total, 
-      page, 
-      limit 
-    });
+    res.json(result);
   } catch (error: any) {
     console.error(error);
     res.status(500).json({ message: 'Failed to get responses' });
@@ -214,29 +159,13 @@ export const getAdminResponses = async (req: AuthenticatedRequest, res: Response
 export const getAdminResponse = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
-    
-    const response = await prisma.supplierResponse.findUnique({
-      where: { id },
-      include: {
-        rfp: {
-          include: {
-            current_version: true,
-            status: true,
-            buyer: true,
-          },
-        },
-        status: true,
-        supplier: true,
-        documents: true,
-      },
-    });
 
-    if (!response) {
-      return res.status(404).json({ message: 'Response not found' });
-    }
-
+    const response = await adminService.getAdminResponse(id);
     res.json(response);
   } catch (error: any) {
+    if (error.message === 'Response not found') {
+      return res.status(404).json({ message: error.message });
+    }
     console.error(error);
     res.status(500).json({ message: 'Failed to get response details' });
   }

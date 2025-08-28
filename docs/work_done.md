@@ -2935,6 +2935,185 @@ frontend/src/
   - Database updated via `npx prisma db seed`
 - **Status**: ✅ **PERMISSION CLEANUP & ADVANCED EDITING COMPLETED** - Full permission management through UI with clean, up-to-date permission set
 
+### **Phase 34: Response Management Page Overhaul - COMPLETED**
+- **✅ Task 1 - Removed Average Rating Stats**:
+  - **Problem**: Average rating stats card was cluttering the interface
+  - **Solution**: Removed the entire average rating stats card from the dashboard
+  - **Implementation**: Removed the stats card component from ResponseManagementPage.tsx
+  - **Result**: Cleaner, more focused interface
+- **✅ Task 2 - Removed Approve and Reject Actions with Dialogs**:
+  - **Problem**: Old approve/reject actions with complex dialogs were not needed
+  - **Solution**: Completely removed the old review dialog and related state management
+  - **Implementation**:
+    - Removed `isReviewDialogOpen`, `selectedResponse`, `isActionLoading` state
+    - Removed `handleReviewResponse` and `handleSubmitReview` functions
+    - Removed the entire review dialog component
+    - Cleaned up unused imports (Dialog, Star, Textarea, Label)
+  - **Result**: Simplified codebase with direct action buttons
+- **✅ Task 3 - Added Status-Based Actions from Response Detail Page**:
+  - **Problem**: Actions didn't match what users see in the Response Detail page
+  - **Solution**: Implemented status-based actions similar to ResponseLifecycleActions
+  - **Implementation**:
+    - **Submitted Status**: "Move to Review" action
+    - **Under Review Status**: "Approve Response" and "Reject Response" actions
+    - **Approved Status**: "Award Response" action
+    - **Rejected Status**: "Reopen for Editing" action
+    - **All Statuses**: "View Details" action (navigates to response detail page)
+  - **Result**: Consistent user experience across management and detail views
+- **✅ Task 4 - Enhanced Backend API with Stats**:
+  - **Problem**: Frontend was calculating stats instead of getting them from API
+  - **Solution**: Updated `getAdminResponses` controller to return stats like RFP API
+  - **Implementation**:
+    - Added `Promise.all` queries for stats: total_responses, pending_review, approved, avg_rating
+    - Updated response structure to include `stats` object
+    - Stats are now calculated server-side for better performance
+  - **Result**: More efficient stats calculation and consistent with RFP management pattern
+- **✅ Task 5 - Updated Frontend to Use API Stats**:
+  - **Problem**: Stats cards were calculated on frontend from filtered data
+  - **Solution**: Updated stats cards to use API-provided stats
+  - **Implementation**:
+    - Modified stats display to use `stats.total_responses`, `stats.pending_review`, `stats.approved`
+    - Removed client-side filtering for stats calculation
+    - Added fallback to existing `total` for backward compatibility
+  - **Result**: Accurate stats regardless of current filters and better performance
+- **✅ Task 6 - Implemented Real API Calls for Actions**:
+  - **Problem**: Action buttons had TODO comments instead of real implementations
+  - **Solution**: Integrated proper hooks for all response lifecycle actions
+  - **Implementation**:
+    - Imported `useApproveResponse`, `useRejectResponse`, `useAwardResponse`, `useMoveResponseToReview`, `useReopenResponseForEdit`
+    - Replaced TODO comments with actual mutation calls
+    - Added proper error handling and success callbacks
+    - Maintained confirmation dialogs for destructive actions
+  - **Result**: Fully functional response management with real API integration
+- **✅ Task 7 - Fixed Date Field Issue**:
+  - **Problem**: Code was trying to access `created_at` field that doesn't exist in the interface
+  - **Solution**: Updated to use `submitted_at` field which exists in the Response interface
+  - **Implementation**: Changed `response.created_at` to `response.submitted_at` in table display
+  - **Result**: Proper date display without errors
+- **✅ Technical Implementation**:
+  - **Status-Based Actions**:
+    ```typescript
+    {response.status.code === 'Submitted' && (
+      <DropdownMenuItem onClick={() => moveToReviewMutation.mutate(response.id)}>
+        Move to Review
+      </DropdownMenuItem>
+    )}
+    ```
+  - **API Stats Integration**:
+    ```typescript
+    const stats = await Promise.all([
+      prisma.supplierResponse.count(), // total_responses
+      prisma.supplierResponse.count({ where: { status: { code: 'Submitted' } } }), // pending_review
+      prisma.supplierResponse.count({ where: { status: { code: 'Approved' } } }), // approved
+      prisma.supplierResponse.aggregate({ _avg: { rating: true } }) // avg_rating
+    ]);
+    ```
+  - **Real API Integration**:
+    ```typescript
+    approveResponseMutation.mutate(response.id, {
+      onSuccess: () => { toast.success('Response approved successfully'); refetch(); },
+      onError: () => { toast.error('Failed to approve response'); }
+    });
+    ```
+- **✅ Benefits Achieved**:
+  - **🎯 Status-Based Actions**: Actions match Response Detail page behavior
+  - **📊 Server-Side Stats**: Better performance and accuracy
+  - **🔧 Real API Integration**: All actions now work with actual backend
+  - **🧹 Cleaner Interface**: Removed unnecessary rating stats and dialogs
+  - **🔄 Consistent UX**: Same actions available in management and detail views
+  - **⚡ Better Performance**: Stats calculated server-side, not client-side
+- **✅ Files Modified**:
+  - `backend/src/controllers/admin.controller.ts` - Added stats to getAdminResponses API
+  - `frontend/src/pages/admin/ResponseManagementPage.tsx` - Complete overhaul with new actions and stats
+  - Removed unused imports and cleaned up code
+- **Status**: ✅ **RESPONSE MANAGEMENT OVERHAUL COMPLETED** - Status-based actions, API stats, real API integration
+
+### **Phase 35: TypeScript Bug Fixes & Architecture Improvements - COMPLETED**
+- **✅ Task 1 - Fixed TypeScript Errors in Admin Controller**:
+  - **Problem**: Multiple TypeScript errors in `admin.controller.ts` due to direct Prisma queries and missing rating field
+  - **Solution**: 
+    - Removed direct `PrismaClient` import and instantiation from admin controller
+    - Fixed `getResponseStats` method to handle missing `rating` field in SupplierResponse schema
+    - Updated response structure to properly handle stats from service method
+  - **Result**: Clean admin controller without direct database queries, proper error handling
+- **✅ Task 2 - Moved Prisma Queries from Controllers to Services**:
+  - **Problem**: Controllers were making direct Prisma queries instead of using service layer
+  - **Solution**: Moved all database operations to appropriate service methods
+  - **Implementation**:
+    - **Admin Controller**: 
+      - Moved `getAdminResponses` and `getAdminResponse` to `admin.service.ts`
+      - Updated controller to use service methods instead of direct Prisma calls
+    - **RFP Controller**: 
+      - Moved `processStatusFilters` logic to service layer
+      - Created `getAllRfpsPaginated`, `getMyRfpsPaginated`, `getMyResponsesPaginated` methods
+      - Updated controller signatures to use object parameters instead of individual params
+    - **Service Layer**: 
+      - Added proper method signatures with structured parameters
+      - Maintained backward compatibility with existing methods
+      - Improved code organization and reusability
+  - **Result**: Clean separation of concerns with controllers only handling HTTP logic and services handling business logic
+- **✅ Task 3 - Enhanced Service Layer Architecture**:
+  - **Problem**: Service methods had inconsistent parameter structures
+  - **Solution**: Standardized service method signatures across the application
+  - **Implementation**:
+    - **Admin Service**: Added `getAdminResponses` and `getAdminResponse` methods with proper error handling
+    - **RFP Service**: Added paginated methods (`getAllRfpsPaginated`, `getMyRfpsPaginated`, `getMyResponsesPaginated`)
+    - **Parameter Standardization**: Used object parameters instead of individual parameters for better maintainability
+  - **Result**: Consistent, maintainable service layer architecture
+- **✅ Task 4 - Schema Compliance & Error Prevention**:
+  - **Problem**: Code referenced non-existent fields (like `rating` in SupplierResponse)
+  - **Solution**: Updated code to match actual Prisma schema structure
+  - **Implementation**:
+    - Removed references to non-existent `rating` field in SupplierResponse model
+    - Added proper null checks and error handling for missing data
+    - Ensured all database queries use valid schema fields
+  - **Result**: Type-safe code that matches the actual database schema
+- **✅ Technical Implementation**:
+  - **Controller Cleanup**:
+    ```typescript
+    // Before: Direct Prisma queries in controller
+    const responses = await prisma.supplierResponse.findMany({...});
+    
+    // After: Service layer abstraction
+    const result = await adminService.getAdminResponses(params);
+    ```
+  - **Service Method Structure**:
+    ```typescript
+    // Standardized service method signature
+    export const getAdminResponses = async (params: {
+      page: number;
+      limit: number;
+      search?: string;
+      status?: string;
+    }) => { /* implementation */ }
+    ```
+  - **Error Handling Improvement**:
+    ```typescript
+    // Proper error propagation from service to controller
+    try {
+      const response = await adminService.getAdminResponse(id);
+      res.json(response);
+    } catch (error: any) {
+      if (error.message === 'Response not found') {
+        return res.status(404).json({ message: error.message });
+      }
+      // Handle other errors
+    }
+    ```
+- **✅ Benefits Achieved**:
+  - **🛡️ Type Safety**: All TypeScript errors resolved, code matches schema
+  - **🏗️ Architecture**: Clean separation between HTTP handlers and business logic
+  - **🔧 Maintainability**: Service methods are reusable and properly structured
+  - **🧹 Code Quality**: Removed direct database queries from controllers
+  - **📊 Consistency**: Standardized parameter structures across services
+  - **🚀 Performance**: Proper error handling and resource management
+- **✅ Files Modified**:
+  - `backend/src/controllers/admin.controller.ts` - Removed Prisma queries, updated to use services
+  - `backend/src/controllers/rfp.controller.ts` - Moved filter processing to services, updated method signatures
+  - `backend/src/services/admin.service.ts` - Added `getAdminResponses` and `getAdminResponse` methods
+  - `backend/src/services/rfp.service.ts` - Added paginated methods with proper parameter structures
+- **Status**: ✅ **TYPESCRIPT BUG FIXES & ARCHITECTURE IMPROVEMENTS COMPLETED** - Clean controllers, proper service layer, type-safe code
+
 ### **Phase 33: Dashboard Permission Removal - COMPLETED**
 - **✅ Task 1 - Removed Dashboard Route Protection**:
   - **Problem**: Dashboard route was unnecessarily protected with `dashboard.view` permission

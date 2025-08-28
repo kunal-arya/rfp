@@ -328,100 +328,6 @@ export const createUser = async (data: {
   return user;
 };
 
-// Response Management Functions
-export const getAdminResponses = async (params: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: string;
-}) => {
-  const { page = 1, limit = 10, search, status } = params;
-  const offset = (page - 1) * limit;
-
-  // Create filters for admin to get all responses
-  const responseFilters: any = {};
-  if (status) {
-    const statusRecord = await prisma.supplierResponseStatus.findUnique({
-      where: { code: status }
-    });
-    if (statusRecord) {
-      responseFilters.status_id = statusRecord.id;
-    }
-  }
-
-  const responses = await prisma.supplierResponse.findMany({
-    where: {
-      ...responseFilters,
-      ...(search && {
-        OR: [
-          { cover_letter: { contains: search, mode: 'insensitive' } },
-          { rfp: { title: { contains: search, mode: 'insensitive' } } },
-          { supplier: { email: { contains: search, mode: 'insensitive' } } },
-        ],
-      }),
-    },
-    skip: offset,
-    take: limit,
-    include: {
-      rfp: {
-        include: {
-          current_version: true,
-          status: true,
-          buyer: true,
-        },
-      },
-      status: true,
-      supplier: true,
-      documents: true,
-    },
-    orderBy: { created_at: 'desc' },
-  });
-
-  const total = await prisma.supplierResponse.count({
-    where: {
-      ...responseFilters,
-      ...(search && {
-        OR: [
-          { cover_letter: { contains: search, mode: 'insensitive' } },
-          { rfp: { title: { contains: search, mode: 'insensitive' } } },
-          { supplier: { email: { contains: search, mode: 'insensitive' } } },
-        ],
-      }),
-    },
-  });
-
-  return {
-    data: responses,
-    total,
-    page,
-    limit
-  };
-};
-
-export const getAdminResponse = async (id: string) => {
-  const response = await prisma.supplierResponse.findUnique({
-    where: { id },
-    include: {
-      rfp: {
-        include: {
-          current_version: true,
-          status: true,
-          buyer: true,
-        },
-      },
-      status: true,
-      supplier: true,
-      documents: true,
-    },
-  });
-
-  if (!response) {
-    throw new Error('Response not found');
-  }
-
-  return response;
-};
-
 // Permission Management Functions
 export const getRolePermissions = async (roleName: string) => {
   const role = await prisma.role.findUnique({
@@ -488,4 +394,136 @@ export const getAllRoles = async () => {
   });
 
   return roles;
+};
+
+export const getResponseStats = async () => {
+  const stats = await Promise.all([
+    // Total responses
+    prisma.supplierResponse.count(),
+
+    // Pending review (Submitted status)
+    prisma.supplierResponse.count({
+      where: {
+        status: {
+          code: 'Submitted'
+        }
+      }
+    }),
+
+    // Approved responses
+    prisma.supplierResponse.count({
+      where: {
+        status: {
+          code: 'Approved'
+        }
+      }
+    }),
+
+    // Average rating (only for rated responses) - Note: Since rating doesn't exist in schema, we'll return 0
+    Promise.resolve({ _avg: { rating: 0 } })
+  ]);
+
+  return {
+    total_responses: stats[0],
+    pending_review: stats[1],
+    approved: stats[2],
+    avg_rating: stats[3]._avg.rating || 0
+  };
+};
+
+export const getAdminResponses = async (params: {
+  page: number;
+  limit: number;
+  search?: string;
+  status?: string;
+}) => {
+  const { page, limit, search, status } = params;
+  const offset = (page - 1) * limit;
+
+  // Create filters for admin to get all responses
+  const responseFilters: any = {};
+  if (status) {
+    const statusRecord = await prisma.supplierResponseStatus.findUnique({
+      where: { code: status }
+    });
+    if (statusRecord) {
+      responseFilters.status_id = statusRecord.id;
+    }
+  }
+
+  const responses = await prisma.supplierResponse.findMany({
+    where: {
+      ...responseFilters,
+      ...(search && {
+        OR: [
+          { cover_letter: { contains: search, mode: 'insensitive' } },
+          { rfp: { title: { contains: search, mode: 'insensitive' } } },
+          { supplier: { email: { contains: search, mode: 'insensitive' } } },
+        ],
+      }),
+    },
+    skip: offset,
+    take: limit,
+    include: {
+      rfp: {
+        include: {
+          current_version: true,
+          status: true,
+          buyer: true,
+        },
+      },
+      status: true,
+      supplier: true,
+      documents: true,
+    },
+    orderBy: { created_at: 'desc' },
+  });
+
+  const total = await prisma.supplierResponse.count({
+    where: {
+      ...responseFilters,
+      ...(search && {
+        OR: [
+          { cover_letter: { contains: search, mode: 'insensitive' } },
+          { rfp: { title: { contains: search, mode: 'insensitive' } } },
+          { supplier: { email: { contains: search, mode: 'insensitive' } } },
+        ],
+      }),
+    },
+  });
+
+  // Get stats for the response management page
+  const stats = await getResponseStats();
+
+  return {
+    data: responses,
+    total,
+    page,
+    limit,
+    stats
+  };
+};
+
+export const getAdminResponse = async (responseId: string) => {
+  const response = await prisma.supplierResponse.findUnique({
+    where: { id: responseId },
+    include: {
+      rfp: {
+        include: {
+          current_version: true,
+          status: true,
+          buyer: true,
+        },
+      },
+      status: true,
+      supplier: true,
+      documents: true,
+    },
+  });
+
+  if (!response) {
+    throw new Error('Response not found');
+  }
+
+  return response;
 };
