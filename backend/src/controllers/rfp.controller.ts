@@ -287,7 +287,7 @@ export const createDraftResponse = async (req: AuthenticatedRequest, res: Respon
     }
 
     try {
-        const response = await rfpService.createDraftResponse(rfp_id, validationResult.data, user.userId);
+        const response = await rfpService.createDraftResponse(rfp_id, validationResult.data, user.userId, user.role);
         res.status(201).json(response);
     } catch (error: any) {
         if (error.message === 'RFP not found') {

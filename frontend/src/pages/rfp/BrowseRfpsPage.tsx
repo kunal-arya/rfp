@@ -1,5 +1,5 @@
 import React, { useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
 import { RfpList } from '@/components/rfp/RfpList';
 import { useAllRfps } from '@/hooks/useRfp';
@@ -11,10 +11,12 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUrlFilters } from '@/hooks/useUrlFilters';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const BrowseRfpsPage: React.FC = () => {
   const navigate = useNavigate();
   const printRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
   
   // Use URL-based filters
   const { filters: urlFilters, updateUrlFilters, clearFilters } = useUrlFilters({
@@ -96,6 +98,11 @@ export const BrowseRfpsPage: React.FC = () => {
     { value: 'Closed', label: 'Closed' },
     { value: 'Awarded', label: 'Awarded' },
   ];
+
+  if (user?.role !== "admin") {
+    return <Navigate to="/dashboard" />;
+  }
+
 
   return (
     <div className="container mx-auto px-4 py-4 sm:py-8 space-y-6 sm:space-y-8">

@@ -458,8 +458,9 @@ export const getAdminResponses = async (params: {
         OR: [
           { cover_letter: { contains: search, mode: 'insensitive' } },
           { rfp: { title: { contains: search, mode: 'insensitive' } } },
+          { rfp: { buyer: { is: { email: { contains: search, mode: 'insensitive' } } } } },
           { supplier: { email: { contains: search, mode: 'insensitive' } } },
-        ],
+        ]
       }),
     },
     skip: offset,
@@ -486,8 +487,9 @@ export const getAdminResponses = async (params: {
         OR: [
           { cover_letter: { contains: search, mode: 'insensitive' } },
           { rfp: { title: { contains: search, mode: 'insensitive' } } },
+          { rfp: { buyer: { is: { email: { contains: search, mode: 'insensitive' } } } } },
           { supplier: { email: { contains: search, mode: 'insensitive' } } },
-        ],
+        ]
       }),
     },
   });

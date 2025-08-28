@@ -6,6 +6,7 @@ export interface CreateResponseData {
   budget: number;
   timeline: string;
   cover_letter: string;
+  supplier_id?: string; // For admin users to specify supplier
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -41,10 +42,11 @@ export const responseApi = {
   // Create new response
   createResponse: async (data: CreateResponseData): Promise<SupplierResponse> => {
     const rfp_id = data.rfp_id.toString()
-    const payload = { 
+    const payload = {
       proposed_budget: data.budget,
       timeline: data.timeline,
       cover_letter: data.cover_letter,
+      ...(data.supplier_id && { supplier_id: data.supplier_id }) // Include supplier_id for admin users
      }
     const response = await apiClient.post<SupplierResponse>(`/rfp/${rfp_id}/responses`, payload);
     return response.data;

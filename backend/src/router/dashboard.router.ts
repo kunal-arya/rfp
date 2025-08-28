@@ -23,7 +23,6 @@ router.use(protect);
  */
 router.get(
     '/',
-    hasPermission('dashboard', 'view'),
     dashboardController.getDashboard
 );
 
@@ -43,7 +42,6 @@ router.get(
  */
 router.get(
     '/stats',
-    hasPermission('dashboard', 'view'),
     dashboardController.getDashboardStats
 );
 

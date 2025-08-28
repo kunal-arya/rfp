@@ -3114,6 +3114,185 @@ frontend/src/
   - `backend/src/services/rfp.service.ts` - Added paginated methods with proper parameter structures
 - **Status**: ✅ **TYPESCRIPT BUG FIXES & ARCHITECTURE IMPROVEMENTS COMPLETED** - Clean controllers, proper service layer, type-safe code
 
+### **Phase 36: RfpManagementPage Submit Response Feature - COMPLETED**
+- **✅ Task 1 - Removed Edit Action from RfpManagementPage**:
+  - **Problem**: Edit action was cluttering the RFP management interface
+  - **Solution**: Completely removed the Edit action from the dropdown menu
+  - **Implementation**: Removed the edit menu item from the actions dropdown in RfpManagementPage.tsx
+  - **Result**: Cleaner, more focused interface with only relevant actions
+- **✅ Task 2 - Added Submit Response Action**:
+  - **Problem**: No way for admins to create responses on behalf of suppliers
+  - **Solution**: Added "Submit Response" action to the RFP actions dropdown
+  - **Implementation**:
+    - Added new dropdown menu item with MessageSquare icon
+    - Created handler functions for opening dialog and submitting responses
+    - Integrated with existing useCreateResponse hook
+  - **Result**: Admins can now create responses directly from RFP management
+- **✅ Task 3 - Created AdminResponseForm Component**:
+  - **Problem**: Needed a form specifically for admin response creation with supplier selection
+  - **Solution**: Created AdminResponseForm component with supplier dropdown
+  - **Implementation**:
+    - **Supplier Selection**: Added dropdown to choose which supplier the response is for
+    - **Form Fields**: Budget, Timeline, Cover Letter (same as regular response form)
+    - **Validation**: Proper Zod schema with supplier_id validation
+    - **UI**: Clean interface showing it's for admin use
+  - **Result**: Dedicated admin form with supplier selection capability
+- **✅ Task 4 - Updated Backend API for Admin Supplier Selection**:
+  - **Problem**: Backend didn't support admin specifying supplier for response creation
+  - **Solution**: Updated backend to accept supplier_id parameter for admin users
+  - **Implementation**:
+    - **Validation Schema**: Added `supplier_id` as optional field in `submitResponseSchema`
+    - **Service Layer**: Updated `createDraftResponse` to use `supplier_id` when provided by admin
+    - **Controller**: Modified to pass user role to service method
+    - **Database Logic**: Uses supplier_id from request for admins, falls back to user ID for suppliers
+  - **Result**: Backend supports admin creating responses for any supplier
+- **✅ Task 5 - Enhanced Frontend API Integration**:
+  - **Problem**: Frontend API didn't support sending supplier_id to backend
+  - **Solution**: Updated API layer to include supplier_id in requests
+  - **Implementation**:
+    - **Interface Update**: Added `supplier_id?: string` to `CreateResponseData`
+    - **API Call**: Modified `createResponse` to conditionally include supplier_id
+    - **Form Integration**: AdminResponseForm sends supplier_id in form data
+  - **Result**: Seamless integration between frontend form and backend API
+- **✅ Task 6 - Created Submit Response Dialog**:
+  - **Problem**: No dialog interface for admin response creation
+  - **Solution**: Created comprehensive dialog with RFP details and form
+  - **Implementation**:
+    - **Dialog Structure**: Shows RFP information at top, form below
+    - **RFP Details**: Displays title, buyer, status, budget, deadline
+    - **Form Integration**: Uses AdminResponseForm component
+    - **State Management**: Proper dialog open/close handling
+    - **Error Handling**: Toast notifications for success/failure
+  - **Result**: Professional dialog interface for admin response creation
+- **✅ Technical Implementation Highlights**:
+  - **AdminResponseForm Component**:
+    ```typescript
+    // Supplier selection for admin users
+    <Select value={selectedSupplierId} onValueChange={(value) => setValue('supplier_id', value)}>
+      <SelectContent>
+        {suppliers?.map((supplier) => (
+          <SelectItem key={supplier.id} value={supplier.id}>
+            <span className="font-medium">{supplier.name}</span>
+            <span className="text-sm text-muted-foreground">({supplier.email})</span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+    ```
+  - **Backend Service Logic**:
+    ```typescript
+    // Use supplier_id from request data if provided (for admin), otherwise use the provided supplierId
+    const finalSupplierId = userRole === 'Admin' && supplier_id ? supplier_id : supplierId;
+    ```
+  - **API Integration**:
+    ```typescript
+    // Include supplier_id for admin users
+    const payload = {
+      proposed_budget: data.budget,
+      timeline: data.timeline,
+      cover_letter: data.cover_letter,
+      ...(data.supplier_id && { supplier_id: data.supplier_id })
+    }
+    ```
+- **✅ User Experience Improvements**:
+  - **🎯 Admin Workflow**: Streamlined process for admins to create responses
+  - **👥 Supplier Selection**: Clear dropdown with supplier names and emails
+  - **📋 Form Validation**: Proper validation for all required fields
+  - **💬 Success Feedback**: Toast notifications for successful creation
+  - **🔄 Real-time Updates**: Automatic refresh of RFP list after creation
+- **✅ Security & Permissions**:
+  - **🔐 Admin-Only Feature**: Only admins can see and use the submit response action
+  - **✅ Supplier Validation**: Backend validates supplier existence
+  - **🛡️ Duplicate Prevention**: Prevents multiple responses per RFP per supplier
+  - **🔒 Role-Based Access**: Proper permission checks throughout
+- **✅ Files Modified**:
+  - `frontend/src/pages/admin/RfpManagementPage.tsx` - Removed edit action, added submit response action and dialog
+  - `frontend/src/components/response/AdminResponseForm.tsx` - New component for admin response creation
+  - `frontend/src/apis/response.ts` - Updated API to support supplier_id parameter
+  - `backend/src/validations/rfp.validation.ts` - Added supplier_id to schema
+  - `backend/src/services/rfp.service.ts` - Updated createDraftResponse to handle admin supplier selection
+  - `backend/src/controllers/rfp.controller.ts` - Updated to pass user role to service
+- **Status**: ✅ **SUBMIT RESPONSE FEATURE COMPLETED** - Admin can create responses for any supplier with full UI/UX
+
+### **Phase 37: Smart Supplier Filtering in Admin Response Creation - COMPLETED**
+- **✅ Task 1 - Enhanced Supplier Dropdown Filtering**:
+  - **Problem**: All suppliers were shown in dropdown even if they already submitted responses for the RFP
+  - **Solution**: Filter out suppliers who have already submitted responses to prevent duplicates
+  - **Implementation**: Modified AdminResponseForm to accept existingResponses prop and filter suppliers accordingly
+  - **Result**: Only suppliers who haven't responded yet appear in the dropdown
+- **✅ Task 2 - Updated Response Fetching**:
+  - **Problem**: Only approved responses were fetched, missing suppliers with other response statuses
+  - **Solution**: Modified useRfpResponses hook to fetch all responses (not just approved ones)
+  - **Implementation**: Changed filter from `{ status: 'Approved' }` to `{}` to get all response statuses
+  - **Result**: Complete view of all existing responses for accurate filtering
+- **✅ Task 3 - Smart UI Feedback**:
+  - **Problem**: No indication of response status or availability
+  - **Solution**: Added comprehensive UI feedback about response availability and existing responses
+  - **Implementation**:
+    - Added counter showing "X of Y suppliers have already responded"
+    - Added preview of existing responses with supplier email and status
+    - Added warning message when no suppliers are available
+    - Disabled submit button when no suppliers available
+  - **Result**: Clear, informative interface showing response status and availability
+- **✅ Task 4 - Enhanced User Experience**:
+  - **Problem**: Limited context about existing responses
+  - **Solution**: Added detailed response status display with supplier information
+  - **Implementation**:
+    - Show up to 3 existing responses as badges with supplier email and status
+    - Display "+X more" indicator when there are many existing responses
+    - Color-coded status badges for quick identification
+    - Responsive design that works on different screen sizes
+  - **Result**: Professional interface with complete response context
+- **✅ Task 5 - Form Validation & Error Handling**:
+  - **Problem**: Form could be submitted even when no suppliers available
+  - **Solution**: Added proper validation and error states
+  - **Implementation**:
+    - Disabled submit button when no suppliers available
+    - Added validation message when dropdown is empty
+    - Maintained existing form validation for required fields
+    - Graceful error handling for edge cases
+  - **Result**: Robust form with proper validation and user guidance
+- **✅ Technical Implementation Highlights**:
+  - **Supplier Filtering Logic**:
+    ```typescript
+    // Filter out suppliers who have already submitted responses
+    const availableSuppliers = suppliers.filter(supplier =>
+      !existingResponses.some(response => response.supplier_id === supplier.id)
+    );
+    ```
+  - **Smart UI Feedback**:
+    ```typescript
+    {existingResponses.length > 0 && (
+      <div className="flex flex-wrap gap-1">
+        <span className="font-medium">Existing responses:</span>
+        {existingResponses.slice(0, 3).map((response: any) => (
+          <span key={response.id} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-800">
+            {response.supplier?.email || 'Unknown'} ({response.status?.label || 'Unknown'})
+          </span>
+        ))}
+      </div>
+    )}
+    ```
+  - **Form Validation Enhancement**:
+    ```typescript
+    <Button
+      type="submit"
+      disabled={isLoading || availableSuppliers.length === 0}
+      className="min-w-[120px]"
+    >
+    ```
+- **✅ Benefits Achieved**:
+  - **🛡️ Data Integrity**: Prevents duplicate responses from same supplier
+  - **👥 Smart Filtering**: Only shows eligible suppliers in dropdown
+  - **📊 Complete Context**: Shows existing responses with status information
+  - **💡 Better UX**: Clear feedback about response availability
+  - **🚫 Error Prevention**: Form validation prevents invalid submissions
+  - **📱 Responsive Design**: Works well on different screen sizes
+- **✅ Files Modified**:
+  - `frontend/src/pages/admin/RfpManagementPage.tsx` - Updated response fetching and passed existing responses to form
+  - `frontend/src/components/response/AdminResponseForm.tsx` - Added supplier filtering, UI feedback, and validation
+- **Status**: ✅ **SMART SUPPLIER FILTERING COMPLETED** - Prevents duplicate responses with comprehensive UI feedback
+
 ### **Phase 33: Dashboard Permission Removal - COMPLETED**
 - **✅ Task 1 - Removed Dashboard Route Protection**:
   - **Problem**: Dashboard route was unnecessarily protected with `dashboard.view` permission

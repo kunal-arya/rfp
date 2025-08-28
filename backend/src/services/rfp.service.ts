@@ -1009,8 +1009,11 @@ async function getNewRfpsForSupplierService(supplierId: string) {
     });
   }  
 
-export const createDraftResponse = async (rFPId: string, responseData: SubmitResponseData, supplierId: string) => {
-    const { proposed_budget, timeline, cover_letter  } = responseData;
+export const createDraftResponse = async (rFPId: string, responseData: SubmitResponseData, supplierId: string, userRole?: string) => {
+    const { proposed_budget, timeline, cover_letter, supplier_id } = responseData;
+
+    // Use supplier_id from request data if provided (for admin), otherwise use the provided supplierId
+    const finalSupplierId = userRole === 'Admin' && supplier_id ? supplier_id : supplierId;
 
     const rFP = await prisma.rFP.findUnique({
         where: { id: rFPId },
@@ -1029,7 +1032,7 @@ export const createDraftResponse = async (rFPId: string, responseData: SubmitRes
     const existingResponse = await prisma.supplierResponse.findFirst({
         where: {
             rfp_id: rFPId,
-            supplier_id: supplierId,
+            supplier_id: finalSupplierId,
         },
     });
 
@@ -1049,7 +1052,7 @@ export const createDraftResponse = async (rFPId: string, responseData: SubmitRes
     const response = await prisma.supplierResponse.create({
         data: {
             rfp_id: rFPId,
-            supplier_id: supplierId,
+            supplier_id: finalSupplierId,
             status_id: draftStatus.id,
             proposed_budget,
             timeline,
@@ -1546,7 +1549,8 @@ export const getNBAResponses = async (rFPId: string, userId: string, user_role: 
 
     const isSupplier = user_role === RoleName.Supplier;
     const isBuyer = user_role === RoleName.Buyer;
-
+    const isAdmin = user_role === RoleName.Admin;
+    
     // Check authorization
     if (isSupplier) {
         // Suppliers can only see their own responses
@@ -1562,7 +1566,7 @@ export const getNBAResponses = async (rFPId: string, userId: string, user_role: 
             },
         });
         return responses;
-    } else if (isBuyer) {        
+    } else if (isBuyer || isAdmin) {        
         const responses = await prisma.supplierResponse.findMany({
             where: {
                 rfp_id: rFPId,

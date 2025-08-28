@@ -35,32 +35,6 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
-interface Response {
-  id: string;
-  rfp: {
-    id: string;
-    title: string;
-    buyer: {
-      id: string;
-      email: string;
-    };
-  };
-  supplier: {
-    id: string;
-    email: string;
-  };
-  status: {
-    code: string;
-    label: string;
-  };
-  proposed_budget: number;
-  description: string;
-  submitted_at: string;
-  reviewed_at?: string;
-  review_notes?: string;
-  rating?: number;
-}
-
 const ResponseManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -259,7 +233,7 @@ const ResponseManagementPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="text-sm text-muted-foreground">
-                        {format(new Date(response.submitted_at), 'MMM dd, yyyy')}
+                        {format(new Date(response.updated_at), 'MMM dd, yyyy')}
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right">

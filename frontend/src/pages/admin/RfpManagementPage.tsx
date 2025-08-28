@@ -17,7 +17,8 @@ import {
   Pause,
   Award,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  MessageSquare
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -51,13 +52,16 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAllRfps, useCreateRfp, usePublishRfp, useCloseRfp, useDeleteRfp, useAwardRfp } from '@/hooks/useRfp';
-import { useRfpResponses } from '@/hooks/useResponse';
+import { useRfpResponses, useCreateResponse } from '@/hooks/useResponse';
 import { useUsers } from '@/hooks/useAdmin';
 import { useDebounce } from '@/hooks/useDebounce';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { RfpForm } from '@/components/rfp/RfpForm';
+import { ResponseForm } from '@/components/response/ResponseForm';
+import { AdminResponseForm } from '@/components/response/AdminResponseForm';
 import { CreateRfpData } from '@/apis/rfp';
+import { CreateResponseData } from '@/apis/response';
 import { useNavigate } from 'react-router-dom';
 import { SupplierResponse } from '@/apis/types';
 
@@ -98,6 +102,7 @@ const RfpManagementPage: React.FC = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isAwardDialogOpen, setIsAwardDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSubmitResponseDialogOpen, setIsSubmitResponseDialogOpen] = useState(false);
   const [selectedRfp, setSelectedRfp] = useState<Rfp | null>(null);
   const [selectedResponseId, setSelectedResponseId] = useState<string>('');
 
@@ -106,6 +111,12 @@ const RfpManagementPage: React.FC = () => {
   // Get buyers for create RFP form
   const { data: usersResponse } = useUsers({ role: 'Buyer', limit: 1000 });
   const buyers = usersResponse?.data?.data || [];
+
+  // Get suppliers for submit response form
+  const { data: suppliersResponse } = useUsers({ role: 'Supplier', limit: 1000 });
+  const suppliers = suppliersResponse?.data?.data || [];
+  
+  console.log({suppliers});
 
   // Use real API data with stats
   const { data: rfpsData, isLoading, error, refetch } = useAllRfps({
@@ -123,10 +134,13 @@ const RfpManagementPage: React.FC = () => {
   const deleteRfpMutation = useDeleteRfp();
   const awardRfpMutation = useAwardRfp();
 
-  // Get responses for the selected RFP
+  // Response action hooks
+  const createResponseMutation = useCreateResponse();
+
+  // Get responses for the selected RFP (all responses to filter out suppliers who already submitted)
   const { data: responses, isLoading: responsesLoading } = useRfpResponses(
     selectedRfp?.id || '',
-    { status: 'Approved' } // Only show approved responses
+    {} // Get all responses, not just approved ones
   );
 
   const rfps = rfpsData?.data || [];
@@ -222,6 +236,34 @@ const RfpManagementPage: React.FC = () => {
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to award RFP');
     }
+  };
+
+  const handleSubmitResponse = async (data: CreateResponseData) => {
+    if (!selectedRfp) {
+      toast.error('No RFP selected');
+      return;
+    }
+
+    try {
+      // Add the RFP ID to the data
+      const responseData = {
+        ...data,
+        rfp_id: selectedRfp.id
+      };
+
+      await createResponseMutation.mutateAsync(responseData);
+      toast.success('Response submitted successfully');
+      setIsSubmitResponseDialogOpen(false);
+      setSelectedRfp(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to submit response');
+    }
+  };
+
+  const openSubmitResponseDialog = (rfp: Rfp) => {
+    setSelectedRfp(rfp);
+    setIsSubmitResponseDialogOpen(true);
   };
 
   const openDeleteDialog = (rfp: Rfp) => {
@@ -456,6 +498,10 @@ const RfpManagementPage: React.FC = () => {
                             <Eye className="h-4 w-4 mr-2" />
                             View Responses
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openSubmitResponseDialog(rfp)}>
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Submit Response
+                          </DropdownMenuItem>
                           {rfp.status.code === 'Draft' && (
                             <DropdownMenuItem 
                               onClick={() => handleRfpAction('publish', rfp.id)}
@@ -480,10 +526,7 @@ const RfpManagementPage: React.FC = () => {
                               Award
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem onClick={() => handleRfpAction('edit', rfp.id)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
+
                           <DropdownMenuItem 
                             onClick={() => openDeleteDialog(rfp)}
                             disabled={deleteRfpMutation.isPending}
@@ -683,6 +726,61 @@ const RfpManagementPage: React.FC = () => {
                   )}
                 </Button>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Submit Response Dialog */}
+      <Dialog open={isSubmitResponseDialogOpen} onOpenChange={setIsSubmitResponseDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-blue-600" />
+              Submit Response
+            </DialogTitle>
+            <DialogDescription>
+              Create a response for this RFP. As an admin, you can choose which supplier to create the response for.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedRfp && (
+            <div className="space-y-6">
+              {/* RFP Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">{selectedRfp.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Buyer:</span> {selectedRfp.buyer.email}
+                    </div>
+                    <div>
+                      <span className="font-medium">Status:</span>
+                      <Badge className={`ml-2 ${getStatusBadgeColor(selectedRfp.status.code)}`}>
+                        {selectedRfp.status.label}
+                      </Badge>
+                    </div>
+                    <div>
+                      <span className="font-medium">Budget:</span> ${selectedRfp.current_version.budget_min || 0} - ${selectedRfp.current_version.budget_max || '∞'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Deadline:</span> {format(new Date(selectedRfp.current_version.deadline), 'MMM dd, yyyy')}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Response Form */}
+              <AdminResponseForm
+                rfpId={selectedRfp.id}
+                hideHeader={true}
+                suppliers={suppliers}
+                existingResponses={responses || []}
+                onSubmit={handleSubmitResponse}
+                isLoading={createResponseMutation.isPending}
+              />
             </div>
           )}
         </DialogContent>
