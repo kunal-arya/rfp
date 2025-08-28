@@ -115,8 +115,6 @@ const RfpManagementPage: React.FC = () => {
   // Get suppliers for submit response form
   const { data: suppliersResponse } = useUsers({ role: 'Supplier', limit: 1000 });
   const suppliers = suppliersResponse?.data?.data || [];
-  
-  console.log({suppliers});
 
   // Use real API data with stats
   const { data: rfpsData, isLoading, error, refetch } = useAllRfps({

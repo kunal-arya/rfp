@@ -14,7 +14,7 @@ export const notificationService = {
         const offset = (page - 1) * limit;
 
         const whereClause = {
-            ...(user.role === RoleName.Admin ? {} : { user_id: user.userId }),
+            ...({ user_id: user.userId }),
             ...(unreadOnly && { is_read: false })
         };
 
@@ -101,7 +101,7 @@ export const notificationService = {
         });
     },
 
-    createNotificationForRole: async (roleName: string, templateCode: string, data?: any) => {
+    createNotificationForRole: async (roleName: string, templateCode: string, data?: any, excludeUserId?: string) => {
         // Get all users with the specified role
         const users = await prisma.user.findMany({
             where: {
@@ -112,9 +112,12 @@ export const notificationService = {
             }
         });
 
-        // Create notifications for all users in the role
+        // Filter out the user who performed the action (if provided)
+        const filteredUsers = excludeUserId ? users.filter(user => user.id !== excludeUserId) : users;
+
+        // Create notifications for filtered users in the role
         const notifications = await Promise.all(
-            users.map(user => 
+            filteredUsers.map(user =>
                 prisma.notification.create({
                     data: {
                         user_id: user.id,
@@ -129,7 +132,12 @@ export const notificationService = {
         return notifications;
     },
 
-    createNotificationForUser: async (userId: string, templateCode: string, data?: any) => {
+    createNotificationForUser: async (userId: string, templateCode: string, data?: any, excludeUserId?: string) => {
+        // Don't create notification if the target user is the same as the action performer
+        if (excludeUserId && userId === excludeUserId) {
+            return null;
+        }
+
         return await prisma.notification.create({
             data: {
                 user_id: userId,
@@ -142,6 +150,23 @@ export const notificationService = {
                 user: true
             }
         });
+    },
+
+    // Generic notification creation with automatic filtering
+    createFilteredNotification: async (templateCode: string, data: any, actionPerformerId?: string) => {
+        const { recipientRole, recipientUserId, ...notificationData } = data;
+
+        // Create notification for a specific role, excluding the action performer
+        if (recipientRole) {
+            return await notificationService.createNotificationForRole(recipientRole, templateCode, notificationData, actionPerformerId);
+        }
+
+        // Create notification for a specific user, excluding the action performer
+        if (recipientUserId) {
+            return await notificationService.createNotificationForUser(recipientUserId, templateCode, notificationData, actionPerformerId);
+        }
+
+        throw new Error('Either recipientRole or recipientUserId must be provided');
     },
 
     // Helper method to create notification templates
@@ -225,12 +250,7 @@ export const notificationService = {
                 message: 'The RFP "{{rfp_title}}" has been awarded to a supplier. Thank you for your participation.',
                 channel: 'BOTH'
             },
-            {
-                code: 'PERMISSIONS_UPDATED',
-                title: 'Role Permissions Updated',
-                message: 'The permissions for role "{{roleName}}" have been updated by {{updatedBy}}.',
-                channel: 'BOTH'
-            }
+
         ];
 
         for (const template of templates) {

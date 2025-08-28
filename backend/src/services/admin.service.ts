@@ -372,13 +372,7 @@ export const updateRolePermissions = async (roleName: string, permissions: any, 
     });
   }
 
-  // Send notification to admin users
-  if (updatedBy) {
-    await notificationService.createNotificationForRole('Admin', 'PERMISSIONS_UPDATED', {
-      roleName,
-      updatedBy
-    });
-  }
+  // Notification removed as per requirements
 
   return updatedRole.permissions;
 };

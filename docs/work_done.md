@@ -3293,6 +3293,31 @@ frontend/src/
   - `frontend/src/components/response/AdminResponseForm.tsx` - Added supplier filtering, UI feedback, and validation
 - **Status**: ✅ **SMART SUPPLIER FILTERING COMPLETED** - Prevents duplicate responses with comprehensive UI feedback
 
+### **Phase 38: Hide Navigation Column for Admin Role - COMPLETED**
+- **✅ Task 1 - Fixed Navigation Section Display for Admin Role**:
+  - **Problem**: Navigation section was still showing in the Admin role permissions display section
+  - **Solution**: Added the same filter that exists in other tabs to the Admin role display section
+  - **Implementation**: Added `.filter((section) => !(isAdminRole && section.title === 'Navigation'))` to the admin permissions display section
+  - **Result**: Navigation section is now properly hidden for Admin role in both view and edit modes
+- **✅ Task 2 - Code Cleanup**:
+  - **Problem**: Debug console.log statement was left in the code
+  - **Solution**: Removed the console.log statement from RfpManagementPage.tsx
+  - **Implementation**: Cleaned up the suppliers logging statement
+  - **Result**: Cleaner, production-ready code
+- **✅ Technical Implementation Highlights**:
+  - **Consistent Filtering**: Applied the same filter pattern used in other tabs to the admin display section
+  - **Filter Logic**: `!(isAdminRole && section.title === 'Navigation')` ensures Navigation is hidden for Admin role
+  - **Existing Configuration**: Leveraged the existing `donot_show_in_admin: true` property on the Navigation section
+  - **Code Consistency**: Maintained the same filtering approach across all permission display sections
+- **✅ Benefits Achieved**:
+  - **🛡️ Security**: Admin role permissions display now properly hides sensitive Navigation section
+  - **👁️ Clean UI**: Admin permissions view is cleaner without irrelevant Navigation controls
+  - **🔄 Consistency**: Same filtering logic applied across all permission display modes
+  - **🧹 Code Quality**: Removed debug code for production readiness
+- **✅ Files Modified**:
+  - `frontend/src/pages/admin/PermissionManagementPage.tsx` - Added Navigation section filter to admin display section and cleaned up debug code
+- **Status**: ✅ **NAVIGATION HIDING FOR ADMIN COMPLETED** - Clean admin permissions display without Navigation section
+
 ### **Phase 33: Dashboard Permission Removal - COMPLETED**
 - **✅ Task 1 - Removed Dashboard Route Protection**:
   - **Problem**: Dashboard route was unnecessarily protected with `dashboard.view` permission

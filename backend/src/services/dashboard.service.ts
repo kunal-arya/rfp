@@ -429,7 +429,6 @@ const getAdminStats = async (userId: string) => {
             const totalRfps = await prisma.rFP.count({
                 where: {
                     deleted_at: null,
-                    status: { code: RFP_STATUS.Awarded },
                 },
             });
 

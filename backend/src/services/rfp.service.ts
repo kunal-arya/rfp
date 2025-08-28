@@ -580,13 +580,13 @@ export const publishRfp = async (rFPId: string, userId: string) => {
     });
     
     if (rfpWithDetails) {
-        // Create notifications for all suppliers
+        // Create notifications for all suppliers (excluding the buyer who published it)
         await notificationService.createNotificationForRole('Supplier', AUDIT_ACTIONS.RFP_PUBLISHED, {
             rfp_title: rfpWithDetails.title,
             buyer_name: rfpWithDetails.buyer.email,
             deadline: rfpWithDetails.current_version?.deadline ? new Date(rfpWithDetails.current_version.deadline).toLocaleDateString() : 'N/A',
             rfp_id: rfpWithDetails.id
-        });
+        }, userId); // Pass buyer ID to exclude from supplier notifications
 
         // Send real-time notification to all suppliers and buyer
         notifyRfpPublished(rfpWithDetails);
@@ -774,12 +774,12 @@ export const awardRfp = async (rFPId: string, responseId: string, buyerId: strin
                 continue;
             }
             
-            // Notify other suppliers that RFP was awarded to someone else
+            // Notify other suppliers that RFP was awarded to someone else (excluding the buyer who awarded it)
             await notificationService.createNotificationForUser(response.supplier_id, "RFP_AWARDED", {
                 rfp_title: updatedRfp.title,
                 supplier_name: response.supplier.email,
                 rfp_id: updatedRfp.id
-            });
+            }, buyerId); // Pass buyer ID to exclude from supplier notifications
         }
     }
 
@@ -1138,12 +1138,12 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
         },
     });
     if (responseWithDetails) {
-        // Create notification for the buyer
+        // Create notification for the buyer (excluding the supplier who submitted it)
         await notificationService.createNotificationForUser(responseWithDetails.rfp.buyer_id, AUDIT_ACTIONS.RESPONSE_SUBMITTED, {
             rfp_title: responseWithDetails.rfp.title,
             supplier_name: responseWithDetails.supplier.email,
             response_id: responseWithDetails.id
-        });
+        }, userId); // Pass supplier ID to exclude from buyer notification
 
         // Send real-time notification to buyer
         notifyResponseSubmitted(responseWithDetails, responseWithDetails.rfp.buyer_id);
@@ -1223,12 +1223,12 @@ export const moveResponseToReview = async (responseId: string, buyerId: string) 
     // Send email notification to supplier
     await sendResponseMovedToReviewNotification(responseId);
 
-    // Create notification for the supplier
+    // Create notification for the supplier (excluding the buyer who moved it to review)
     await notificationService.createNotificationForUser(updatedResponse.supplier_id, AUDIT_ACTIONS.RESPONSE_MOVED_TO_REVIEW, {
         rfp_title: updatedResponse.rfp.title,
         supplier_name: updatedResponse.supplier.email,
         response_id: updatedResponse.id
-    });
+    }, buyerId); // Pass buyer ID to exclude from supplier notification
 
     return updatedResponse;
 };
@@ -1292,14 +1292,14 @@ export const rejectResponse = async (responseId: string, rejectionReason: string
     // Send email notification to supplier
     await sendResponseRejectedNotification(responseId, rejectionReason);
 
-    // Create notification for the supplier
+    // Create notification for the supplier (excluding the buyer who rejected it)
     try {
       await notificationService.createNotificationForUser(updatedResponse.supplier_id, "RESPONSE_REJECTED", {
         rfp_title: updatedResponse.rfp.title,
         supplier_name: updatedResponse.supplier.email,
         response_id: updatedResponse.id,
         rejection_reason: rejectionReason
-      });
+      }, buyerId); // Pass buyer ID to exclude from supplier notification
     } catch (error) {
       console.warn('Failed to send response rejected notification:', error);
       // Don't throw error to avoid breaking the main functionality
@@ -1391,13 +1391,13 @@ export const reopenResponseForEdit = async (responseId: string, buyerId: string)
         },
     });
 
-    // Send notification to supplier
+    // Send notification to supplier (excluding the buyer who reopened it)
     await notificationService.createNotificationForUser(updatedResponse.supplier_id, "RESPONSE_REOPENED", {
         rfp_id: updatedResponse.rfp_id,
         rfp_title: updatedResponse.rfp.title,
         response_id: updatedResponse.id,
         supplier_name: updatedResponse.supplier.email,
-    });
+    }, buyerId); // Pass buyer ID to exclude from supplier notification
 
     // Create audit trail entry
     await createAuditEntry(buyerId, AUDIT_ACTIONS.RESPONSE_REOPENED, 'SupplierResponse', responseId, {
@@ -1515,13 +1515,13 @@ export const awardResponse = async (responseId: string, buyerId: string) => {
     // Send email notification to supplier
     await sendResponseAwardedNotification(responseId);
 
-    // Create notification for the supplier
+    // Create notification for the supplier (excluding the buyer who awarded it)
     try {
       await notificationService.createNotificationForUser(updatedResponse.supplier_id, "RESPONSE_AWARDED", {
         rfp_title: updatedResponse.rfp.title,
         supplier_name: updatedResponse.supplier.email,
         response_id: updatedResponse.id
-      });
+      }, buyerId); // Pass buyer ID to exclude from supplier notification
     } catch (error) {
       console.warn('Failed to send response awarded notification:', error);
       // Don't throw error to avoid breaking the main functionality
