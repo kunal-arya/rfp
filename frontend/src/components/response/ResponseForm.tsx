@@ -18,7 +18,6 @@ const responseSchema = z.object({
   budget: z.number().min(1, 'Budget must be greater than 0'),
   timeline: z.string().min(1, 'Timeline is required').max(500, 'Timeline must be less than 500 characters'),
   cover_letter: z.string().min(10, 'Cover letter must be at least 10 characters').max(2000, 'Cover letter must be less than 2000 characters'),
-  notes: z.string().optional(),
 });
 
 type ResponseFormData = z.infer<typeof responseSchema>;
@@ -30,6 +29,7 @@ interface ResponseFormProps {
   error?: string | null;
   mode: 'create' | 'edit';
   rfpId?: string;
+  hideHeader?: boolean;
 }
 
 export const ResponseForm: React.FC<ResponseFormProps> = ({
@@ -39,6 +39,7 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
   error,
   mode,
   rfpId,
+  hideHeader = false,
 }) => {
   const { data: publishedRfps } = usePublishedRfps();
   const {
@@ -63,7 +64,8 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
+      {!hideHeader && (
+        <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
           {mode === 'create' ? 'Create Response' : 'Edit Response'}
@@ -73,8 +75,9 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
             ? 'Fill in the details below to submit your response to the RFP'
             : 'Update your response details below'
           }
-        </CardDescription>
-      </CardHeader>
+          </CardDescription>
+        </CardHeader>
+      )}
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           {error && (
@@ -156,17 +159,6 @@ export const ResponseForm: React.FC<ResponseFormProps> = ({
             {errors.cover_letter && (
               <p className="text-sm text-destructive">{errors.cover_letter.message}</p>
             )}
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Additional Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Any additional information, clarifications, or special considerations"
-              rows={3}
-              {...register('notes')}
-            />
           </div>
 
           {/* Submit Button */}

@@ -30,6 +30,7 @@ import NotificationManagementPage from './pages/admin/NotificationManagementPage
 import DocumentManagementPage from './pages/admin/DocumentManagementPage';
 import SupportPage from './pages/admin/SupportPage';
 import SystemConfigPage from './pages/admin/SystemConfigPage';
+import { PermissionManagementPage } from './pages/admin/PermissionManagementPage';
 import { RoleBasedRedirect } from './components/layout/RoleBasedRedirect';
 import './App.css';
 
@@ -171,6 +172,7 @@ function App() {
                       <Route path="documents" element={<DocumentManagementPage />} />
                       <Route path="support" element={<SupportPage />} />
                       <Route path="settings" element={<SystemConfigPage />} />
+                      <Route path="permissions" element={<PermissionManagementPage />} />
                     </Route>
                     
                     {/* Redirect root based on role */}

@@ -274,6 +274,39 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         });
       });
 
+      // Admin-specific notification listeners
+      newSocket.on('user_created', (notification) => {
+        const data = notification.data;
+        
+        // Invalidate admin queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+        queryClient.invalidateQueries({ queryKey: ['admin-user-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        
+        toast.info(`New User Created: ${data.email}`, {
+          description: `A new user has been created with role ${data.role?.name || 'Unknown'}.`,
+          action: {
+            label: 'View Users',
+            onClick: () => (window.location.href = '/admin/users'),
+          },
+        });
+      });
+
+      newSocket.on('data_export', (notification) => {
+        const data = notification.data;
+        
+        // Invalidate admin queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        
+        toast.success(`Data Export Completed: ${data.filename}`, {
+          description: `Export completed with ${data.recordCount} records.`,
+          action: {
+            label: 'View Exports',
+            onClick: () => (window.location.href = '/admin/reports'),
+          },
+        });
+      });
+
       setSocket(newSocket);
 
       // Clean up the connection when the component unmounts or user logs out

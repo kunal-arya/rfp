@@ -626,6 +626,38 @@ router.put(
 
 /**
  * @swagger
+ * /rfp/responses/{response_id}/reopen:
+ *   put:
+ *     summary: Reopen a rejected response for editing
+ *     tags: [Responses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: response_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Response reopened for editing successfully
+ *       400:
+ *         description: Only rejected responses can be reopened for editing
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Response not found
+ */
+router.put(
+    '/responses/:response_id/reopen',
+    hasPermission('supplier_response', 'reopen'),
+    rfpController.reopenResponseForEdit
+);
+
+/**
+ * @swagger
  * /rfp/responses/{response_id}/award:
  *   put:
  *     summary: Award a response

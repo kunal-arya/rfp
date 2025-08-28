@@ -67,11 +67,22 @@ export const notifyRfpPublished = (rfpData: any) => {
         data: rfpData,
         timestamp: new Date().toISOString()
     });
+    io.to('Admin').emit('rfp_published', {
+        type: 'RFP_PUBLISHED',
+        data: rfpData,
+        timestamp: new Date().toISOString()
+    });
 };
 
 export const notifyResponseSubmitted = (responseData: any, buyerId: string) => {
     const io = getIO();
     io.to(`user_${buyerId}`).emit('response_submitted', {
+        type: 'RESPONSE_SUBMITTED',
+        data: responseData,
+        timestamp: new Date().toISOString()
+    });
+    // Also notify admin users
+    io.to('Admin').emit('response_submitted', {
         type: 'RESPONSE_SUBMITTED',
         data: responseData,
         timestamp: new Date().toISOString()
@@ -87,11 +98,24 @@ export const notifyRfpStatusChanged = (rfpData: any, supplierIds: string[]) => {
             timestamp: new Date().toISOString()
         });
     });
+    // Also notify admin users
+    io.to('Admin').emit('rfp_status_changed', {
+        type: 'RFP_STATUS_CHANGED',
+        data: rfpData,
+        timestamp: new Date().toISOString()
+    });
 };
 
 export const notifyResponseMovedToReview = (responseData: any, supplierId: string) => {
     const io = getIO();
     io.to(`user_${supplierId}`).emit('response_moved_to_review', {
+        type: 'RESPONSE_MOVED_TO_REVIEW',
+        data: responseData,
+        timestamp: new Date().toISOString()
+    });
+
+    // Also notify admin users
+    io.to('Admin').emit('response_moved_to_review', {
         type: 'RESPONSE_MOVED_TO_REVIEW',
         data: responseData,
         timestamp: new Date().toISOString()
@@ -105,6 +129,13 @@ export const notifyResponseApproved = (responseData: any, supplierId: string) =>
         data: responseData,
         timestamp: new Date().toISOString()
     });
+
+    // Also notify admin users
+    io.to('Admin').emit('response_approved', {
+        type: 'RESPONSE_APPROVED',
+        data: responseData,
+        timestamp: new Date().toISOString()
+    });
 };
 
 export const notifyResponseRejected = (responseData: any, supplierId: string) => {
@@ -114,11 +145,25 @@ export const notifyResponseRejected = (responseData: any, supplierId: string) =>
         data: responseData,
         timestamp: new Date().toISOString()
     });
+
+    // Also notify admin users
+    io.to('Admin').emit('response_rejected', {
+        type: 'RESPONSE_REJECTED',
+        data: responseData,
+        timestamp: new Date().toISOString()
+    });
 };
 
 export const notifyResponseAwarded = (responseData: any, supplierId: string) => {
     const io = getIO();
     io.to(`user_${supplierId}`).emit('response_awarded', {
+        type: 'RESPONSE_AWARDED',
+        data: responseData,
+        timestamp: new Date().toISOString()
+    });
+
+    // Also notify admin users  
+    io.to('Admin').emit('response_awarded', {
         type: 'RESPONSE_AWARDED',
         data: responseData,
         timestamp: new Date().toISOString()
@@ -134,6 +179,13 @@ export const notifyRfpAwarded = (rfpData: any, supplierIds: string[]) => {
             timestamp: new Date().toISOString()
         });
     });
+
+    // Also notify admin users
+    io.to('Admin').emit('rfp_awarded', {
+        type: 'RFP_AWARDED',
+        data: rfpData,
+        timestamp: new Date().toISOString()
+    });
 };
 
 export const notifyUser = (userId: string, event: string, data: any) => {
@@ -142,12 +194,18 @@ export const notifyUser = (userId: string, event: string, data: any) => {
         ...data,
         timestamp: new Date().toISOString()
     });
+
+    // Also notify admin users
+    io.to('Admin').emit(event, {
+        ...data,
+        timestamp: new Date().toISOString()
+    });
 };
 
 // Additional WebSocket events for real-time dashboard updates
 export const notifyRfpCreated = (rfpData: any) => {
     const io = getIO();
-    io.to('Buyer').emit('rfp_created', {
+    io.to('Admin').emit('rfp_created', {
         type: 'RFP_CREATED',
         data: rfpData,
         timestamp: new Date().toISOString()
@@ -204,6 +262,16 @@ export const notifyDocumentDeleted = (documentData: any, userId: string) => {
     io.to(`user_${userId}`).emit('document_deleted', {
         type: 'DOCUMENT_DELETED',
         data: documentData,
+        timestamp: new Date().toISOString()
+    });
+};
+
+// Admin-specific notification functions
+export const notifyUserCreated = (userData: any) => {
+    const io = getIO();
+    io.to('Admin').emit('user_created', {
+        type: 'USER_CREATED',
+        data: userData,
         timestamp: new Date().toISOString()
     });
 };

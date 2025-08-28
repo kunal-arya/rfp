@@ -12,10 +12,12 @@ import {
   Database,
   LogOut,
   Menu,
-  X
+  X,
+  Key
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLogout } from '@/hooks/useLogout';
+import { NotificationBell } from '@/components/shared/NotificationBell';
 
 const AdminLayout: React.FC = () => {
   const { user, permissionHelpers } = useAuth();
@@ -31,6 +33,7 @@ const AdminLayout: React.FC = () => {
     audit: { name: 'Audit Logs', href: '/admin/audit', icon: Shield, permission: 'admin' },
     rfps: { name: 'RFP Management', href: '/admin/rfps', icon: FileText, permission: 'admin' },
     responses: { name: 'Response Management', href: '/admin/responses', icon: MessageSquare, permission: 'admin' },
+    permissions: { name: 'Permissions', href: '/admin/permissions', icon: Key, permission: 'admin' },
     config: { name: 'System Config', href: '/admin/config', icon: Settings, permission: 'admin' },
     database: { name: 'Database', href: '/admin/database', icon: Database, permission: 'admin' }
   };
@@ -156,6 +159,7 @@ const AdminLayout: React.FC = () => {
               </h2>
             </div>
             <div className="flex items-center space-x-4">
+              <NotificationBell />
               <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-500">
                 <span>Welcome back,</span>
                 <span className="font-medium text-gray-900">{user?.name}</span>

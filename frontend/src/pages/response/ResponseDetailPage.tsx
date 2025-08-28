@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useResponseById, useSubmitResponse } from '@/hooks/useResponse';
+import { useResponseById, useSubmitResponse, useReopenResponseForEdit } from '@/hooks/useResponse';
 import { ResponseLifecycleActions } from '@/components/response/ResponseLifecycleActions';
+import { EditResponseDialog } from '@/components/response/EditResponseDialog';
 import { useDeleteDocument, useUploadResponseDocument } from '@/hooks/useDocument';
 import { useAuth } from '@/contexts/AuthContext';
 import { DocumentList } from '@/components/shared/DocumentList';
@@ -33,6 +34,7 @@ export const ResponseDetailPage: React.FC = () => {
   const deleteDocumentMutation = useDeleteDocument();
   const uploadDocumentMutation = useUploadResponseDocument();
   const submitResponseMutation = useSubmitResponse();
+  const reopenResponseMutation = useReopenResponseForEdit();
   const [uploadingDocs, setUploadingDocs] = useState(false);
 
   const handleDelete = (docId: string) => {
@@ -71,10 +73,12 @@ export const ResponseDetailPage: React.FC = () => {
   // Permission checks
   const canManageDocuments = permissionHelpers.hasPermission('supplier_response', 'manage_documents');
   const canSubmitResponse = permissionHelpers.hasPermission('supplier_response', 'submit');
-  const isOwner = user?.id === response?.supplier?.id;
-  const canUploadDocuments = canManageDocuments && isOwner; // Only supplier can upload documents
-  const canDeleteDocuments = canManageDocuments && isOwner; // Only supplier can delete documents
-  const canSubmit = canSubmitResponse && isOwner && response?.status.code === 'Draft';
+  const canEditResponse = permissionHelpers.hasPermission('supplier_response', 'edit');
+  const canReopenResponse = permissionHelpers.hasPermission('supplier_response', 'reopen');
+  const isAllowed = user?.role === "Admin" || user?.id === response?.supplier?.id;
+  const canUploadDocuments = canManageDocuments && isAllowed; // Only supplier can upload documents
+  const canDeleteDocuments = canManageDocuments && isAllowed; // Only supplier can delete documents
+  const canSubmit = canSubmitResponse && isAllowed && response?.status.code === 'Draft';
 
   const formatCurrency = (amount: number | null | undefined) => {
     if (!amount) return 'Not specified';
@@ -99,7 +103,7 @@ export const ResponseDetailPage: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Loading response details...</p>
+          <p className="text-muted-foreground">Loading Response Details...</p>
         </div>
       </div>
     );
@@ -172,6 +176,34 @@ export const ResponseDetailPage: React.FC = () => {
                   <Send className="h-4 w-4 mr-2" />
                 )}
                 Submit Response
+              </Button>
+            )}
+
+            {/* Edit Button - Show for draft responses when user has edit permission */}
+            {response.status.code === 'Draft' && canEditResponse && (
+              <EditResponseDialog 
+                response={response}
+              />
+            )}
+
+            {/* Open to Edit Button - Show for rejected responses when user has reopen permission */}
+            {response.status.code === 'Rejected' && canReopenResponse && (
+              <Button 
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to reopen this response for editing? The supplier will be able to modify their response.')) {
+                    reopenResponseMutation.mutate(response.id);
+                  }
+                }}
+                disabled={reopenResponseMutation.isPending}
+                className="bg-orange-600 hover:bg-orange-700"
+                size="sm"
+              >
+                {reopenResponseMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                )}
+                Open to Edit
               </Button>
             )}
             
@@ -308,6 +340,13 @@ export const ResponseDetailPage: React.FC = () => {
                   </p>
                 </div>
                 <Separator />
+                <div>
+                  <h4 className="font-medium text-sm text-muted-foreground">Status</h4>
+                  <Badge className={`${getStatusColor(response.status.code)} text-white`}>
+                    {response.status.label}
+                  </Badge>
+                </div>
+                <Separator />
                 <div className="space-y-2">
                   <h3 className="font-semibold">RFP</h3>
                   <p 
@@ -316,12 +355,8 @@ export const ResponseDetailPage: React.FC = () => {
                   >
                     {response.rfp?.title}
                   </p>
-                </div>
-                <Separator />
-                <div>
-                  <h4 className="font-medium text-sm text-muted-foreground">Status</h4>
-                  <Badge className={`${getStatusColor(response.status.code)} text-white`}>
-                    {response.status.label}
+                  <Badge className={`${getStatusColor(response.rfp.status.code)} text-white`}>
+                    {response.rfp.status.label}
                   </Badge>
                 </div>
                 <Separator />

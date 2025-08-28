@@ -18,7 +18,13 @@ const rfpSchema = z.object({
   requirements: z.string().min(10, 'Requirements must be at least 10 characters'),
   budget_min: z.number().min(0, 'Minimum budget must be positive').optional(),
   budget_max: z.number().min(0, 'Maximum budget must be positive').optional(),
-  deadline: z.string().min(1, 'Deadline is required'),
+  deadline: z.string().min(1, 'Deadline is required').refine((date) => {
+    const selectedDate = new Date(date);
+    const now = new Date();
+    return selectedDate > now;
+  }, {
+    message: "Deadline must be in the future",
+  }),
   notes: z.string().optional(),
   buyer_id: z.string().optional(), // Optional for admin users
 }).refine((data) => {
@@ -58,10 +64,14 @@ export const RfpForm: React.FC<RfpFormProps> = ({
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<RfpFormData>({
     resolver: zodResolver(rfpSchema),
     defaultValues: initialData,
   });
+
+  const selectedBuyerId = watch('buyer_id');
 
   const handleFormSubmit = (data: RfpFormData) => {
     onSubmit(data as CreateRfpData);
@@ -110,11 +120,10 @@ export const RfpForm: React.FC<RfpFormProps> = ({
             {isAdmin && (
               <div className="space-y-2">
                 <Label htmlFor="buyer_id">Buyer *</Label>
-                <Select onValueChange={(value) => {
-                  // Update the form value
-                  const event = { target: { value } } as any;
-                  register('buyer_id').onChange(event);
-                }}>
+                <Select
+                  value={selectedBuyerId || ''}
+                  onValueChange={(value) => setValue('buyer_id', value)}
+                >
                   <SelectTrigger className={errors.buyer_id ? 'border-destructive w-full' : 'w-full'}>
                     <SelectValue placeholder="Select buyer" />
                   </SelectTrigger>
@@ -196,12 +205,13 @@ export const RfpForm: React.FC<RfpFormProps> = ({
           {/* Deadline */}
           <div className="space-y-2">
             <Label htmlFor="deadline">Deadline *</Label>
-            <Input
-              id="deadline"
-              type="datetime-local"
-              {...register('deadline')}
-              className={errors.deadline ? 'border-destructive' : ''}
-            />
+              <Input
+                id="deadline"
+                type="datetime-local"
+                min={new Date().toISOString().slice(0, 16)}
+                {...register('deadline')}
+                className={errors.deadline ? 'border-destructive' : ''}
+              />
             {errors.deadline && (
               <p className="text-sm text-destructive">{errors.deadline.message}</p>
             )}

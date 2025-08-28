@@ -195,3 +195,23 @@ export const useMoveResponseToReview = () => {
     },
   });
 };
+
+export const useReopenResponseForEdit = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (responseId: string) => responseApi.reopenResponseForEdit(responseId),
+    onSuccess: (updatedResponse) => {
+      // Update the specific response in cache
+      queryClient.setQueryData(['response', updatedResponse.id], updatedResponse);
+      
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['responses', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['responses', 'rfp', updatedResponse.rfp_id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+    onError: (error) => {
+      console.error('Failed to reopen response for editing:', error);
+    },
+  });
+};

@@ -2387,3 +2387,277 @@ frontend/src/
 - **Status**: ✅ **AWARD & DELETE DIALOGS IMPLEMENTED** - Professional dialog interfaces for RFP management
 
 **📝 MEMORY NOTE**: Never use `confirm()` dialogs - always create proper dialog components with AlertDialog for confirmations and Dialog for complex interactions. This provides better UX, accessibility, and design consistency.
+
+### **Phase 22: Response "Open to Edit" Functionality - COMPLETED**
+- **✅ Task 1 - Backend API Implementation**:
+  - **Problem**: No API endpoint existed for reopening rejected responses for editing
+  - **Solution**: Created comprehensive backend API for reopening responses
+  - **Implementation**: 
+    - **Service Function**: Added `reopenResponseForEdit` in `rfp.service.ts`
+    - **Controller Function**: Added `reopenResponseForEdit` controller in `rfp.controller.ts`
+    - **Router Endpoint**: Added PUT `/rfp/responses/:response_id/reopen` endpoint
+    - **Audit Trail**: Added `RESPONSE_REOPENED` audit action to enum
+    - **Notifications**: Integrated notification service for supplier alerts
+    - **Validation**: Only rejected responses can be reopened, only RFP owners can reopen
+  - **Result**: Complete backend API for reopening responses with proper validation and notifications
+- **✅ Task 2 - Frontend API Integration**:
+  - **Problem**: Frontend had no way to call the reopen response API
+  - **Solution**: Added frontend API integration with hooks and UI
+  - **Implementation**: 
+    - **API Function**: Added `reopenResponseForEdit` to `responseApi`
+    - **React Hook**: Added `useReopenResponseForEdit` mutation hook
+    - **UI Button**: Added "Open to Edit" button in ResponseDetailPage
+    - **Permission Check**: Only shows for rejected responses when user is RFP owner
+    - **Confirmation**: Added confirmation dialog before reopening
+    - **Loading States**: Proper loading states during API call
+  - **Result**: Complete frontend integration with proper UX and error handling
+- **✅ Technical Implementation**:
+  - **Backend**: 
+    - **Service Layer**: `reopenResponseForEdit` function with proper validation
+    - **Controller Layer**: HTTP request handling with error responses
+    - **Router Layer**: RESTful endpoint with permission checks
+    - **Database**: Status transition from "Rejected" to "Draft"
+    - **Notifications**: Supplier notification when response is reopened
+    - **Audit Trail**: Complete audit logging of reopen action
+  - **Frontend**: 
+    - **API Client**: RESTful API call to backend endpoint
+    - **React Query**: Mutation hook with cache invalidation
+    - **UI Component**: Conditional button with proper styling
+    - **State Management**: Loading states and error handling
+    - **User Experience**: Confirmation dialog and success feedback
+- **✅ Business Logic**:
+  - **Status Transition**: Rejected → Draft (allows editing)
+  - **Permission Check**: Only RFP owner (buyer) can reopen responses
+  - **Data Cleanup**: Clears rejection reason and decision date
+  - **Supplier Notification**: Notifies supplier when response is reopened
+  - **Audit Trail**: Complete tracking of reopen action
+- **✅ Benefits Achieved**:
+  - **🔄 Workflow Flexibility**: Buyers can allow suppliers to fix rejected responses
+  - **📝 Edit Capability**: Suppliers can modify rejected responses
+  - **🔔 Notifications**: Suppliers are notified when responses are reopened
+  - **📊 Audit Trail**: Complete tracking of reopen actions
+  - **🛡️ Security**: Proper permission checks and validation
+  - **🎯 User Experience**: Clear UI with confirmation dialogs
+- **✅ Files Modified**:
+  - `backend/src/services/rfp.service.ts` - Added `reopenResponseForEdit` function
+  - `backend/src/controllers/rfp.controller.ts` - Added `reopenResponseForEdit` controller
+  - `backend/src/router/rfp.router.ts` - Added PUT `/responses/:response_id/reopen` endpoint
+  - `backend/src/utils/enum.ts` - Added `RESPONSE_REOPENED` audit action
+  - `frontend/src/apis/response.ts` - Added `reopenResponseForEdit` API function
+  - `frontend/src/hooks/useResponse.ts` - Added `useReopenResponseForEdit` hook
+  - `frontend/src/pages/response/ResponseDetailPage.tsx` - Added "Open to Edit" button
+- **Status**: ✅ **RESPONSE "OPEN TO EDIT" FUNCTIONALITY IMPLEMENTED** - Complete workflow for reopening rejected responses
+
+### **Phase 23: Response Edit & Reopen Permission Fixes - COMPLETED**
+- **✅ Task 1 - Permission System Integration**:
+  - **Problem**: Response edit and reopen functionality was using hardcoded role checks instead of the permission system
+  - **Solution**: Integrated proper permission-based access control
+  - **Implementation**: 
+    - **Backend Permissions**: Added `reopen` permission to all role permissions in seed file
+    - **Frontend Permissions**: Used `permissionHelpers.hasPermission()` instead of hardcoded role checks
+    - **Permission Rules**: 
+      - **Buyer**: Can reopen rejected responses to their RFPs (`scope: 'rfp_owner'`, `allowed_response_statuses: ['Rejected']`)
+      - **Admin**: Can reopen any rejected response (`allowed: true`)
+      - **Supplier**: Cannot reopen responses (`allowed: false`)
+  - **Result**: Proper permission-based access control for response management
+- **✅ Task 2 - Edit Button for Draft Responses**:
+  - **Problem**: Edit button was missing for draft responses
+  - **Solution**: Added edit button for draft responses with proper permission checks
+  - **Implementation**: 
+    - **Edit Button**: Added "Edit Response" button for draft responses
+    - **Permission Check**: Uses `supplier_response.edit` permission with `scope: 'own'` and `allowed_response_statuses: ['Draft']`
+    - **Navigation**: Navigates to `/responses/${responseId}/edit` for editing
+    - **UI Styling**: Blue button with proper loading states
+  - **Result**: Suppliers can now edit their draft responses with proper permission validation
+- **✅ Technical Implementation**:
+  - **Backend**: 
+    - **Seed File**: Added `reopen` permission to buyer, supplier, and admin roles
+    - **Permission Rules**: Proper scope and status-based restrictions
+    - **Service Layer**: Maintains existing authorization logic for admin vs buyer access
+  - **Frontend**: 
+    - **Permission Helpers**: Uses `canEditResponse` and `canReopenResponse` permission checks
+    - **Conditional Rendering**: Buttons only show when user has appropriate permissions
+    - **Navigation**: Proper routing to edit page for draft responses
+    - **User Experience**: Clear button labels and confirmation dialogs
+- **✅ Business Logic**:
+  - **Edit Permission**: Suppliers can edit their own draft responses
+  - **Reopen Permission**: Buyers can reopen rejected responses to their RFPs, admins can reopen any rejected response
+  - **Status Validation**: Edit only for 'Draft', reopen only for 'Rejected' responses
+  - **Scope Validation**: Proper ownership and RFP ownership checks
+- **✅ Benefits Achieved**:
+  - **🛡️ Security**: Proper permission-based access control instead of hardcoded roles
+  - **📝 Edit Capability**: Suppliers can edit draft responses with proper validation
+  - **🔄 Reopen Flexibility**: Buyers and admins can reopen rejected responses
+  - **🎯 User Experience**: Clear UI with proper permission-based button visibility
+  - **🔧 Maintainability**: Centralized permission management through permission system
+- **✅ Files Modified**:
+  - `backend/src/prisma/seed.ts` - Added `reopen` permission to all role permissions
+  - `frontend/src/pages/response/ResponseDetailPage.tsx` - Updated to use permission system and added edit button
+- **Status**: ✅ **RESPONSE EDIT & REOPEN PERMISSION FIXES IMPLEMENTED** - Proper permission-based access control for response management
+
+### **Phase 24: Admin Permission Management System - COMPLETED**
+- **✅ Task 1 - Backend Permission Management API**:
+  - **Problem**: No API endpoints existed for managing role permissions from the frontend
+  - **Solution**: Created comprehensive backend API for permission management
+  - **Implementation**: 
+    - **Service Functions**: Added `getRolePermissions`, `updateRolePermissions`, `getAllRoles` in `admin.service.ts`
+    - **Controller Functions**: Added permission management controllers in `admin.controller.ts`
+    - **Router Endpoints**: Added GET `/admin/roles`, GET `/admin/roles/:roleName/permissions`, PUT `/admin/roles/:roleName/permissions`
+    - **Validation**: Basic JSON validation and role existence checks
+    - **Notifications**: Admin notifications when permissions are updated
+  - **Result**: Complete backend API for permission management with proper validation and notifications
+- **✅ Task 2 - Frontend Permission Management UI**:
+  - **Problem**: No frontend interface for admins to edit role permissions
+  - **Solution**: Created comprehensive permission management page with JSON editor
+  - **Implementation**: 
+    - **Permission Management Page**: Created `PermissionManagementPage.tsx` with role selection and JSON editor
+    - **API Integration**: Added permission management API functions and React Query hooks
+    - **JSON Editor**: Real-time JSON validation with syntax highlighting and error detection
+    - **Role Selection**: Interactive role selection with Admin role protection (read-only)
+    - **Action Buttons**: Save changes, reset to default, and validation status indicators
+    - **Navigation**: Added permissions link to admin navigation with Key icon
+  - **Result**: Professional permission management interface with full CRUD capabilities
+- **✅ Technical Implementation**:
+  - **Backend**: 
+    - **Service Layer**: Permission CRUD operations with validation
+    - **Controller Layer**: HTTP request handling with proper error responses
+    - **Router Layer**: RESTful endpoints with permission checks (`manage_roles`)
+    - **Database**: Direct role permissions updates in Prisma
+    - **Notifications**: Admin notifications for permission changes
+  - **Frontend**: 
+    - **API Client**: RESTful API calls to backend endpoints
+    - **React Query**: Hooks for permission data fetching and mutations
+    - **UI Components**: Professional JSON editor with validation
+    - **State Management**: Real-time validation and change tracking
+    - **Navigation**: Integrated into admin panel navigation
+- **✅ Business Logic**:
+  - **Role Protection**: Admin role permissions are read-only for security
+  - **JSON Validation**: Real-time validation with syntax error detection
+  - **Change Tracking**: Visual indicators for unsaved changes
+  - **Default Reset**: Ability to reset permissions to default values
+  - **Permission Scope**: Only admins with `manage_roles` permission can access
+- **✅ User Experience**:
+  - **Professional UI**: Clean, modern interface with proper spacing and typography
+  - **Real-time Feedback**: Immediate validation feedback and error messages
+  - **Loading States**: Proper loading indicators during API calls
+  - **Success Feedback**: Toast notifications for successful operations
+  - **Error Handling**: Comprehensive error handling with user-friendly messages
+- **✅ Security Features**:
+  - **Permission Checks**: Backend and frontend permission validation
+  - **Role Protection**: Admin role cannot be modified through UI
+  - **JSON Validation**: Prevents invalid permission structures
+  - **Audit Trail**: Permission changes are logged and notified
+- **✅ Benefits Achieved**:
+  - **🔧 Dynamic Permissions**: Admins can modify role permissions without code changes
+  - **🛡️ Security**: Proper permission validation and role protection
+  - **🎯 User Experience**: Professional JSON editor with real-time validation
+  - **📊 Flexibility**: Easy permission management for different business requirements
+  - **🔍 Transparency**: Clear validation feedback and change tracking
+  - **🔄 Maintainability**: Centralized permission management through UI
+- **✅ Files Modified**:
+  - `backend/src/services/admin.service.ts` - Added permission management functions
+  - `backend/src/controllers/admin.controller.ts` - Added permission management controllers
+  - `backend/src/router/admin.router.ts` - Added permission management routes
+  - `frontend/src/apis/admin.ts` - Added permission management API functions
+  - `frontend/src/hooks/useAdmin.ts` - Added permission management hooks
+  - `frontend/src/pages/admin/PermissionManagementPage.tsx` - Created permission management page
+  - `frontend/src/App.tsx` - Added permission management route
+  - `frontend/src/components/layout/AdminLayout.tsx` - Added permissions navigation link
+- **Status**: ✅ **ADMIN PERMISSION MANAGEMENT SYSTEM IMPLEMENTED** - Complete permission management system for role-based access control
+
+### **Phase 25: Admin Navigation Fix - COMPLETED**
+- **✅ Task 1 - Admin Permissions Update**:
+  - **Problem**: Admin role didn't have "permissions" in the navbar configuration, so the permissions page wasn't showing in the sidebar
+  - **Solution**: Updated admin permissions to include "permissions" in the navbar
+  - **Implementation**: 
+    - **Seed File Update**: Added "permissions" to admin navbar configuration in `backend/src/prisma/seed.ts`
+    - **Database Update**: Ran `npx prisma db seed` to update the database with new permissions
+    - **Navigation Configuration**: AdminLayout already had the permissions navigation item configured
+  - **Result**: Admin users can now see the permissions page in the sidebar navigation
+- **✅ Task 2 - Permission Refresh Requirement**:
+  - **Problem**: Users need to refresh their session to see updated permissions
+  - **Solution**: Documented the requirement and provided clear instructions
+  - **Implementation**: 
+    - **Session Management**: Permissions are stored in localStorage and loaded on login
+    - **Refresh Requirement**: Users must log out and log back in to get updated permissions
+    - **Clear Instructions**: Documented the process for getting updated permissions
+  - **Result**: Clear understanding of how to access updated permissions
+- **✅ Technical Implementation**:
+  - **Backend**: 
+    - **Seed Update**: Modified admin permissions navbar to include "permissions"
+    - **Database Sync**: Executed seed script to update database
+    - **Permission Structure**: Admin role now has full access to permissions management
+  - **Frontend**: 
+    - **Navigation**: Permissions page already configured in AdminLayout
+    - **Session Management**: Permissions loaded from localStorage on app initialization
+    - **User Experience**: Clear navigation with proper permissions
+- **✅ User Instructions**:
+  - **For New Users**: Permissions page will be visible immediately after login
+  - **For Existing Users**: Log out and log back in to see the permissions page
+  - **Navigation Path**: Admin Panel → Permissions (Key icon)
+  - **Access Control**: Only admins with `manage_roles` permission can access
+- **✅ Benefits Achieved**:
+  - **🎯 Navigation Visibility**: Permissions page now appears in admin sidebar
+  - **🔄 Permission Updates**: Database updated with correct admin permissions
+  - **📋 Clear Instructions**: Users know how to access updated permissions
+  - **🛡️ Security**: Proper permission-based access control maintained
+- **✅ Files Modified**:
+  - `backend/src/prisma/seed.ts` - Updated admin navbar to include "permissions"
+  - Database updated via `npx prisma db seed`
+- **Status**: ✅ **ADMIN NAVIGATION FIX COMPLETED** - Permissions page now visible in admin sidebar
+
+### **Phase 26: Response Edit Functionality - COMPLETED**
+- **✅ Task 1 - Response Edit Dialog Implementation**:
+  - **Problem**: The "Edit Response" button was trying to navigate to `/responses/${response.id}/edit` which doesn't exist
+  - **Solution**: Created an EditResponseDialog component that uses the existing ResponseForm with prefilled values
+  - **Implementation**: 
+    - **Dialog Component**: Created `frontend/src/components/response/EditResponseDialog.tsx` with proper form handling
+    - **Form Reuse**: Used existing `ResponseForm` component with `mode="edit"` and prefilled initial data
+    - **API Integration**: Used existing `useUpdateResponse` hook and `updateResponse` API endpoint
+    - **User Experience**: Dialog opens with prefilled values and handles success/error states
+  - **Result**: Users can now edit responses directly from the ResponseDetailPage without navigation
+- **✅ Task 2 - Backend API Verification**:
+  - **Problem**: Needed to verify if edit API exists and works properly
+  - **Solution**: Confirmed backend already has complete edit functionality
+  - **Implementation**: 
+    - **API Endpoint**: `PUT /rfp/responses/:responseId` already exists in `backend/src/router/rfp.router.ts`
+    - **Controller**: `updateResponse` function already exists in `backend/src/controllers/rfp.controller.ts`
+    - **Service**: `updateResponse` function already exists in `backend/src/services/rfp.service.ts`
+    - **Permission Check**: Uses `hasPermission('supplier_response', 'edit')` middleware
+  - **Result**: No backend changes needed - edit functionality was already complete
+- **✅ Task 3 - Frontend Integration**:
+  - **Problem**: ResponseDetailPage was using non-existent navigation
+  - **Solution**: Replaced navigation with EditResponseDialog component
+  - **Implementation**: 
+    - **Import Addition**: Added `EditResponseDialog` import to ResponseDetailPage
+    - **Button Replacement**: Replaced Edit button with `EditResponseDialog` component
+    - **Data Flow**: Dialog receives response data and handles form submission
+    - **Success Handling**: Refreshes page data after successful edit
+  - **Result**: Seamless edit experience without page navigation
+- **✅ Technical Implementation**:
+  - **Frontend**: 
+    - **Dialog Component**: Professional dialog with form validation and error handling
+    - **Form Reuse**: Leverages existing ResponseForm component for consistency
+    - **State Management**: Proper loading states and success/error feedback
+    - **User Experience**: Modal dialog with scrollable content for large forms
+  - **Backend**: 
+    - **API Endpoint**: Already exists and properly configured
+    - **Permission System**: Uses RBAC for edit access control
+    - **Data Validation**: Proper validation and error handling
+    - **Database Updates**: Handles response updates correctly
+- **✅ User Experience**:
+  - **Edit Flow**: Click "Edit Response" → Dialog opens with prefilled data → Make changes → Save
+  - **Form Validation**: Same validation as create form for consistency
+  - **Error Handling**: Clear error messages and loading states
+  - **Success Feedback**: Toast notifications and automatic data refresh
+  - **Access Control**: Only users with edit permission can access the dialog
+- **✅ Benefits Achieved**:
+  - **🎯 No Navigation**: Edit functionality works without page navigation
+  - **🔄 Form Reuse**: Leverages existing ResponseForm component
+  - **📋 Prefilled Data**: Form opens with current response data
+  - **🛡️ Security**: Proper permission checks and validation
+  - **⚡ Performance**: No page reloads, just dialog interaction
+- **✅ Files Modified**:
+  - `frontend/src/components/response/EditResponseDialog.tsx` - New dialog component
+  - `frontend/src/pages/response/ResponseDetailPage.tsx` - Updated to use dialog instead of navigation
+- **Status**: ✅ **RESPONSE EDIT FUNCTIONALITY COMPLETED** - Edit responses via dialog with prefilled data

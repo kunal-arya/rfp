@@ -28,10 +28,10 @@ export const RfpLifecycleActions: React.FC<RfpLifecycleActionsProps> = ({
   const cancelRfpMutation = useCancelRfp();
   const awardRfpMutation = useAwardRfp();
 
-  const isOwner = user?.id === rfp.buyer?.id;
-  const canClose = isOwner && permissionHelpers.hasPermission('rfp', 'close') && rfp.status.code === 'Published';
-  const canCancel = isOwner && permissionHelpers.hasPermission('rfp', 'cancel') && ['Draft', 'Published'].includes(rfp.status.code);
-  const canAward = isOwner && permissionHelpers.hasPermission('rfp', 'award') && ['Published', 'Closed'].includes(rfp.status.code);
+  const isAllowed = user?.role === 'Admin' || user?.id === rfp.buyer?.id;
+  const canClose = isAllowed && permissionHelpers.hasPermission('rfp', 'close') && rfp.status.code === 'Published';
+  const canCancel = isAllowed && permissionHelpers.hasPermission('rfp', 'cancel') && ['Draft', 'Published'].includes(rfp.status.code);
+  const canAward = isAllowed && permissionHelpers.hasPermission('rfp', 'award') && ['Published', 'Closed'].includes(rfp.status.code);
 
   const approvedResponses = responses.filter(response => response.status.code === 'Approved');
 
@@ -81,7 +81,7 @@ export const RfpLifecycleActions: React.FC<RfpLifecycleActionsProps> = ({
     }
   };
 
-  if (!isOwner) {
+  if (!isAllowed) {
     return null;
   }
 

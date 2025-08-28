@@ -9,7 +9,6 @@ export const updateSystemConfig = (config: any) => apiClient.put('/admin/config'
 export const getDatabaseStats = () => apiClient.get('/admin/database/stats');
 export const testDatabaseConnection = () => apiClient.post('/admin/database/test');
 export const createBackup = () => apiClient.post('/admin/database/backup');
-export const optimizeDatabase = () => apiClient.post('/admin/database/optimize');
 
 // Export APIs
 export const exportUsers = (options: any) => apiClient.post('/admin/export/users', options);
@@ -85,3 +84,9 @@ export const getAdminAuditTrails = (filters?: AdminAuditFilters) =>
 
 export const getAdminAuditStats = () => 
   apiClient.get('/admin/audit/stats');
+
+// Permission Management APIs
+export const getAllRoles = () => apiClient.get('/admin/roles');
+export const getRolePermissions = (roleName: string) => apiClient.get(`/admin/roles/${roleName}/permissions`);
+export const updateRolePermissions = (roleName: string, permissions: any) => 
+  apiClient.put(`/admin/roles/${roleName}/permissions`, { permissions });

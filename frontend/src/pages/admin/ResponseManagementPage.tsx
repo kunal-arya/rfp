@@ -13,11 +13,7 @@ import {
   XCircle,
   Clock,
   Star,
-  Loader2,
-  Users,
-  Award,
-  AlertCircle,
-  Send
+  Loader2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -32,7 +28,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -47,6 +42,7 @@ import { useAdminResponses } from '@/hooks/useAdmin';
 import { useDebounce } from '@/hooks/useDebounce';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface Response {
   id: string;
@@ -66,7 +62,7 @@ interface Response {
     code: string;
     label: string;
   };
-  price: number;
+  proposed_budget: number;
   description: string;
   submitted_at: string;
   reviewed_at?: string;
@@ -82,6 +78,7 @@ const ResponseManagementPage: React.FC = () => {
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [selectedResponse, setSelectedResponse] = useState<Response | null>(null);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const navigate = useNavigate();
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
@@ -168,37 +165,6 @@ const ResponseManagementPage: React.FC = () => {
     }
   };
 
-  const handleBulkAction = async (action: string) => {
-    if (!confirm(`Are you sure you want to ${action} all selected responses?`)) return;
-    
-    setIsActionLoading(true);
-    try {
-      // TODO: Implement bulk action API call
-      toast.success(`Bulk ${action} completed successfully`);
-      refetch();
-    } catch (error) {
-      toast.error(`Failed to ${action} responses`);
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
-
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`h-3 w-3 ${
-              star <= rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-            }`}
-          />
-        ))}
-        <span className="ml-1 text-xs text-gray-600">({rating})</span>
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -207,10 +173,6 @@ const ResponseManagementPage: React.FC = () => {
           <h1 className="text-2xl font-bold">Response Management</h1>
           <p className="text-muted-foreground">Manage and review all supplier responses</p>
         </div>
-        <Button>
-          <MessageSquare className="h-4 w-4 mr-2" />
-          Review Responses
-        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -277,49 +239,6 @@ const ResponseManagementPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button
-              variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-2"
-            >
-              <Eye className="h-6 w-6 text-blue-600" />
-              <span className="text-sm font-medium">Review All</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-2"
-              onClick={() => handleBulkAction('approve')}
-              disabled={isActionLoading}
-            >
-              <CheckCircle className="h-6 w-6 text-green-600" />
-              <span className="text-sm font-medium">Bulk Approve</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-2"
-              onClick={() => handleBulkAction('reject')}
-              disabled={isActionLoading}
-            >
-              <XCircle className="h-6 w-6 text-red-600" />
-              <span className="text-sm font-medium">Bulk Reject</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-2"
-            >
-              <Send className="h-6 w-6 text-purple-600" />
-              <span className="text-sm font-medium">Send Feedback</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
@@ -366,8 +285,7 @@ const ResponseManagementPage: React.FC = () => {
                   <th className="text-left py-3 px-4 font-medium">RFP</th>
                   <th className="text-left py-3 px-4 font-medium">Supplier</th>
                   <th className="text-left py-3 px-4 font-medium">Status</th>
-                  <th className="text-left py-3 px-4 font-medium">Price</th>
-                  <th className="text-left py-3 px-4 font-medium">Rating</th>
+                  <th className="text-left py-3 px-4 font-medium">Proposed Budget</th>
                   <th className="text-left py-3 px-4 font-medium">Submitted</th>
                   <th className="text-right py-3 px-4 font-medium">Actions</th>
                 </tr>
@@ -376,7 +294,7 @@ const ResponseManagementPage: React.FC = () => {
                 {responses.map((response) => (
                   <tr key={response.id} className="border-b hover:bg-gray-50">
                     <td className="py-3 px-4">
-                      <div>
+                      <div className='text-left'>
                         <div className="font-medium">{response.rfp.title}</div>
                         <div className="text-sm text-muted-foreground">
                           Buyer: {response.rfp.buyer.email}
@@ -392,14 +310,11 @@ const ResponseManagementPage: React.FC = () => {
                       </Badge>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="text-sm font-medium">${response.price.toLocaleString()}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      {response.rating ? renderStars(response.rating) : <span className="text-gray-400">No rating</span>}
+                      <div className="text-sm font-medium">${response.proposed_budget.toLocaleString()}</div>
                     </td>
                     <td className="py-3 px-4">
                       <div className="text-sm text-muted-foreground">
-                        {format(new Date(response.submitted_at), 'MMM dd, yyyy')}
+                        {format(new Date(response.created_at), 'MMM dd, yyyy')}
                       </div>
                     </td>
                     <td className="py-3 px-4 text-right">
@@ -410,13 +325,9 @@ const ResponseManagementPage: React.FC = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/responses/${response.id}`)}>
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleReviewResponse(response)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Review Response
                           </DropdownMenuItem>
                           {response.status.code === 'Submitted' && (
                             <>
@@ -510,8 +421,8 @@ const ResponseManagementPage: React.FC = () => {
                   <p className="text-sm font-medium">{selectedResponse.supplier.email}</p>
                 </div>
                 <div>
-                  <Label>Price</Label>
-                  <p className="text-sm font-medium">${selectedResponse.price.toLocaleString()}</p>
+                  <Label>Proposed Budget</Label>
+                  <p className="text-sm font-medium">${selectedResponse.proposed_budget.toLocaleString()}</p>
                 </div>
                 <div>
                   <Label>Action</Label>

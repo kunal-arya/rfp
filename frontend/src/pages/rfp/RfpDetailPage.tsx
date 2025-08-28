@@ -20,7 +20,6 @@ import {
   Clock, 
   Upload, 
   MessageSquare,
-  Edit,
   ArrowLeft,
   Loader2,
   Trash2
@@ -77,10 +76,8 @@ export const RfpDetailPage: React.FC = () => {
 
   const canManageDocuments = permissionHelpers.hasPermission('rfp', 'manage_documents');
   const canCreateResponse = permissionHelpers.hasPermission('supplier_response', 'create');
-  const canEditRfp = permissionHelpers.hasPermission('rfp', 'edit');
   const canPublishRfp = permissionHelpers.hasPermission('rfp', 'publish');
-  console.log(user?.id, rfp?.buyer?.id);
-  const isOwner = user?.id === rfp?.buyer?.id;
+  const isAllowed = user?.role === 'Admin' || user?.id === rfp?.buyer?.id;
   const isPublished = rfp?.status.code === 'Published';
   const isDraft = rfp?.status.code === 'Draft';
 
@@ -159,13 +156,7 @@ export const RfpDetailPage: React.FC = () => {
           
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-2 flex-row-reverse">
-            {isOwner && canEditRfp && isDraft && (
-              <Button onClick={() => navigate(`/rfps/${rfpId}/edit`)} size="sm">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit RFP
-              </Button>
-            )}
-            {isOwner && canPublishRfp && isDraft && (
+            {isAllowed && canPublishRfp && isDraft && (
               <Button 
                 onClick={() => {
                   if (window.confirm('Are you sure you want to publish this RFP? This will make it visible to all suppliers.')) {
@@ -185,7 +176,7 @@ export const RfpDetailPage: React.FC = () => {
               </Button>
             )}
             
-            {isOwner && isDraft && (
+            {isAllowed && isDraft && (
               <Button 
                 onClick={() => {
                   if (window.confirm('Are you sure you want to delete this RFP? This action cannot be undone.')) {
@@ -282,7 +273,7 @@ export const RfpDetailPage: React.FC = () => {
             </Card>
 
             {/* Upload Documents - Only show if user has permission and RFP is not published */}
-            {canManageDocuments && isOwner && isDraft && (
+            {canManageDocuments && isAllowed && isDraft && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -413,7 +404,7 @@ export const RfpDetailPage: React.FC = () => {
             </Card>
 
             {/* Action for Suppliers */}
-            {!isOwner && canCreateResponse && isPublished && (
+            {!isAllowed && canCreateResponse && isPublished && (
               <Card>
                 <CardHeader>
                   <CardTitle>Submit Response</CardTitle>

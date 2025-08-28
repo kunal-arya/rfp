@@ -297,3 +297,149 @@ export const createUser = async (data: {
 
   return user;
 };
+
+// Response Management Functions
+export const getAdminResponses = async (params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) => {
+  const { page = 1, limit = 10, search, status } = params;
+  const offset = (page - 1) * limit;
+
+  // Create filters for admin to get all responses
+  const responseFilters: any = {};
+  if (status) {
+    const statusRecord = await prisma.supplierResponseStatus.findUnique({
+      where: { code: status }
+    });
+    if (statusRecord) {
+      responseFilters.status_id = statusRecord.id;
+    }
+  }
+
+  const responses = await prisma.supplierResponse.findMany({
+    where: {
+      ...responseFilters,
+      ...(search && {
+        OR: [
+          { cover_letter: { contains: search, mode: 'insensitive' } },
+          { rfp: { title: { contains: search, mode: 'insensitive' } } },
+          { supplier: { email: { contains: search, mode: 'insensitive' } } },
+        ],
+      }),
+    },
+    skip: offset,
+    take: limit,
+    include: {
+      rfp: {
+        include: {
+          current_version: true,
+          status: true,
+          buyer: true,
+        },
+      },
+      status: true,
+      supplier: true,
+      documents: true,
+    },
+    orderBy: { created_at: 'desc' },
+  });
+
+  const total = await prisma.supplierResponse.count({
+    where: {
+      ...responseFilters,
+      ...(search && {
+        OR: [
+          { cover_letter: { contains: search, mode: 'insensitive' } },
+          { rfp: { title: { contains: search, mode: 'insensitive' } } },
+          { supplier: { email: { contains: search, mode: 'insensitive' } } },
+        ],
+      }),
+    },
+  });
+
+  return {
+    data: responses,
+    total,
+    page,
+    limit
+  };
+};
+
+export const getAdminResponse = async (id: string) => {
+  const response = await prisma.supplierResponse.findUnique({
+    where: { id },
+    include: {
+      rfp: {
+        include: {
+          current_version: true,
+          status: true,
+          buyer: true,
+        },
+      },
+      status: true,
+      supplier: true,
+      documents: true,
+    },
+  });
+
+  if (!response) {
+    throw new Error('Response not found');
+  }
+
+  return response;
+};
+
+// Permission Management Functions
+export const getRolePermissions = async (roleName: string) => {
+  const role = await prisma.role.findUnique({
+    where: { name: roleName },
+    select: { permissions: true }
+  });
+
+  if (!role) {
+    throw new Error('Role not found');
+  }
+
+  return role.permissions;
+};
+
+export const updateRolePermissions = async (roleName: string, permissions: any) => {
+  // Validate that the role exists
+  const existingRole = await prisma.role.findUnique({
+    where: { name: roleName }
+  });
+
+  if (!existingRole) {
+    throw new Error('Role not found');
+  }
+
+  // Validate permissions structure (basic validation)
+  if (typeof permissions !== 'object' || permissions === null) {
+    throw new Error('Invalid permissions format');
+  }
+
+  // Update the role permissions
+  const updatedRole = await prisma.role.update({
+    where: { name: roleName },
+    data: { permissions },
+    select: { permissions: true }
+  });
+
+  return updatedRole.permissions;
+};
+
+export const getAllRoles = async () => {
+  const roles = await prisma.role.findMany({
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      permissions: true
+    }
+  });
+
+  return roles;
+};

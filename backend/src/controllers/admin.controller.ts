@@ -1,34 +1,12 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { PrismaClient } from '@prisma/client';
 import * as configService from '../services/config.service';
-import * as exportService from '../services/export.service';
 import * as adminService from '../services/admin.service';
 import * as analyticsService from '../services/analytics.service';
-import * as rfpService from '../services/rfp.service';
+import { notificationService } from '../services/notification.service';
 
 const prisma = new PrismaClient();
-
-// Configuration Controllers
-export const getSystemConfig = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const config = await configService.getSystemConfig();
-    res.json(config);
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to get system configuration' });
-  }
-};
-
-export const updateSystemConfig = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const config = await configService.updateSystemConfig(req.body);
-    res.json(config);
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to update system configuration' });
-  }
-};
 
 export const getDatabaseStats = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -50,103 +28,6 @@ export const testDatabaseConnection = async (req: AuthenticatedRequest, res: Res
   }
 };
 
-export const createBackup = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const backupPath = await configService.createBackup();
-    res.json({ backupPath, message: 'Backup created successfully' });
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to create backup' });
-  }
-};
-
-export const optimizeDatabase = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const result = await configService.optimizeDatabase();
-    res.json({ message: result });
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to optimize database' });
-  }
-};
-
-// Export Controllers
-export const exportUsers = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { format, dateRange, filters } = req.body;
-    const options = { format, dateRange, filters };
-    
-    const result = await exportService.exportUsers(options, req.user!.userId);
-    res.json(result);
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to export users' });
-  }
-};
-
-export const exportRfps = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { format, dateRange, filters } = req.body;
-    const options = { format, dateRange, filters };
-    
-    const result = await exportService.exportRfps(options, req.user!.userId);
-    res.json(result);
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to export RFPs' });
-  }
-};
-
-export const exportResponses = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { format, dateRange, filters } = req.body;
-    const options = { format, dateRange, filters };
-    
-    const result = await exportService.exportResponses(options, req.user!.userId);
-    res.json(result);
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to export responses' });
-  }
-};
-
-export const exportAuditLogs = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { format, dateRange, filters } = req.body;
-    const options = { format, dateRange, filters };
-    
-    const result = await exportService.exportAuditLogs(options, req.user!.userId);
-    res.json(result);
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to export audit logs' });
-  }
-};
-
-export const generateSystemReport = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { reportType, format, dateRange, filters } = req.body;
-    const options = { format, dateRange, filters };
-    
-    const result = await exportService.generateSystemReport(reportType, options, req.user!.userId);
-    res.json(result);
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to generate system report' });
-  }
-};
-
-export const scheduleReport = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { reportType, schedule } = req.body;
-    
-    const result = await exportService.scheduleReport(reportType, schedule, req.user!.userId);
-    res.json(result);
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to schedule report' });
-  }
-};
 
 // User Management Controllers
 export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
@@ -380,5 +261,61 @@ export const getAdminResponse = async (req: AuthenticatedRequest, res: Response)
   } catch (error: any) {
     console.error(error);
     res.status(500).json({ message: 'Failed to get response details' });
+  }
+};
+
+// Permission Management Controllers
+export const getRolePermissions = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { roleName } = req.params;
+    
+    const permissions = await adminService.getRolePermissions(roleName);
+    res.json(permissions);
+  } catch (error: any) {
+    if (error.message === 'Role not found') {
+      return res.status(404).json({ message: error.message });
+    }
+    console.error('Error getting role permissions:', error);
+    res.status(500).json({ message: 'Failed to get role permissions' });
+  }
+};
+
+export const updateRolePermissions = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { roleName } = req.params;
+    const { permissions } = req.body;
+
+    if (!permissions) {
+      return res.status(400).json({ message: 'Permissions data is required' });
+    }
+
+    const updatedPermissions = await adminService.updateRolePermissions(roleName, permissions);
+    
+    // Create notification for admin users
+    await notificationService.createNotificationForRole('Admin', 'PERMISSIONS_UPDATED', {
+      roleName,
+      updatedBy: req.user?.userId || 'Unknown'
+    });
+    
+    res.json(updatedPermissions);
+  } catch (error: any) {
+    if (error.message === 'Role not found') {
+      return res.status(404).json({ message: error.message });
+    }
+    if (error.message === 'Invalid permissions format') {
+      return res.status(400).json({ message: error.message });
+    }
+    console.error('Error updating role permissions:', error);
+    res.status(500).json({ message: 'Failed to update role permissions' });
+  }
+};
+
+export const getAllRoles = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const roles = await adminService.getAllRoles();
+    res.json(roles);
+  } catch (error: any) {
+    console.error('Error getting roles:', error);
+    res.status(500).json({ message: 'Failed to get roles' });
   }
 };

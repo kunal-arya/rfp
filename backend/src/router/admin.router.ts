@@ -4,49 +4,6 @@ import { hasPermission, protect } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// Configuration Routes
-/**
- * @swagger
- * /admin/config:
- *   get:
- *     summary: Get system configuration
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: System configuration retrieved successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin permissions
- */
-router.get('/config', protect, hasPermission('admin', 'system_config'), adminController.getSystemConfig);
-
-/**
- * @swagger
- * /admin/config:
- *   put:
- *     summary: Update system configuration
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *     responses:
- *       200:
- *         description: System configuration updated successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin permissions
- */
-router.put('/config', protect, hasPermission('admin', 'system_config'), adminController.updateSystemConfig);
-
 /**
  * @swagger
  * /admin/database/stats:
@@ -82,171 +39,6 @@ router.get('/database/stats', protect, hasPermission('admin', 'system_config'), 
  *         description: Forbidden - requires admin permissions
  */
 router.post('/database/test', protect, hasPermission('admin', 'system_config'), adminController.testDatabaseConnection);
-
-/**
- * @swagger
- * /admin/database/backup:
- *   post:
- *     summary: Create database backup
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Database backup created successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin permissions
- */
-router.post('/database/backup', protect, hasPermission('admin', 'system_config'), adminController.createBackup);
-
-/**
- * @swagger
- * /admin/database/optimize:
- *   post:
- *     summary: Optimize database
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Database optimization completed
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin permissions
- */
-router.post('/database/optimize', protect, hasPermission('admin', 'system_config'), adminController.optimizeDatabase);
-
-// Export Routes
-/**
- * @swagger
- * /admin/export/users:
- *   post:
- *     summary: Export users data
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               format:
- *                 type: string
- *                 enum: [csv, excel, pdf, json]
- *               dateRange:
- *                 type: object
- *               filters:
- *                 type: object
- *     responses:
- *       200:
- *         description: Users data exported successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin permissions
- */
-router.post('/export/users', protect, hasPermission('admin', 'export_data'), adminController.exportUsers);
-
-/**
- * @swagger
- * /admin/export/rfps:
- *   post:
- *     summary: Export RFPs data
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               format:
- *                 type: string
- *                 enum: [csv, excel, pdf, json]
- *               dateRange:
- *                 type: object
- *               filters:
- *                 type: object
- *     responses:
- *       200:
- *         description: RFPs data exported successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin permissions
- */
-router.post('/export/rfps', protect, hasPermission('admin', 'export_data'), adminController.exportRfps);
-
-/**
- * @swagger
- * /admin/export/responses:
- *   post:
- *     summary: Export responses data
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               format:
- *                 type: string
- *                 enum: [csv, excel, pdf, json]
- *               dateRange:
- *                 type: object
- *               filters:
- *                 type: object
- *     responses:
- *       200:
- *         description: Responses data exported successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin permissions
- */
-router.post('/export/responses', protect, hasPermission('admin', 'export_data'), adminController.exportResponses);
-
-/**
- * @swagger
- * /admin/export/audit-logs:
- *   post:
- *     summary: Export audit logs data
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               format:
- *                 type: string
- *                 enum: [csv, excel, pdf, json]
- *               dateRange:
- *                 type: object
- *               filters:
- *                 type: object
- *     responses:
- *       200:
- *         description: Audit logs data exported successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin permissions
- */
-router.post('/export/audit-logs', protect, hasPermission('admin', 'export_data'), adminController.exportAuditLogs);
 
 // Response Management Routes
 /**
@@ -314,80 +106,6 @@ router.get('/responses', protect, hasPermission('admin', 'view_analytics'), admi
  *         description: Response not found
  */
 router.get('/responses/:id', protect, hasPermission('admin', 'view_analytics'), adminController.getAdminResponse);
-
-/**
- * @swagger
- * /admin/reports/generate:
- *   post:
- *     summary: Generate system report
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               reportType:
- *                 type: string
- *                 enum: [user-activity, rfp-performance, revenue-analytics, system-usage]
- *               format:
- *                 type: string
- *                 enum: [csv, excel, pdf, json]
- *               dateRange:
- *                 type: object
- *               filters:
- *                 type: object
- *     responses:
- *       200:
- *         description: System report generated successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin permissions
- */
-router.post('/reports/generate', protect, hasPermission('admin', 'export_data'), adminController.generateSystemReport);
-
-/**
- * @swagger
- * /admin/reports/schedule:
- *   post:
- *     summary: Schedule report generation
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               reportType:
- *                 type: string
- *               schedule:
- *                 type: object
- *                 properties:
- *                   frequency:
- *                     type: string
- *                     enum: [daily, weekly, monthly]
- *                   time:
- *                     type: string
- *                   recipients:
- *                     type: array
- *                     items:
- *                       type: string
- *     responses:
- *       200:
- *         description: Report scheduled successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin permissions
- */
-router.post('/reports/schedule', protect, hasPermission('admin', 'export_data'), adminController.scheduleReport);
 
 // User Management Routes
 /**
@@ -699,5 +417,92 @@ router.post('/users', protect, hasPermission('admin', 'manage_users'), adminCont
  *         description: Forbidden - requires admin permissions
  */
 router.get('/analytics', protect, hasPermission('admin', 'view_analytics'), adminController.getAnalytics);
+
+// Permission Management Routes
+/**
+ * @swagger
+ * /admin/roles:
+ *   get:
+ *     summary: Get all roles with permissions (admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Roles retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - requires admin permissions
+ */
+router.get('/roles', protect, hasPermission('admin', 'manage_roles'), adminController.getAllRoles);
+
+/**
+ * @swagger
+ * /admin/roles/{roleName}/permissions:
+ *   get:
+ *     summary: Get permissions for a specific role (admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roleName
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Role name (Buyer, Supplier, Admin)
+ *     responses:
+ *       200:
+ *         description: Role permissions retrieved successfully
+ *       404:
+ *         description: Role not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - requires admin permissions
+ */
+router.get('/roles/:roleName/permissions', protect, hasPermission('admin', 'manage_roles'), adminController.getRolePermissions);
+
+/**
+ * @swagger
+ * /admin/roles/{roleName}/permissions:
+ *   put:
+ *     summary: Update permissions for a specific role (admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roleName
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Role name (Buyer, Supplier, Admin)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - permissions
+ *             properties:
+ *               permissions:
+ *                 type: object
+ *                 description: Complete permissions object for the role
+ *     responses:
+ *       200:
+ *         description: Role permissions updated successfully
+ *       400:
+ *         description: Bad request - invalid permissions format
+ *       404:
+ *         description: Role not found
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - requires admin permissions
+ */
+router.put('/roles/:roleName/permissions', protect, hasPermission('admin', 'manage_roles'), adminController.updateRolePermissions);
 
 export default router;

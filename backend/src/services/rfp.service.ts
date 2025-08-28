@@ -10,8 +10,8 @@ import { AUDIT_ACTIONS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
-export const createRfp = async (rFPData: CreateRfpData, buyerId: string) => {
-    const { title, description, requirements, budget_min, budget_max, deadline, notes } = rFPData;
+export const createRfp = async (rFPData: CreateRfpData, user: any) => {
+    const { title, description, requirements, budget_min, budget_max, deadline, notes, buyer_id } = rFPData;
 
     const draftStatus = await prisma.rFPStatus.findUnique({
         where: { code: RFP_STATUS.Draft },
@@ -22,6 +22,8 @@ export const createRfp = async (rFPData: CreateRfpData, buyerId: string) => {
         throw new Error('Draft status not found');
     }
 
+    const final_buyer_id = buyer_id || user.userId;
+
     let updateRfp: any;
 
     await prisma.$transaction(async (tx) => {
@@ -30,7 +32,7 @@ export const createRfp = async (rFPData: CreateRfpData, buyerId: string) => {
             data: {
                 title,
                 status_id: draftStatus.id,
-                buyer_id: buyerId,
+                buyer_id: final_buyer_id,
             },
         });
 
@@ -63,13 +65,15 @@ export const createRfp = async (rFPData: CreateRfpData, buyerId: string) => {
 
     if (updateRfp) {
         // Create audit trail entry
-        await createAuditEntry(buyerId, AUDIT_ACTIONS.RFP_CREATED, 'RFP', updateRfp.id, {
+        await createAuditEntry(user.userId, AUDIT_ACTIONS.RFP_CREATED, 'RFP', updateRfp.id, {
             title: updateRfp.title,
             status: updateRfp.status.code,
         });
 
         // Send real-time notification to buyer
-        notifyRfpCreated(updateRfp);
+        if (user.role === RoleName.Admin) {
+            notifyRfpCreated(updateRfp);
+        }
     }
 
     return updateRfp;
@@ -194,10 +198,6 @@ export const getRfpVersions = async (rfpId: string, userId: string) => {
 
     if (!rfp) {
         throw new Error('RFP not found');
-    }
-
-    if (rfp.buyer_id !== userId) {
-        throw new Error('You are not authorized to view versions of this RFP');
     }
 
     return rfp.versions;
@@ -528,10 +528,6 @@ export const closeRfp = async (rFPId: string, buyerId: string) => {
         throw new Error('RFP not found');
     }
 
-    if (rFP.buyer_id !== buyerId) {
-        throw new Error('You are not authorized to close this RFP');
-    }
-
     if (rFP.status.code !== 'Published') {
         throw new Error('RFP cannot be closed in current status');
     }
@@ -581,10 +577,6 @@ export const cancelRfp = async (rFPId: string, buyerId: string) => {
         throw new Error('RFP not found');
     }
 
-    if (rFP.buyer_id !== buyerId) {
-        throw new Error('You are not authorized to cancel this RFP');
-    }
-
     if (!['Draft', 'Published'].includes(rFP.status.code)) {
         throw new Error('RFP cannot be cancelled in current status');
     }
@@ -629,10 +621,6 @@ export const awardRfp = async (rFPId: string, responseId: string, buyerId: strin
 
     if (!rFP) {
         throw new Error('RFP not found');
-    }
-
-    if (rFP.buyer_id !== buyerId) {
-        throw new Error('You are not authorized to award this RFP');
     }
 
     if (!['Published', 'Closed'].includes(rFP.status.code)) {
@@ -886,7 +874,7 @@ async function getNewRfpsForSupplierService(supplierId: string) {
   }  
 
 export const createDraftResponse = async (rFPId: string, responseData: SubmitResponseData, supplierId: string) => {
-    const { proposed_budget, timeline, cover_letter } = responseData;
+    const { proposed_budget, timeline, cover_letter  } = responseData;
 
     const rFP = await prisma.rFP.findUnique({
         where: { id: rFPId },
@@ -936,8 +924,10 @@ export const createDraftResponse = async (rFPId: string, responseData: SubmitRes
                 include: {
                     current_version: true,
                     status: true,
+                    buyer: true,
                 },
             },
+            supplier: true,
             status: true,
         },
     });
@@ -1003,6 +993,7 @@ export const submitDraftResponse = async (responseId: string, userId: string) =>
                 include: {
                     current_version: true,
                     buyer: true,
+                    status: true,
                 },
             },
         },
@@ -1072,6 +1063,8 @@ export const moveResponseToReview = async (responseId: string, buyerId: string) 
             rfp: {
                 include: {
                     buyer: true,
+                    current_version: true,
+                    status: true,   
                 },
             },
         },
@@ -1092,7 +1085,7 @@ export const moveResponseToReview = async (responseId: string, buyerId: string) 
     await sendResponseMovedToReviewNotification(responseId);
 
     // Create notification for the supplier
-            await notificationService.createNotificationForUser(updatedResponse.supplier_id, AUDIT_ACTIONS.RESPONSE_MOVED_TO_REVIEW, {
+    await notificationService.createNotificationForUser(updatedResponse.supplier_id, AUDIT_ACTIONS.RESPONSE_MOVED_TO_REVIEW, {
         rfp_title: updatedResponse.rfp.title,
         supplier_name: updatedResponse.supplier.email,
         response_id: updatedResponse.id
@@ -1119,10 +1112,6 @@ export const approveResponse = async (responseId: string, buyerId: string) => {
         throw new Error('Response not found');
     }
 
-    if (response.rfp.buyer_id !== buyerId) {
-        throw new Error('You are not authorized to approve this response');
-    }
-
     if (response.status.code !== SUPPLIER_RESPONSE_STATUS.Under_Review) {
         throw new Error('Response cannot be approved in current status');
     }
@@ -1146,6 +1135,8 @@ export const approveResponse = async (responseId: string, buyerId: string) => {
             supplier: true,
             rfp: {
                 include: {
+                    current_version: true,
+                    status: true,
                     buyer: true,
                 },
             },
@@ -1194,10 +1185,6 @@ export const rejectResponse = async (responseId: string, rejectionReason: string
         throw new Error('Response not found');
     }
 
-    if (response.rfp.buyer_id !== buyerId) {
-        throw new Error('You are not authorized to reject this response');
-    }
-
     if (response.status.code !== SUPPLIER_RESPONSE_STATUS.Under_Review) {
         throw new Error('Response cannot be rejected in current status');
     }
@@ -1222,6 +1209,8 @@ export const rejectResponse = async (responseId: string, rejectionReason: string
             supplier: true,
             rfp: {
                 include: {
+                    current_version: true,
+                    status: true,
                     buyer: true,
                 },
             },
@@ -1254,7 +1243,7 @@ export const rejectResponse = async (responseId: string, rejectionReason: string
     return updatedResponse;
 };
 
-export const awardResponse = async (responseId: string, buyerId: string) => {
+export const reopenResponseForEdit = async (responseId: string, buyerId: string) => {
     const response = await prisma.supplierResponse.findUnique({
         where: { id: responseId },
         include: {
@@ -1272,8 +1261,101 @@ export const awardResponse = async (responseId: string, buyerId: string) => {
         throw new Error('Response not found');
     }
 
-    if (response.rfp.buyer_id !== buyerId) {
-        throw new Error('You are not authorized to award this response');
+    // Only rejected responses can be reopened for edit
+    if (response.status.code !== SUPPLIER_RESPONSE_STATUS.Rejected) {
+        throw new Error('Only rejected responses can be reopened for editing');
+    }
+
+    // Check if the user is authorized to reopen this response
+    // Admin can reopen any response, buyer can only reopen responses to their RFPs
+    const user = await prisma.user.findUnique({
+        where: { id: buyerId },
+        include: { role: true }
+    });
+
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    // Admin can reopen any response
+    if (user.role.name === 'Admin') {
+        // Admin is authorized
+    }
+    // Buyer can only reopen responses to their RFPs
+    else if (user.role.name === 'Buyer' && response.rfp.buyer_id === buyerId) {
+        // Buyer is authorized
+    }
+    else {
+        throw new Error('You are not authorized to reopen this response');
+    }
+
+    const draftStatus = await prisma.supplierResponseStatus.findUnique({
+        where: { code: SUPPLIER_RESPONSE_STATUS.Draft },
+    });
+
+    if (!draftStatus) {
+        throw new Error('Draft status not found');
+    }
+
+    const updatedResponse = await prisma.supplierResponse.update({
+        where: { id: responseId },
+        data: {
+            status_id: draftStatus.id,
+            rejection_reason: null, // Clear rejection reason
+            decided_at: null, // Clear decision date
+        },
+        include: {
+            status: true,
+            supplier: true,
+            rfp: {
+                include: {
+                    current_version: true,
+                    status: true,
+                    buyer: true,
+                },
+            },
+        },
+    });
+
+    // Send notification to supplier
+    await notificationService.createNotificationForUser(updatedResponse.supplier_id, "RESPONSE_REOPENED", {
+        rfp_id: updatedResponse.rfp_id,
+        rfp_title: updatedResponse.rfp.title,
+        response_id: updatedResponse.id,
+        supplier_name: updatedResponse.supplier.email,
+    });
+
+    // Create audit trail entry
+    await createAuditEntry(buyerId, AUDIT_ACTIONS.RESPONSE_REOPENED, 'SupplierResponse', responseId, {
+        rfp_id: response.rfp_id,
+        rfp_title: response.rfp.title,
+        previous_status: response.status.code,
+        new_status: updatedResponse.status.code,
+        supplier_id: response.supplier_id,
+        supplier_email: response.supplier.email,
+    });
+
+    return updatedResponse;
+};
+
+export const awardResponse = async (responseId: string, buyerId: string) => {
+    const response = await prisma.supplierResponse.findUnique({
+        where: { id: responseId },
+        include: {
+            status: true,
+            supplier: true,
+            rfp: {
+                include: {
+                    current_version: true,
+                    status: true,
+                    buyer: true,
+                },
+            },
+        },
+    });
+
+    if (!response) {
+        throw new Error('Response not found');
     }
 
     if (response.status.code !== SUPPLIER_RESPONSE_STATUS.Approved) {
@@ -1312,6 +1394,8 @@ export const awardResponse = async (responseId: string, buyerId: string) => {
                 supplier: true,
                 rfp: {
                     include: {
+                        current_version: true,
+                        status: true,
                         buyer: true,
                     },
                 },
@@ -1457,6 +1541,8 @@ export const reviewRfpResponse = async (rfp_id: string, status: 'Approved' | 'Re
             },
             include: {
                 status: true,
+                buyer: true,
+                current_version: true,
             },
         });
     } else { // Rejected
@@ -1472,6 +1558,8 @@ export const reviewRfpResponse = async (rfp_id: string, status: 'Approved' | 'Re
                 status_id: rfpRejectedStatus.id,
             },
             include: {
+                buyer: true,
+                current_version: true,
                 status: true,
             },
         });
@@ -1551,9 +1639,6 @@ export const uploadResponseDocument = async (responseId: string, userId: string,
         throw new Error('Response not found');
     }
 
-    if (response.supplier_id !== userId) {
-        throw new Error('You are not authorized to upload documents for this response');
-    }
 
     const uploadResult = await uploadToCloudinary(file.buffer, file.mimetype);
 
@@ -1683,10 +1768,6 @@ export const updateResponse = async (responseId: string, responseData: SubmitRes
         throw new Error('Response not found');
     }
 
-    if (response.supplier_id !== userId) {
-        throw new Error('You are not authorized to update this response');
-    }
-
     if (response.status.code !== 'Draft') {
         throw new Error('Response cannot be updated in current status');
     }
@@ -1705,8 +1786,10 @@ export const updateResponse = async (responseId: string, responseData: SubmitRes
                 include: {
                     current_version: true,
                     status: true,
+                    buyer: true,
                 },
             },
+            supplier: true,
             status: true,
         },
     });
@@ -1759,11 +1842,7 @@ export const deleteDocument = async (documentId: string, type: string, parentId:
             throw new Error('Document not found');
         }
         
-        // Check if user owns the response
-        if (document.rfp_response.supplier_id !== userId) {
-            throw new Error('You are not authorized to delete this document');
-        }
-
+  
         // Verify parentId matches
         if (document.rfp_response_id !== parentId) {
             throw new Error('Document not found');

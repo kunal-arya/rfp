@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as authService from '../services/auth.service';
 import { registerSchema, loginSchema } from '../validations/auth.validation';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
+import { notifyUserCreated } from '../services/websocket.service';
 
 export const register = async (req: Request, res: Response) => {
     const validationResult = registerSchema.safeParse(req.body);
@@ -14,6 +15,10 @@ export const register = async (req: Request, res: Response) => {
 
     try {
         const user = await authService.register(name, email, password, roleName);
+        
+        // Send notification to admin users about new user registration
+        notifyUserCreated(user.user);
+        
         res.status(201).json(user);
     } catch (error: any) {
         if (error.message === 'Email already exists') {

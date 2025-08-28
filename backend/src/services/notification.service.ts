@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { USER_STATUS } from '../utils/enum';
+import { RoleName, USER_STATUS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
@@ -10,11 +10,11 @@ export interface NotificationData {
 }
 
 export const notificationService = {
-    getUserNotifications: async (userId: string, page: number = 1, limit: number = 10, unreadOnly: boolean = false) => {
+    getUserNotifications: async (user: any, page: number = 1, limit: number = 10, unreadOnly: boolean = false) => {
         const offset = (page - 1) * limit;
 
         const whereClause = {
-            user_id: userId,
+            ...(user.role === RoleName.Admin ? {} : { user_id: user.userId }),
             ...(unreadOnly && { is_read: false })
         };
 

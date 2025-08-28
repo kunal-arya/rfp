@@ -6,9 +6,9 @@ export interface CreateResponseData {
   budget: number;
   timeline: string;
   cover_letter: string;
-  notes?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface UpdateResponseData extends Partial<CreateResponseData> {}
 
 export interface ResponseFilters {
@@ -45,7 +45,6 @@ export const responseApi = {
       proposed_budget: data.budget,
       timeline: data.timeline,
       cover_letter: data.cover_letter,
-      notes: data.notes,
      }
     const response = await apiClient.post<SupplierResponse>(`/rfp/${rfp_id}/responses`, payload);
     return response.data;
@@ -53,7 +52,11 @@ export const responseApi = {
 
   // Update response
   updateResponse: async (responseId: string, data: UpdateResponseData): Promise<SupplierResponse> => {
-    const response = await apiClient.put<SupplierResponse>(`/rfp/responses/${responseId}`, data);
+    const payload = { 
+      proposed_budget: data.budget,
+      ...data,
+     }
+    const response = await apiClient.put<SupplierResponse>(`/rfp/responses/${responseId}`, payload);
     return response.data;
   },
 
@@ -89,6 +92,12 @@ export const responseApi = {
   // Move response to review (buyer only)
   moveResponseToReview: async (responseId: string): Promise<SupplierResponse> => {
     const response = await apiClient.put<SupplierResponse>(`/rfp/responses/${responseId}/move-to-review`);
+    return response.data;
+  },
+
+  // Reopen response for editing (buyer only)
+  reopenResponseForEdit: async (responseId: string): Promise<SupplierResponse> => {
+    const response = await apiClient.put<SupplierResponse>(`/rfp/responses/${responseId}/reopen`);
     return response.data;
   },
 };

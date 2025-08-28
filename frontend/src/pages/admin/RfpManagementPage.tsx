@@ -363,40 +363,6 @@ const RfpManagementPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Button
-              variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-2"
-              onClick={() => setIsCreateDialogOpen(true)}
-            >
-              <Plus className="h-6 w-6 text-blue-600" />
-              <span className="text-sm font-medium">Create RFP</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-2"
-              onClick={() => navigate('/admin/responses')}
-            >
-              <Users className="h-6 w-6 text-green-600" />
-              <span className="text-sm font-medium">View Responses</span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-2"
-              onClick={() => navigate('/admin/rfps/award')}
-            >
-              <Award className="h-6 w-6 text-orange-600" />
-              <span className="text-sm font-medium">Award RFP</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Filters */}
       <Card>

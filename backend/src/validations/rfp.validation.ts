@@ -9,6 +9,7 @@ export const createRfpSchema = z.object({
   budget_max: z.number().optional(),
   deadline: z.string().transform((val) => new Date(val).toISOString()),
   notes: z.string().optional(),
+  buyer_id: z.string().optional(),
 });
 
 export type CreateRfpData = z.infer<typeof createRfpSchema>;

@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { RoleName } from '../utils/enum';
+import { createAuditEntry } from '../services/audit.service';
+import { AUDIT_ACTIONS } from '../utils/enum';
 
 const prisma = new PrismaClient();
 
@@ -25,6 +27,32 @@ export interface AuthenticatedRequest extends Request {
     };
 }
 
+// Helper function to handle JWT expiration and session cleanup
+const handleJwtExpiration = async (userId: string) => {
+    try {
+        // Get the user's last audit log entry
+        const lastAuditLog = await prisma.auditTrail.findFirst({
+            where: { user_id: userId },
+            orderBy: { created_at: 'desc' },
+            select: { action: true, created_at: true }
+        });
+
+        // If no audit log exists or the last action wasn't a logout, add a logout entry
+        if (!lastAuditLog || !lastAuditLog.action.includes('LOGOUT')) {
+            await createAuditEntry(userId, AUDIT_ACTIONS.USER_LOGOUT, 'User', userId, {
+                reason: 'JWT_EXPIRED',
+                logout_time: new Date().toISOString(),
+                note: 'Automatic logout due to token expiration'
+            });
+            
+            console.log(`Session cleanup: Added logout entry for user ${userId} due to JWT expiration`);
+        }
+    } catch (error) {
+        console.error('Error handling JWT expiration cleanup:', error);
+        // Don't throw error as this is cleanup logic
+    }
+};
+
 export const protect = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const bearer = req.headers.authorization;
 
@@ -40,10 +68,31 @@ export const protect = async (req: AuthenticatedRequest, res: Response, next: Ne
 
     try {
         const user = jwt.verify(token, process.env.JWT_SECRET as string);
-        req.user = user as any; // We'll refine this with a checkPermission function
+        req.user = user as any;
         next();
-    } catch (e) {
-        console.error(e);
+    } catch (e: any) {
+        console.error('JWT verification error:', e);
+        
+        // Check if it's a JWT expiration error
+        if (e.name === 'TokenExpiredError' && e.message === 'jwt expired') {
+            try {
+                // Decode the expired token to get user ID (without verification)
+                const decoded = jwt.decode(token) as any;
+                if (decoded && decoded.userId) {
+                    // Handle session cleanup for expired token
+                    await handleJwtExpiration(decoded.userId);
+                }
+            } catch (decodeError) {
+                console.error('Error decoding expired token:', decodeError);
+            }
+            
+            return res.status(401).json({ 
+                message: 'Token expired', 
+                code: 'TOKEN_EXPIRED',
+                details: 'Your session has expired. Please log in again.'
+            });
+        }
+        
         return res.status(401).json({ message: 'Unauthorized: Invalid token' });
     }
 };

@@ -38,7 +38,7 @@ export const RfpVersioning: React.FC<RfpVersioningProps> = ({
   const createVersionMutation = useCreateRfpVersion();
   const switchVersionMutation = useSwitchRfpVersion();
 
-  const isOwner = user?.id === rfp.buyer?.id;
+  const isAllowed = user?.role === 'Admin' || user?.id === rfp.buyer?.id;
   const isDraft = rfp.status.code === 'Draft';
 
   const handleCreateVersion = (data: CreateRfpData) => {
@@ -81,11 +81,11 @@ export const RfpVersioning: React.FC<RfpVersioningProps> = ({
     if (!min && !max) return 'Not specified';
     if (min && max) return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
     if (min) return `$${min.toLocaleString()}+`;
-    if (max) return `Up to $${max.toLocaleString()}`;
+    if (max) return `Up to $${max.toLocaleString()}`; 
     return 'Not specified';
   };
 
-  if (!isOwner) {
+  if (!isAllowed) {
     return null;
   }
 
@@ -159,7 +159,7 @@ export const RfpVersioning: React.FC<RfpVersioningProps> = ({
                           budget_min: rfp.current_version?.budget_min,
                           budget_max: rfp.current_version?.budget_max,
                           deadline: rfp.current_version?.deadline
-                            ? format(new Date(rfp.current_version.deadline), "yyyy-MM-dd")
+                            ? format(new Date(rfp.current_version.deadline), "yyyy-MM-dd'T'HH:mm")
                             : "",
                           notes: rfp.current_version?.notes || "",
                         }}

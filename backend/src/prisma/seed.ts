@@ -28,6 +28,7 @@ const buyerPermissions = {
     approve: { allowed: true, scope: 'rfp_owner', allowed_response_statuses: ['Under Review'] },
     reject: { allowed: true, scope: 'rfp_owner', allowed_response_statuses: ['Under Review'] },
     award: { allowed: true, scope: 'rfp_owner', allowed_response_statuses: ['Approved'] },
+    reopen: { allowed: true, scope: 'rfp_owner', allowed_response_statuses: ['Rejected'] },
   },
   documents: {
     upload_for_rfp: { allowed: true, scope: 'own' },
@@ -62,6 +63,7 @@ const supplierPermissions = {
         approve: { allowed: false },
         reject: { allowed: false },
         award: { allowed: false },
+        reopen: { allowed: false },
     },
     documents: {
         upload_for_rfp: { allowed: false },
@@ -102,6 +104,7 @@ const adminPermissions = {
         approve: { allowed: true },
         reject: { allowed: true },
         award: { allowed: true },
+        reopen: { allowed: true },
     },
     documents: {
         upload_for_rfp: { allowed: true },
@@ -116,7 +119,7 @@ const adminPermissions = {
         system_config: { allowed: true },
         export_data: { allowed: true },
     },
-    navbar: "dashboard,users,analytics,audit,rfps,responses"
+    navbar: "dashboard,users,analytics,audit,rfps,responses,permissions"
 };
 
 

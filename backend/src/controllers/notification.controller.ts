@@ -1,15 +1,15 @@
 import { Request, Response } from 'express';
 import { notificationService } from '../services/notification.service';
+import { AuthenticatedRequest } from '../middleware/auth.middleware';
 
 export const notificationController = {
-    getNotifications: async (req: Request, res: Response) => {
+    getNotifications: async (req: AuthenticatedRequest, res: Response) => {
         try {
-            const userId = (req as any).user.userId;
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
             const unreadOnly = req.query.unreadOnly === 'true';
 
-            const result = await notificationService.getUserNotifications(userId, page, limit, unreadOnly);
+            const result = await notificationService.getUserNotifications(req.user, page, limit, unreadOnly);
 
             res.json({
                 success: true,

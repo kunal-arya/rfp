@@ -27,11 +27,11 @@ export const ResponseLifecycleActions: React.FC<ResponseLifecycleActionsProps> =
   const awardResponseMutation = useAwardResponse();
   const moveToReviewMutation = useMoveResponseToReview();
 
-  const isRfpOwner = user?.id === response.rfp?.buyer?.id;
-  const canMoveToReview = isRfpOwner && permissionHelpers.hasPermission('supplier_response', 'review') && response.status.code === 'Submitted';
-  const canApprove = isRfpOwner && permissionHelpers.hasPermission('supplier_response', 'approve') && response.status.code === 'Under Review';
-  const canReject = isRfpOwner && permissionHelpers.hasPermission('supplier_response', 'reject') && response.status.code === 'Under Review';
-  const canAward = isRfpOwner && permissionHelpers.hasPermission('supplier_response', 'award') && response.status.code === 'Approved';
+  const isAllowed = user?.role === "Admin" || user?.id === response.rfp?.buyer?.id;
+  const canMoveToReview = isAllowed && permissionHelpers.hasPermission('supplier_response', 'review') && response.status.code === 'Submitted';
+  const canApprove = isAllowed && permissionHelpers.hasPermission('supplier_response', 'approve') && response.status.code === 'Under Review';
+  const canReject = isAllowed && permissionHelpers.hasPermission('supplier_response', 'reject') && response.status.code === 'Under Review';
+  const canAward = isAllowed && permissionHelpers.hasPermission('supplier_response', 'award') && response.status.code === 'Approved';
 
   const handleApproveResponse = async () => {
     if (!window.confirm('Are you sure you want to approve this response?')) {
@@ -92,7 +92,7 @@ export const ResponseLifecycleActions: React.FC<ResponseLifecycleActionsProps> =
     }
   };
 
-  if (!isRfpOwner) {
+  if (!isAllowed) {
     return null;
   }
 

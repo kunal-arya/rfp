@@ -21,7 +21,7 @@ export const createRfp = async (req: AuthenticatedRequest, res: Response) => {
     }
 
     try {
-        const rfp = await rfpService.createRfp(validationResult.data, user.userId);
+        const rfp = await rfpService.createRfp(validationResult.data, user);
         res.status(201).json(rfp);
     } catch (error: any) {
         console.error(error);
@@ -480,6 +480,32 @@ export const rejectResponse = async (req: AuthenticatedRequest, res: Response) =
             return res.status(403).json({ message: error.message });
         }
         if (error.message === 'Response cannot be rejected in current status') {
+            return res.status(400).json({ message: error.message });
+        }
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+export const reopenResponseForEdit = async (req: AuthenticatedRequest, res: Response) => {
+    const { response_id } = req.params;
+    const user = req.user;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    try {
+        const updatedResponse = await rfpService.reopenResponseForEdit(response_id, user.userId);
+        res.json(updatedResponse);
+    } catch (error: any) {
+        if (error.message === 'Response not found') {
+            return res.status(404).json({ message: error.message });
+        }
+        if (error.message === 'You are not authorized to reopen this response') {
+            return res.status(403).json({ message: error.message });
+        }
+        if (error.message === 'Only rejected responses can be reopened for editing') {
             return res.status(400).json({ message: error.message });
         }
         console.error(error);

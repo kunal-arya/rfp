@@ -6,7 +6,6 @@ import {
   getDatabaseStats,
   testDatabaseConnection,
   createBackup,
-  optimizeDatabase,
   exportUsers,
   exportRfps,
   exportResponses,
@@ -32,6 +31,9 @@ import {
   getAdminAuditTrails,
   getAdminAuditStats,
   AdminAuditFilters,
+  getAllRoles,
+  getRolePermissions,
+  updateRolePermissions,
 } from '../apis/admin';
 
 // Configuration hooks
@@ -47,14 +49,6 @@ export const useUpdateSystemConfig = () => {
 // Database hooks
 export const useDatabaseStats = () => useQuery({ queryKey: ['database-stats'], queryFn: getDatabaseStats });
 export const useTestDatabaseConnection = () => useMutation({ mutationFn: testDatabaseConnection });
-export const useCreateBackup = () => useMutation({ mutationFn: createBackup });
-export const useOptimizeDatabase = () => useMutation({ mutationFn: optimizeDatabase });
-
-// Export hooks
-export const useExportUsers = () => useMutation({ mutationFn: exportUsers });
-export const useExportRfps = () => useMutation({ mutationFn: exportRfps });
-export const useExportResponses = () => useMutation({ mutationFn: exportResponses });
-export const useExportAuditLogs = () => useMutation({ mutationFn: exportAuditLogs });
 
 // Report hooks
 export const useGenerateSystemReport = () => useMutation({ mutationFn: generateSystemReport });
@@ -186,3 +180,31 @@ export const useAdminAuditStats = () => useQuery({
   queryKey: ['admin-audit-stats'], 
   queryFn: () => getAdminAuditStats().then(res => res.data) 
 });
+
+// Permission Management hooks
+export const useAllRoles = () => useQuery({ 
+  queryKey: ['admin-roles'], 
+  queryFn: () => getAllRoles().then(res => res.data) 
+});
+
+export const useRolePermissions = (roleName: string) => useQuery({ 
+  queryKey: ['admin-role-permissions', roleName], 
+  queryFn: () => getRolePermissions(roleName).then(res => res.data),
+  enabled: !!roleName 
+});
+
+export const useUpdateRolePermissions = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ roleName, permissions }: { roleName: string; permissions: any }) => 
+      updateRolePermissions(roleName, permissions),
+    onSuccess: (_, { roleName }) => {
+      toast.success(`Permissions updated for ${roleName} role successfully`);
+      queryClient.invalidateQueries({ queryKey: ['admin-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-role-permissions', roleName] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update role permissions');
+    },
+  });
+};
