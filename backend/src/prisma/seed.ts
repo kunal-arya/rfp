@@ -5,7 +5,6 @@ import { notificationService } from '../services/notification.service';
 const prisma = new PrismaClient();
 
 const buyerPermissions = {
-  dashboard: { view: {allowed: true} },
   rfp: {
     create: { allowed: true },
     view: { allowed: true, scope: 'own' },
@@ -34,14 +33,11 @@ const buyerPermissions = {
     upload_for_rfp: { allowed: true, scope: 'own' },
     upload_for_response: { allowed: false }
   },
-  search: { allowed: true },
   audit: { view: { allowed: true, scope: 'own' } },
-  admin: { manage_users: false, manage_roles: false },
-  navbar: "dashboard,my_rfps,create_rfp,browse_rfps,audit"
+  navbar: "dashboard,my_rfps,create_rfp,browse_rfps"
 };
 
 const supplierPermissions = {
-    dashboard: { view: { allowed: true } },
     rfp: {
         create: { allowed: false },
         view: { allowed: true, allowed_rfp_statuses: ['Published',"Awarded","Rejected"] },
@@ -69,25 +65,17 @@ const supplierPermissions = {
         upload_for_rfp: { allowed: false },
         upload_for_response: { allowed: true, scope: 'own' },
     },
-    search: { allowed: true },
     audit: { view: { allowed: true, scope: 'own' } },
-    admin: {
-        manage_users: false,
-        manage_roles: false,
-    },
     navbar: "dashboard,browse_rfps,my_responses,audit"
 };
 
 const adminPermissions = {
-    dashboard: { view: { allowed: true } },
     rfp: {
         create: { allowed: true },
         view: { allowed: true },
         edit: { allowed: true },
         publish: { allowed: true },
         close: { allowed: true },
-        pause: { allowed: true },
-        resume: { allowed: true },
         cancel: { allowed: true },
         award: { allowed: true },
         review_responses: { allowed: true },
@@ -110,15 +98,12 @@ const adminPermissions = {
         upload_for_rfp: { allowed: true },
         upload_for_response: { allowed: true },
     },
-    search: { allowed: true },
-    audit: { view: { allowed: true } },
     admin: {
         manage_users: { allowed: true },
         manage_roles: { allowed: true },
-        view_analytics: { allowed: true },
-        system_config: { allowed: true },
-        export_data: { allowed: true },
+        view_analytics: { allowed: true }
     },
+    audit: { view: { allowed: true } },
     navbar: "dashboard,users,analytics,audit,rfps,responses,permissions"
 };
 

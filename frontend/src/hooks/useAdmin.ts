@@ -46,10 +46,6 @@ export const useUpdateSystemConfig = () => {
   });
 };
 
-// Database hooks
-export const useDatabaseStats = () => useQuery({ queryKey: ['database-stats'], queryFn: getDatabaseStats });
-export const useTestDatabaseConnection = () => useMutation({ mutationFn: testDatabaseConnection });
-
 // Report hooks
 export const useGenerateSystemReport = () => useMutation({ mutationFn: generateSystemReport });
 export const useScheduleReport = () => useMutation({ mutationFn: scheduleReport });

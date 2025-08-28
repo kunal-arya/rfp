@@ -49,13 +49,9 @@ function App() {
               <Route path="/*" element={
                 <RootLayout>
                   <Routes>
-                    <Route 
-                      path="/dashboard" 
-                      element={
-                        <ProtectedRoute requiredPermission={{ resource: 'dashboard', action: 'view' }}>
-                          <DashboardPage />
-                        </ProtectedRoute>
-                      } 
+                    <Route
+                      path="/dashboard"
+                      element={<DashboardPage />}
                     />
                     
                     {/* RFP routes */}

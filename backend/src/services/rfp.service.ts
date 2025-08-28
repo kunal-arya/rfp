@@ -1095,76 +1095,6 @@ export const moveResponseToReview = async (responseId: string, buyerId: string) 
 };
 
 export const approveResponse = async (responseId: string, buyerId: string) => {
-    const response = await prisma.supplierResponse.findUnique({
-        where: { id: responseId },
-        include: {
-            status: true,
-            supplier: true,
-            rfp: {
-                include: {
-                    buyer: true,
-                },
-            },
-        },
-    });
-
-    if (!response) {
-        throw new Error('Response not found');
-    }
-
-    if (response.status.code !== SUPPLIER_RESPONSE_STATUS.Under_Review) {
-        throw new Error('Response cannot be approved in current status');
-    }
-
-    const approvedStatus = await prisma.supplierResponseStatus.findUnique({
-        where: { code: SUPPLIER_RESPONSE_STATUS.Approved },
-    });
-
-    if (!approvedStatus) {
-        throw new Error('Approved status not found');
-    }
-
-    const updatedResponse = await prisma.supplierResponse.update({
-        where: { id: responseId },
-        data: {
-            status_id: approvedStatus.id,
-            reviewed_at: new Date(),
-        },
-        include: {
-            status: true,
-            supplier: true,
-            rfp: {
-                include: {
-                    current_version: true,
-                    status: true,
-                    buyer: true,
-                },
-            },
-        },
-    });
-
-    // Create audit trail entry
-    await createAuditEntry(buyerId, AUDIT_ACTIONS.RESPONSE_APPROVED, 'SupplierResponse', responseId, {
-        rfp_id: response.rfp_id,
-        rfp_title: response.rfp.title,
-        previous_status: response.status.code,
-        new_status: updatedResponse.status.code,
-    });
-
-    // Send real-time notification to supplier
-    notifyResponseApproved(updatedResponse, updatedResponse.supplier_id);
-
-    // Send email notification to supplier
-    await sendResponseApprovedNotification(responseId);
-
-    // Create notification for the supplier
-    await notificationService.createNotificationForUser(updatedResponse.supplier_id, "RESPONSE_APPROVED", {
-        rfp_title: updatedResponse.rfp.title,
-        supplier_name: updatedResponse.supplier.email,
-        response_id: updatedResponse.id
-    });
-
-    return updatedResponse;
 };
 
 export const rejectResponse = async (responseId: string, rejectionReason: string, buyerId: string) => {
@@ -1224,12 +1154,17 @@ export const rejectResponse = async (responseId: string, rejectionReason: string
     await sendResponseRejectedNotification(responseId, rejectionReason);
 
     // Create notification for the supplier
-    await notificationService.createNotificationForUser(updatedResponse.supplier_id, "RESPONSE_REJECTED", {
+    try {
+      await notificationService.createNotificationForUser(updatedResponse.supplier_id, "RESPONSE_REJECTED", {
         rfp_title: updatedResponse.rfp.title,
         supplier_name: updatedResponse.supplier.email,
         response_id: updatedResponse.id,
         rejection_reason: rejectionReason
-    });
+      });
+    } catch (error) {
+      console.warn('Failed to send response rejected notification:', error);
+      // Don't throw error to avoid breaking the main functionality
+    }
 
     // Create audit trail entry
     await createAuditEntry(buyerId, AUDIT_ACTIONS.RESPONSE_REJECTED, 'SupplierResponse', responseId, {
@@ -1442,11 +1377,16 @@ export const awardResponse = async (responseId: string, buyerId: string) => {
     await sendResponseAwardedNotification(responseId);
 
     // Create notification for the supplier
-    await notificationService.createNotificationForUser(updatedResponse.supplier_id, "RESPONSE_AWARDED", {
+    try {
+      await notificationService.createNotificationForUser(updatedResponse.supplier_id, "RESPONSE_AWARDED", {
         rfp_title: updatedResponse.rfp.title,
         supplier_name: updatedResponse.supplier.email,
         response_id: updatedResponse.id
-    });
+      });
+    } catch (error) {
+      console.warn('Failed to send response awarded notification:', error);
+      // Don't throw error to avoid breaking the main functionality
+    }
 
     // Create audit trail entry
     await createAuditEntry(buyerId, AUDIT_ACTIONS.RESPONSE_AWARDED, 'SupplierResponse', responseId, {

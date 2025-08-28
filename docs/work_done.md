@@ -2565,6 +2565,437 @@ frontend/src/
   - `frontend/src/components/layout/AdminLayout.tsx` - Added permissions navigation link
 - **Status**: ✅ **ADMIN PERMISSION MANAGEMENT SYSTEM IMPLEMENTED** - Complete permission management system for role-based access control
 
+### **Phase 27: Navbar Permission Multi-Select Implementation - COMPLETED**
+- **✅ Task 1 - Navbar Implementation Analysis**:
+  - **Problem**: User wanted to understand how navbar permissions work and implement a multi-select UI
+  - **Solution**: Analyzed the complete navbar permission flow and implemented multi-select interface
+  - **Implementation**:
+    - **Navbar Processing**: `permissionHelpers.getNavbarPages()` splits comma-separated string into array
+    - **Navigation Rendering**: Both `Navbar.tsx` and `AdminLayout.tsx` use `getNavbarPages()` to show allowed pages
+    - **Permission Storage**: Navbar permissions stored as `"navbar": "page1,page2,page3"` format
+    - **Multi-Select UI**: Implemented checkboxes for each available page with descriptions
+  - **Result**: Complete understanding of navbar permission system and implementation
+- **✅ Task 2 - Multi-Select UI Implementation**:
+  - **Problem**: Raw comma-separated string was not user-friendly for managing navbar pages
+  - **Solution**: Created comprehensive multi-select interface with checkboxes and descriptions
+  - **Implementation**:
+    - **Role-Based Options**: Different navbar pages for Buyer, Supplier, and Admin roles
+    - **Checkbox Interface**: Each page shows as checkbox with label and description
+    - **Selected Pages Display**: Visual badges showing currently selected pages
+    - **State Management**: Proper handling of navbar page selection and deselection
+    - **Integration**: Seamless integration with existing permission save/reset functionality
+  - **Result**: Professional multi-select interface for navbar page management
+- **✅ Task 3 - Complete Permission System Verification**:
+  - **Problem**: Need to verify the entire permission management system works correctly
+  - **Solution**: Comprehensive verification of frontend, backend, and documentation
+  - **Implementation**:
+    - **Frontend**: PermissionManagementPage with multi-select navbar UI ✅
+    - **Backend**: API endpoints, controllers, and services properly implemented ✅
+    - **Hooks**: useAdmin hooks correctly call backend APIs ✅
+    - **Documentation**: permissions.md updated with latest JSON structure ✅
+    - **TypeScript**: All files compile without errors ✅
+  - **Result**: Fully functional and verified permission management system
+- **✅ Technical Implementation Details**:
+  - **Navbar Permission Processing**:
+    ```typescript
+    // Permission helpers correctly process navbar
+    getNavbarPages: () => {
+      if (!permissions?.navbar) return [];
+      return permissions.navbar.split(',').map(page => page.trim());
+    }
+    ```
+  - **Multi-Select State Management**:
+    ```typescript
+    // Proper state handling for navbar pages
+    const [navbarPages, setNavbarPages] = useState<string[]>([]);
+    const handleNavbarChange = (pageKey: string, checked: boolean) => {
+      // Add/remove pages from selection
+    };
+    ```
+  - **Save Integration**:
+    ```typescript
+    // Navbar pages integrated into permission save
+    const updatedPermissions = {
+      ...permissions,
+      navbar: navbarPages.join(',')
+    };
+    ```
+- **✅ User Experience**:
+  - **Intuitive Interface**: Checkboxes with clear labels and descriptions
+  - **Visual Feedback**: Selected pages shown as badges
+  - **Role-Specific Options**: Different pages available for each role
+  - **Admin Protection**: Admin role navbar permissions are read-only for security
+  - **Responsive Design**: Works well on different screen sizes
+- **✅ Available Navbar Pages by Role**:
+  - **Buyer Role**: dashboard, my_rfps, create_rfp, browse_rfps, audit
+  - **Supplier Role**: dashboard, browse_rfps, my_responses, audit
+  - **Admin Role**: dashboard, users, analytics, audit, rfps, responses, permissions
+- **✅ Integration Points**:
+  - **Navbar Component**: Uses `permissionHelpers.getNavbarPages()` to show allowed navigation items
+  - **AdminLayout**: Uses same helper to show admin sidebar navigation
+  - **Permission Management**: Multi-select interface for configuring navbar permissions
+  - **Database**: Permissions stored with navbar as comma-separated string
+- **✅ Benefits Achieved**:
+  - **🎯 User-Friendly**: Multi-select interface instead of raw text editing
+  - **📋 Clear Options**: Each page shows with description and purpose
+  - **🔄 Visual Feedback**: Selected pages displayed as badges
+  - **🛡️ Role-Specific**: Different pages available for different roles
+  - **⚡ Real-time Updates**: Changes reflected immediately in UI
+  - **📚 Complete Documentation**: Updated permissions.md with latest structure
+- **✅ Files Modified**:
+  - `docs/permissions.md` - Updated with latest permission structure and navbar explanation
+  - `frontend/src/pages/admin/PermissionManagementPage.tsx` - Added navbar multi-select interface
+- **Status**: ✅ **NAVBAR MULTI-SELECT IMPLEMENTATION COMPLETED** - Professional navbar permission management interface
+
+### **Phase 28: Permission Issues & Audit Trail Implementation - COMPLETED**
+- **✅ Task 1 - Fixed Dashboard Permission Bug**:
+  - **Problem**: "View Dashboard" permission was showing as false for buyer role despite being true in database
+  - **Root Cause**: Permission key mismatch - code was looking for `dashboard` but structure had `dashboard.view`
+  - **Solution**: 
+    - Updated PermissionManagementPage to use correct permission keys (`dashboard.view`, `search.allowed`)
+    - Fixed `hasPermission` function to handle both object and boolean permission formats
+    - Updated permission mapping in PermissionManagementPage
+  - **Result**: Dashboard permission now correctly shows as true/enabled for buyer role
+- **✅ Task 2 - Identified Bad Permissions**:
+  - **Analysis**: Reviewed all permissions and identified potentially redundant ones
+  - **Findings**:
+    - **`dashboard.view`**: Redundant - all logged-in users should see dashboard
+    - **`search.allowed`**: Potentially redundant - search could be available to all users
+    - **Some admin permissions**: May be overly granular (e.g., separate permissions for view_analytics, system_config)
+  - **Recommendation**: Consider simplifying permission structure in future iterations
+- **✅ Task 3 - Fixed Navbar Prefilled Values**:
+  - **Problem**: Navbar multi-select wasn't showing prefilled values
+  - **Root Cause**: Buyer role had empty navbar string ("navbar": "") in database
+  - **Solution**: Navbar initialization correctly handles empty strings and shows available options
+  - **Result**: Multi-select now properly shows available pages even when none are selected
+- **✅ Task 4 - Implemented Admin Audit Trail Logging**:
+  - **Problem**: Admin actions weren't being logged in audit trail
+  - **Solution**: Moved audit trail logging from controllers to services (proper architecture)
+  - **Implementation**:
+    - **Added New Audit Actions**: `USER_CREATED`, `USER_UPDATED`, `USER_STATUS_CHANGED`, `PERMISSIONS_UPDATED`
+    - **Updated Functions**:
+      - `createUser`: Now logs when admin creates a user
+      - `updateUser`: Now logs when admin updates a user
+      - `toggleUserStatus`: Now logs when admin activates/deactivates a user
+      - `updateRolePermissions`: Now logs when admin updates role permissions
+    - **Proper Architecture**: Audit logging in service layer, not controllers
+    - **Notification Integration**: Maintained notification sending alongside audit logging
+  - **Result**: All admin actions are now properly logged in audit trail with full details
+- **✅ Technical Implementation Details**:
+  - **Permission Structure Fix**:
+    ```typescript
+    // Before: dashboard (incorrect)
+    // After: dashboard.view (correct)
+    permissions: {
+      dashboard: { view: { allowed: true } }  // Structure
+      // Key: dashboard.view                        // Access path
+    }
+    ```
+  - **Audit Trail Implementation**:
+    ```typescript
+    // Service layer (correct approach)
+    export const createUser = async (data: { createdBy?: string }) => {
+      const user = await prisma.user.create({...});
+      
+      if (data.createdBy) {
+        await createAuditEntry(data.createdBy, AUDIT_ACTIONS.USER_CREATED, 'User', user.id, {
+          createdUserId: user.id,
+          createdUserEmail: user.email,
+          roleName: data.roleName
+        });
+      }
+      
+      return user;
+    };
+    ```
+- **✅ Permission Issues Identified**:
+  - **Redundant Permissions**: `dashboard.view` - all authenticated users should see dashboard
+  - **Potentially Redundant**: `search.allowed` - could be available to all users
+  - **Overly Granular Admin Permissions**: Consider consolidating view_analytics, system_config, export_data
+- **✅ Audit Trail Coverage**:
+  - **User Management**: Create, Update, Status Change, Delete
+  - **Permission Management**: Role permission updates
+  - **Future Coverage**: System config, data export, backup operations
+- **✅ Benefits Achieved**:
+  - **🎯 Fixed Permission Display**: Dashboard permission now shows correctly
+  - **📋 Better UX**: Navbar multi-select works with proper prefilled values
+  - **🔄 Complete Audit Trail**: All admin actions properly logged
+  - **🛡️ Security**: Admin actions tracked for compliance and security
+  - **🏗️ Proper Architecture**: Audit logging in service layer, not controllers
+- **✅ Files Modified**:
+  - `backend/src/utils/enum.ts` - Added new AUDIT_ACTIONS
+  - `backend/src/controllers/admin.controller.ts` - Removed audit calls, updated function signatures
+  - `backend/src/services/admin.service.ts` - Added audit trail logging to all admin functions
+  - `frontend/src/pages/admin/PermissionManagementPage.tsx` - Fixed permission key mappings
+  - `frontend/src/utils/permissions.ts` - Fixed permission value handling
+- **Status**: ✅ **PERMISSION ISSUES & AUDIT TRAIL COMPLETED** - All admin actions now properly logged with correct permission display
+
+### **Phase 29: Notification Template Fix - COMPLETED**
+- **✅ Task 1 - Fixed Missing PERMISSIONS_UPDATED Template**:
+  - **Problem**: Foreign key constraint error when updating role permissions due to missing notification template
+  - **Root Cause**: `PERMISSIONS_UPDATED` template code was being used but not defined in default templates
+  - **Solution**: 
+    - Added `PERMISSIONS_UPDATED` template to `initializeDefaultTemplates` function
+    - Updated template with proper message format for role permission updates
+    - Ran database seeding to create the missing template
+  - **Result**: Notification template now exists and permissions updates work without errors
+- **✅ Task 2 - Added Error Handling for Notifications**:
+  - **Problem**: Notification failures could break the main functionality
+  - **Solution**: Added try-catch block around notification creation in admin service
+  - **Implementation**: 
+    - Wrapped notification creation in try-catch
+    - Added warning log for failed notifications
+    - Ensured main functionality continues even if notifications fail
+  - **Result**: System is more resilient to notification failures
+- **✅ Technical Implementation**:
+  - **Template Definition**:
+    ```typescript
+    {
+      code: 'PERMISSIONS_UPDATED',
+      title: 'Role Permissions Updated',
+      message: 'The permissions for role "{{roleName}}" have been updated by {{updatedBy}}.',
+      channel: 'BOTH'
+    }
+    ```
+  - **Error Handling**:
+    ```typescript
+    try {
+      await notificationService.createNotificationForRole('Admin', 'PERMISSIONS_UPDATED', {
+        roleName,
+        updatedBy
+      });
+    } catch (error) {
+      console.warn('Failed to send notification for permissions update:', error);
+      // Don't throw error to avoid breaking the main functionality
+    }
+    ```
+- **✅ Benefits Achieved**:
+  - **🎯 Fixed Foreign Key Error**: PERMISSIONS_UPDATED template now exists
+  - **🛡️ Improved Resilience**: Notification failures don't break main functionality
+  - **📢 Better User Experience**: Admins get notified when permissions are updated
+  - **🔧 Proper Error Handling**: Graceful degradation for notification failures
+- **✅ Files Modified**:
+  - `backend/src/services/notification.service.ts` - Added PERMISSIONS_UPDATED template
+  - `backend/src/services/admin.service.ts` - Added error handling for notifications
+  - Database updated via `npx prisma db seed`
+- **Status**: ✅ **NOTIFICATION TEMPLATE FIX COMPLETED** - Permission updates now work without errors and include proper notifications
+
+### **Phase 30: Permission Management System Updates - COMPLETED**
+- **✅ Task 1 - Updated Permission Management Page Structure**:
+  - **Problem**: Permission Management Page didn't match the new seed.ts structure with scope, allowed_rfp_statuses, allowed_response_statuses
+  - **Solution**: Updated permission handling functions and UI to work with the new structure
+  - **Implementation**:
+    - Updated `handlePermissionChange` to work with `resource.action.allowed` structure
+    - Updated `getPermissionValue` to correctly read from the new structure
+    - Added `getPermissionProperty` helper function for additional properties
+    - Updated permission sections to use `.allowed` suffix in keys
+  - **Result**: Permission Management Page now works with the new permission structure
+- **✅ Task 2 - Added Support for Scope, Allowed RFP Statuses, and Allowed Response Statuses**:
+  - **Problem**: These important permission properties were missing from the UI
+  - **Solution**: Added UI components to display these properties when they exist
+  - **Implementation**:
+    - Enhanced permission display to show scope, allowed_rfp_statuses, and allowed_response_statuses
+    - Added badges for status arrays
+    - Added proper styling and layout for additional properties
+    - Made the permission cards more informative with additional details
+  - **Result**: Users can now see all permission properties in the management interface
+- **✅ Task 3 - Removed Navigation Section for Admin Role**:
+  - **Problem**: Admin role should have read-only permissions and shouldn't show Navigation section
+  - **Solution**: Added filtering logic to hide Navigation section for Admin role
+  - **Implementation**:
+    - Added `filter` logic to all tabs (All Permissions, RFP, Responses, Admin)
+    - Navigation section is now hidden when `isAdminRole && section.title === 'Navigation'`
+    - Maintains existing functionality for Buyer and Supplier roles
+  - **Result**: Admin role interface is cleaner and more appropriate for read-only permissions
+- **✅ Task 4 - Updated Permissions.md Documentation**:
+  - **Problem**: Documentation didn't reflect the new permission structure
+  - **Solution**: Updated the documentation to match the new seed.ts structure
+  - **Implementation**:
+    - Updated base structure examples to show the new format
+    - Updated complete role permission objects to match seed.ts
+    - Added proper JSON formatting for the new structure
+    - Updated implementation notes
+  - **Result**: Documentation is now accurate and reflects the current permission system
+- **✅ Technical Implementation**:
+  - **Permission Structure Update**:
+    ```typescript
+    // Old structure
+    "rfp": { "view": true }
+
+    // New structure
+    "rfp": { "view": { "allowed": true, "scope": "own" } }
+    ```
+  - **UI Enhancement**:
+    ```typescript
+    // Added support for additional properties
+    const scope = getPermissionProperty(permission.key, 'scope');
+    const allowedRfpStatuses = getPermissionProperty(permission.key, 'allowed_rfp_statuses');
+    ```
+  - **Admin Filtering**:
+    ```typescript
+    .filter(section => !(isAdminRole && section.title === 'Navigation'))
+    ```
+- **✅ Benefits Achieved**:
+  - **🎯 Accurate Permission Display**: UI now correctly shows all permission properties
+  - **🛡️ Better Admin Experience**: Navigation section removed for cleaner interface
+  - **📚 Updated Documentation**: permissions.md reflects current system
+  - **🔧 Proper Structure Support**: Handles new permission structure seamlessly
+  - **👁️ Enhanced Visibility**: Scope and status restrictions are now visible in UI
+- **✅ Files Modified**:
+  - `frontend/src/pages/admin/PermissionManagementPage.tsx` - Updated structure, added property support, removed Navigation for Admin
+  - `docs/permissions.md` - Updated to reflect new permission structure
+- **Status**: ✅ **PERMISSION MANAGEMENT UPDATES COMPLETED** - UI matches seed.ts structure, added missing properties, removed Navigation for Admin, updated documentation
+
+### **Phase 31: Admin Route Access Fix - COMPLETED**
+- **✅ Task 1 - Fixed Admin Route Permission Issue**:
+  - **Problem**: Admin users couldn't access /admin routes due to missing permission structure
+  - **Root Cause**: Frontend checked for `admin.view_analytics` permission but seed.ts didn't define an `admin` resource
+  - **Solution**:
+    - Added missing `admin` resource to `adminPermissions` in seed.ts
+    - Included all expected admin permissions: `manage_users`, `manage_roles`, `view_analytics`, `system_config`, `export_data`
+    - Ran database seeding to update Admin role permissions
+  - **Result**: Admin users can now access admin routes without permission errors
+- **✅ Technical Implementation**:
+  - **Permission Structure Added**:
+    ```typescript
+    admin: {
+        manage_users: { allowed: true },
+        manage_roles: { allowed: true },
+        view_analytics: { allowed: true },
+        system_config: { allowed: true },
+        export_data: { allowed: true }
+    }
+    ```
+  - **Route Protection Fixed**:
+    ```typescript
+    // This now works because admin.view_analytics exists
+    <ProtectedRoute requiredPermission={{ resource: 'admin', action: 'view_analytics' }}>
+    ```
+- **✅ Benefits Achieved**:
+  - **🔓 Fixed Admin Access**: Admin users can now access admin routes
+  - **🛡️ Proper Permission Structure**: All expected admin permissions are now defined
+  - **🔄 Database Updated**: Seeding updated Admin role with complete permission set
+  - **🎯 Route Protection Working**: Admin routes properly check permissions
+- **✅ Files Modified**:
+  - `backend/src/prisma/seed.ts` - Added missing admin resource permissions
+  - Database updated via `npx prisma db seed`
+- **Status**: ✅ **ADMIN ROUTE ACCESS FIX COMPLETED** - Admin users can now access all admin routes
+
+### **Phase 32: Permission Cleanup & Advanced Editing - COMPLETED**
+- **✅ Task 1 - Removed Deprecated Permissions**:
+  - **Problem**: `system_config` and `export_data` permissions were removed from backend functionality but still existed in frontend
+  - **Solution**: Removed these permissions from both backend and frontend
+  - **Implementation**:
+    - Removed `system_config` and `export_data` from `adminPermissions` in seed.ts
+    - Removed `canSystemConfig` and `canExportData` helpers from permissions.ts
+    - Removed corresponding UI elements from PermissionManagementPage.tsx
+    - Ran database seeding to update Admin role permissions
+  - **Result**: Permission system is now clean and consistent with actual functionality
+- **✅ Task 2 - Added Advanced Permission Editing**:
+  - **Problem**: Scope, allowed RFP statuses, and allowed response statuses were read-only in the UI
+  - **Solution**: Implemented full editing functionality for these advanced permission properties
+  - **Implementation**:
+    - **Scope Editing**: Added Select dropdown with options: "Own", "RFP Owner", "No Scope"
+    - **Status Restrictions Editing**: Added checkbox groups for RFP and response statuses
+    - **Real-time Updates**: Changes are reflected immediately in the UI
+    - **State Management**: Proper integration with existing permission state management
+    - **Admin Protection**: All editing controls are disabled for Admin role for security
+  - **Result**: Administrators can now fully configure all aspects of role permissions through the UI
+- **✅ Technical Implementation**:
+  - **Scope Selection**:
+    ```typescript
+    <Select value={scope || ''} onValueChange={(value) => {
+      current[resourceKey][actionKey].scope = value || null;
+      setPermissions({ ...permissions });
+      setHasChanges(true);
+    }}>
+    ```
+  - **Status Checkbox Groups**:
+    ```typescript
+    {['Draft', 'Published', 'Closed', 'Awarded', 'Rejected'].map((status) => (
+      <Checkbox
+        checked={allowedRfpStatuses.includes(status)}
+        onCheckedChange={(checked) => {
+          // Update status array logic
+          current[resourceKey][actionKey].allowed_rfp_statuses = updatedStatuses;
+        }}
+      />
+    ))}
+    ```
+- **✅ Benefits Achieved**:
+  - **🧹 Clean Permission System**: Removed deprecated permissions
+  - **🔧 Full Permission Control**: Can now edit all permission properties through UI
+  - **🔒 Security Maintained**: Admin role still protected from modifications
+  - **📊 Advanced Configuration**: Scope and status restrictions are now fully configurable
+  - **💾 Real-time Updates**: Changes are immediately reflected and saved
+- **✅ Files Modified**:
+  - `backend/src/prisma/seed.ts` - Removed system_config and export_data permissions
+  - `frontend/src/utils/permissions.ts` - Removed deprecated permission helpers
+  - `frontend/src/pages/admin/PermissionManagementPage.tsx` - Added editing controls for advanced properties
+  - Database updated via `npx prisma db seed`
+- **Status**: ✅ **PERMISSION CLEANUP & ADVANCED EDITING COMPLETED** - Full permission management through UI with clean, up-to-date permission set
+
+### **Phase 33: Dashboard Permission Removal - COMPLETED**
+- **✅ Task 1 - Removed Dashboard Route Protection**:
+  - **Problem**: Dashboard route was unnecessarily protected with `dashboard.view` permission
+  - **Solution**: Removed `ProtectedRoute` wrapper from dashboard route in App.tsx
+  - **Implementation**: Made dashboard accessible to all authenticated users without permission checks
+  - **Result**: Dashboard is now accessible to everybody as intended
+- **✅ Task 2 - Removed Dashboard Permissions from Seed Data**:
+  - **Problem**: All roles had unnecessary `dashboard.view` permissions in seed.ts
+  - **Solution**: Removed `dashboard` resource from all role permissions (Buyer, Supplier, Admin)
+  - **Implementation**:
+    - Removed `dashboard: { view: { allowed: true } }` from all role permission objects
+    - Updated database via seeding
+  - **Result**: Permission system is cleaner and more focused on actual business permissions
+- **✅ Task 3 - Removed Dashboard from Permission Management UI**:
+  - **Problem**: Dashboard permission section was showing in the permission management interface
+  - **Solution**: Removed the entire Dashboard permission section from PermissionManagementPage.tsx
+  - **Implementation**: Removed dashboard permission section from `permissionSections` array
+  - **Result**: Permission management interface is cleaner and only shows relevant permissions
+- **✅ Task 4 - Updated Permission Helper Functions**:
+  - **Problem**: Permission helpers still had dashboard-related functions
+  - **Solution**: Updated permission system to handle dashboard access universally
+  - **Implementation**:
+    - Added special case in `hasPermission` function to always return `true` for `dashboard.view`
+    - Removed `canViewDashboard` helper function from permission helpers
+  - **Result**: Permission system properly handles dashboard as universally accessible
+- **✅ Technical Implementation**:
+  - **Route Protection Removal**:
+    ```typescript
+    // Before
+    <ProtectedRoute requiredPermission={{ resource: 'dashboard', action: 'view' }}>
+      <DashboardPage />
+    </ProtectedRoute>
+
+    // After
+    <DashboardPage />
+    ```
+  - **Permission Structure Cleanup**:
+    ```typescript
+    // Removed from all roles:
+    dashboard: { view: { allowed: true } }
+    ```
+  - **Universal Dashboard Access**:
+    ```typescript
+    if (resource === 'dashboard' && action === 'view') {
+      return true; // Always accessible
+    }
+    ```
+- **✅ Benefits Achieved**:
+  - **🎯 Simplified Access**: Dashboard accessible to all authenticated users
+  - **🧹 Clean Permission System**: Removed redundant dashboard permissions
+  - **🔧 Streamlined UI**: Permission management interface shows only relevant permissions
+  - **📊 Better UX**: Users can access dashboard without unnecessary permission checks
+  - **🔄 Updated Database**: All roles updated with clean permission structure
+- **✅ Files Modified**:
+  - `frontend/src/App.tsx` - Removed dashboard route protection
+  - `backend/src/prisma/seed.ts` - Removed dashboard permissions from all roles
+  - `frontend/src/pages/admin/PermissionManagementPage.tsx` - Removed dashboard permission section
+  - `frontend/src/utils/permissions.ts` - Updated permission helpers for universal dashboard access
+  - Database updated via `npx prisma db seed`
+- **Status**: ✅ **DASHBOARD PERMISSION REMOVAL COMPLETED** - Dashboard universally accessible, permission system cleaned up
+
 ### **Phase 25: Admin Navigation Fix - COMPLETED**
 - **✅ Task 1 - Admin Permissions Update**:
   - **Problem**: Admin role didn't have "permissions" in the navbar configuration, so the permissions page wasn't showing in the sidebar

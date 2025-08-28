@@ -1,33 +1,11 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { PrismaClient } from '@prisma/client';
-import * as configService from '../services/config.service';
 import * as adminService from '../services/admin.service';
 import * as analyticsService from '../services/analytics.service';
-import { notificationService } from '../services/notification.service';
+
 
 const prisma = new PrismaClient();
-
-export const getDatabaseStats = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const stats = await configService.getDatabaseStats();
-    res.json(stats);
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to get database statistics' });
-  }
-};
-
-export const testDatabaseConnection = async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const isConnected = await configService.testDatabaseConnection();
-    res.json({ connected: isConnected });
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ message: 'Failed to test database connection' });
-  }
-};
-
 
 // User Management Controllers
 export const getUsers = async (req: AuthenticatedRequest, res: Response) => {
@@ -70,7 +48,7 @@ export const updateUser = async (req: AuthenticatedRequest, res: Response) => {
     const { id } = req.params;
     const { name, email, role } = req.body;
 
-    const user = await adminService.updateUser(id, { name, email, role });
+    const user = await adminService.updateUser(id, { name, email, role, updatedBy: req.user?.userId });
     res.json(user);
   } catch (error: any) {
     if (error.message === 'User not found') {
@@ -101,7 +79,7 @@ export const toggleUserStatus = async (req: AuthenticatedRequest, res: Response)
     const { id } = req.params;
     const { action } = req.body; // 'activate' or 'deactivate'
     
-    const result = await adminService.toggleUserStatus(id, action);
+    const result = await adminService.toggleUserStatus(id, action, req.user?.userId);
     res.json(result);
   } catch (error: any) {
     if (error.message === 'User not found') {
@@ -135,7 +113,7 @@ export const createUser = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(400).json({ message: 'Invalid role' });
     }
 
-    const user = await adminService.createUser({ name, email, password, roleName });
+        const user = await adminService.createUser({ name, email, password, roleName, createdBy: req.user?.userId });
     res.status(201).json(user);
   } catch (error: any) {
     if (error.message === 'User with this email already exists') {
@@ -289,14 +267,7 @@ export const updateRolePermissions = async (req: AuthenticatedRequest, res: Resp
       return res.status(400).json({ message: 'Permissions data is required' });
     }
 
-    const updatedPermissions = await adminService.updateRolePermissions(roleName, permissions);
-    
-    // Create notification for admin users
-    await notificationService.createNotificationForRole('Admin', 'PERMISSIONS_UPDATED', {
-      roleName,
-      updatedBy: req.user?.userId || 'Unknown'
-    });
-    
+    const updatedPermissions = await adminService.updateRolePermissions(roleName, permissions, req.user?.userId);
     res.json(updatedPermissions);
   } catch (error: any) {
     if (error.message === 'Role not found') {

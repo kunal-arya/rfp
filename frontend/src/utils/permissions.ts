@@ -7,21 +7,33 @@ export const hasPermission = (
   action: string
 ): boolean => {
   if (!permissions) return false;
-  
+
+  // Dashboard is always accessible - no permission check needed
+  if (resource === 'dashboard' && action === 'view') {
+    return true;
+  }
+
   const resourcePermissions = permissions[resource as keyof UserPermissions];
   if (!resourcePermissions) return false;
-  
-  const permission = resourcePermissions[action];
+
+  // Handle both object and boolean formats
+  if (typeof resourcePermissions === 'boolean') {
+    return resourcePermissions;
+  }
+
+  const permission = (resourcePermissions as any)[action];
   if (!permission) return false;
-  
-  return permission.allowed;
+
+  // Handle both { allowed: boolean } and direct boolean
+  if (typeof permission === 'boolean') {
+    return permission;
+  }
+
+  return permission.allowed || false;
 };
 
 // Helper functions for common permission checks
 export const createPermissionHelpers = (permissions: UserPermissions | null) => ({
-  // Dashboard permissions
-  canViewDashboard: hasPermission(permissions, 'dashboard', 'view'),
-  
   // RFP permissions
   canCreateRfp: hasPermission(permissions, 'rfp', 'create'),
   canViewRfp: hasPermission(permissions, 'rfp', 'view'),
@@ -51,8 +63,6 @@ export const createPermissionHelpers = (permissions: UserPermissions | null) => 
   canManageUsers: hasPermission(permissions, 'admin', 'manage_users'),
   canManageRoles: hasPermission(permissions, 'admin', 'manage_roles'),
   canViewAnalytics: hasPermission(permissions, 'admin', 'view_analytics'),
-  canSystemConfig: hasPermission(permissions, 'admin', 'system_config'),
-  canExportData: hasPermission(permissions, 'admin', 'export_data'),
   
   // Navigation permissions
   getNavbarPages: () => {

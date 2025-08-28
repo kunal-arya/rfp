@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -17,6 +18,7 @@ interface PermissionSection {
   title: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
+  donot_show_in_admin?: boolean;
   permissions: {
     key: string;
     label: string;
@@ -30,93 +32,100 @@ interface PermissionSection {
   }[];
 }
 
+interface NavbarOption {
+  key: string;
+  label: string;
+  description: string;
+}
+
+// Available navbar pages for each role
+const navbarOptions: Record<string, NavbarOption[]> = {
+  Buyer: [
+    { key: 'dashboard', label: 'Dashboard', description: 'Main dashboard overview' },
+    { key: 'my_rfps', label: 'My RFPs', description: 'View and manage owned RFPs' },
+    { key: 'create_rfp', label: 'Create RFP', description: 'Create new RFPs' },
+    { key: 'browse_rfps', label: 'Browse RFPs', description: 'Browse published RFPs' },
+    { key: 'audit', label: 'Audit Trail', description: 'View audit logs' },
+  ],
+  Supplier: [
+    { key: 'dashboard', label: 'Dashboard', description: 'Main dashboard overview' },
+    { key: 'browse_rfps', label: 'Browse RFPs', description: 'Browse and respond to RFPs' },
+    { key: 'my_responses', label: 'My Responses', description: 'View and manage responses' },
+    { key: 'audit', label: 'Audit Trail', description: 'View audit logs' },
+  ],
+  Admin: [
+    { key: 'dashboard', label: 'Dashboard', description: 'Admin dashboard' },
+    { key: 'users', label: 'User Management', description: 'Manage users' },
+    { key: 'analytics', label: 'Analytics', description: 'View analytics and reports' },
+    { key: 'audit', label: 'Audit Logs', description: 'View audit logs' },
+    { key: 'rfps', label: 'RFP Management', description: 'Manage RFPs' },
+    { key: 'responses', label: 'Response Management', description: 'Manage responses' },
+    { key: 'permissions', label: 'Permissions', description: 'Manage role permissions' },
+  ]
+};
+
 const permissionSections: PermissionSection[] = [
-  {
-    title: 'Dashboard',
-    description: 'Access to dashboard and overview pages',
-    icon: BarChart3,
-    permissions: [
-      {
-        key: 'dashboard',
-        label: 'View Dashboard',
-        description: 'Access to main dashboard',
-        type: 'boolean'
-      }
-    ]
-  },
   {
     title: 'RFP Management',
     description: 'Create, edit, and manage RFPs',
     icon: FileText,
     permissions: [
       {
-        key: 'rfp.create',
+        key: 'rfp.create.allowed',
         label: 'Create RFP',
         description: 'Create new RFPs',
         type: 'boolean'
       },
       {
-        key: 'rfp.view',
+        key: 'rfp.view.allowed',
         label: 'View RFP',
         description: 'View RFPs',
         type: 'boolean'
       },
       {
-        key: 'rfp.edit',
+        key: 'rfp.edit.allowed',
         label: 'Edit RFP',
         description: 'Edit existing RFPs',
         type: 'boolean'
       },
       {
-        key: 'rfp.publish',
+        key: 'rfp.publish.allowed',
         label: 'Publish RFP',
         description: 'Publish RFPs',
         type: 'boolean'
       },
       {
-        key: 'rfp.close',
+        key: 'rfp.close.allowed',
         label: 'Close RFP',
         description: 'Close RFPs',
         type: 'boolean'
       },
       {
-        key: 'rfp.pause',
-        label: 'Pause RFP',
-        description: 'Pause RFPs',
-        type: 'boolean'
-      },
-      {
-        key: 'rfp.resume',
-        label: 'Resume RFP',
-        description: 'Resume paused RFPs',
-        type: 'boolean'
-      },
-      {
-        key: 'rfp.cancel',
+        key: 'rfp.cancel.allowed',
         label: 'Cancel RFP',
         description: 'Cancel RFPs',
         type: 'boolean'
       },
       {
-        key: 'rfp.award',
+        key: 'rfp.award.allowed',
         label: 'Award RFP',
         description: 'Award RFPs to suppliers',
         type: 'boolean'
       },
       {
-        key: 'rfp.review_responses',
+        key: 'rfp.review_responses.allowed',
         label: 'Review Responses',
         description: 'Review supplier responses',
         type: 'boolean'
       },
       {
-        key: 'rfp.read_responses',
+        key: 'rfp.read_responses.allowed',
         label: 'Read Responses',
         description: 'Read supplier responses',
         type: 'boolean'
       },
       {
-        key: 'rfp.manage_documents',
+        key: 'rfp.manage_documents.allowed',
         label: 'Manage Documents',
         description: 'Manage RFP documents',
         type: 'boolean'
@@ -129,61 +138,61 @@ const permissionSections: PermissionSection[] = [
     icon: MessageSquare,
     permissions: [
       {
-        key: 'supplier_response.create',
+        key: 'supplier_response.create.allowed',
         label: 'Create Response',
         description: 'Create responses to RFPs',
         type: 'boolean'
       },
       {
-        key: 'supplier_response.submit',
+        key: 'supplier_response.submit.allowed',
         label: 'Submit Response',
         description: 'Submit responses',
         type: 'boolean'
       },
       {
-        key: 'supplier_response.view',
+        key: 'supplier_response.view.allowed',
         label: 'View Response',
         description: 'View responses',
         type: 'boolean'
       },
       {
-        key: 'supplier_response.edit',
+        key: 'supplier_response.edit.allowed',
         label: 'Edit Response',
         description: 'Edit responses',
         type: 'boolean'
       },
       {
-        key: 'supplier_response.manage_documents',
+        key: 'supplier_response.manage_documents.allowed',
         label: 'Manage Documents',
         description: 'Manage response documents',
         type: 'boolean'
       },
       {
-        key: 'supplier_response.review',
+        key: 'supplier_response.review.allowed',
         label: 'Review Response',
         description: 'Review responses',
         type: 'boolean'
       },
       {
-        key: 'supplier_response.approve',
+        key: 'supplier_response.approve.allowed',
         label: 'Approve Response',
         description: 'Approve responses',
         type: 'boolean'
       },
       {
-        key: 'supplier_response.reject',
+        key: 'supplier_response.reject.allowed',
         label: 'Reject Response',
         description: 'Reject responses',
         type: 'boolean'
       },
       {
-        key: 'supplier_response.award',
+        key: 'supplier_response.award.allowed',
         label: 'Award Response',
         description: 'Award responses',
         type: 'boolean'
       },
       {
-        key: 'supplier_response.reopen',
+        key: 'supplier_response.reopen.allowed',
         label: 'Reopen Response',
         description: 'Reopen rejected responses for editing',
         type: 'boolean'
@@ -196,28 +205,15 @@ const permissionSections: PermissionSection[] = [
     icon: Database,
     permissions: [
       {
-        key: 'documents.upload_for_rfp',
+        key: 'documents.upload_for_rfp.allowed',
         label: 'Upload for RFP',
         description: 'Upload documents for RFPs',
         type: 'boolean'
       },
       {
-        key: 'documents.upload_for_response',
+        key: 'documents.upload_for_response.allowed',
         label: 'Upload for Response',
         description: 'Upload documents for responses',
-        type: 'boolean'
-      }
-    ]
-  },
-  {
-    title: 'Search',
-    description: 'Search functionality',
-    icon: Settings,
-    permissions: [
-      {
-        key: 'search',
-        label: 'Search',
-        description: 'Use search functionality',
         type: 'boolean'
       }
     ]
@@ -228,7 +224,7 @@ const permissionSections: PermissionSection[] = [
     icon: Shield,
     permissions: [
       {
-        key: 'audit.view',
+        key: 'audit.view.allowed',
         label: 'View Audit Logs',
         description: 'View audit trail',
         type: 'boolean'
@@ -258,17 +254,20 @@ const permissionSections: PermissionSection[] = [
         description: 'Access analytics and reports',
         type: 'boolean'
       },
+
+    ]
+  },
+  {
+    title: 'Navigation',
+    description: 'Control which pages appear in the navigation menu',
+    icon: Key,
+    donot_show_in_admin: true,
+    permissions: [
       {
-        key: 'admin.system_config',
-        label: 'System Configuration',
-        description: 'Configure system settings',
-        type: 'boolean'
-      },
-      {
-        key: 'admin.export_data',
-        label: 'Export Data',
-        description: 'Export system data',
-        type: 'boolean'
+        key: 'navbar',
+        label: 'Navbar Pages',
+        description: 'Select which pages to show in navigation',
+        type: 'object'
       }
     ]
   }
@@ -277,6 +276,7 @@ const permissionSections: PermissionSection[] = [
 export const PermissionManagementPage: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState<string>('');
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
+  const [navbarPages, setNavbarPages] = useState<string[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
 
 
@@ -293,6 +293,10 @@ export const PermissionManagementPage: React.FC = () => {
   useEffect(() => {
     if (rolePermissions) {
       setPermissions(rolePermissions);
+      // Initialize navbar pages from permissions
+      const navbarString = rolePermissions.navbar || '';
+      const pages = navbarString.split(',').map(page => page.trim()).filter(page => page);
+      setNavbarPages(pages);
       setHasChanges(false);
     }
   }, [rolePermissions]);
@@ -303,23 +307,37 @@ export const PermissionManagementPage: React.FC = () => {
     const pathParts = path.split('.');
     let current: any = permissions;
 
-    // Navigate to the parent object
-    for (let i = 0; i < pathParts.length - 1; i++) {
-      if (!current[pathParts[i]]) {
-        current[pathParts[i]] = {};
-      }
-      current = current[pathParts[i]];
+    // Navigate to the resource level
+    const resourceKey = pathParts[0];
+    if (!current[resourceKey]) {
+      current[resourceKey] = {};
+    }
+    current = current[resourceKey];
+
+    // Navigate to the action level
+    const actionKey = pathParts[1];
+    if (!current[actionKey]) {
+      current[actionKey] = {};
     }
 
-    // Set the final value
-    const lastKey = pathParts[pathParts.length - 1];
-    if (typeof current[lastKey] === 'object' && current[lastKey] !== null) {
-      current[lastKey].allowed = value;
-    } else {
-      current[lastKey] = value;
-    }
+    // Set the allowed property
+    current[actionKey].allowed = value;
 
     setPermissions({ ...permissions });
+    setHasChanges(true);
+  };
+
+  const handleNavbarChange = (pageKey: string, checked: boolean) => {
+    if (!permissions) return;
+
+    let updatedPages: string[];
+    if (checked) {
+      updatedPages = [...navbarPages, pageKey];
+    } else {
+      updatedPages = navbarPages.filter(page => page !== pageKey);
+    }
+
+    setNavbarPages(updatedPages);
     setHasChanges(true);
   };
 
@@ -327,30 +345,51 @@ export const PermissionManagementPage: React.FC = () => {
     if (!permissions) return false;
 
     const pathParts = path.split('.');
-    let current: any = permissions;
+    const resourceKey = pathParts[0];
+    const actionKey = pathParts[1];
+    const propertyKey = pathParts[2]; // 'allowed', 'scope', etc.
 
-    for (const part of pathParts) {
-      if (current && typeof current === 'object' && part in current) {
-        current = current[part];
-      } else {
-        return false;
-      }
+    if (!permissions[resourceKey] || !permissions[resourceKey][actionKey]) {
+      return false;
     }
 
-    if (typeof current === 'object' && current !== null) {
-      return current.allowed || false;
+    const actionObj = permissions[resourceKey][actionKey];
+
+    if (propertyKey === 'allowed') {
+      return Boolean(actionObj.allowed);
     }
 
-    return Boolean(current);
+    return false;
+  };
+
+  const getPermissionProperty = (path: string, property: string): any => {
+    if (!permissions) return null;
+
+    const pathParts = path.split('.');
+    const resourceKey = pathParts[0];
+    const actionKey = pathParts[1];
+
+    if (!permissions[resourceKey] || !permissions[resourceKey][actionKey]) {
+      return null;
+    }
+
+    const actionObj = permissions[resourceKey][actionKey];
+    return actionObj[property] || null;
   };
 
   const handleSave = async () => {
     if (!permissions || !selectedRole) return;
 
     try {
+      // Update permissions with navbar pages
+      const updatedPermissions = {
+        ...permissions,
+        navbar: navbarPages.join(',')
+      };
+
       await updatePermissionsMutation.mutateAsync({
         roleName: selectedRole,
-        permissions
+        permissions: updatedPermissions
       });
 
       toast.success(`Permissions for ${selectedRole} role have been updated successfully.`);
@@ -364,6 +403,10 @@ export const PermissionManagementPage: React.FC = () => {
   const handleReset = () => {
     if (rolePermissions) {
       setPermissions(rolePermissions);
+      // Reset navbar pages from permissions
+      const navbarString = rolePermissions.navbar || '';
+      const pages = navbarString.split(',').map(page => page.trim()).filter(page => page);
+      setNavbarPages(pages);
       setHasChanges(false);
     }
   };
@@ -499,7 +542,9 @@ export const PermissionManagementPage: React.FC = () => {
                   </TabsList>
 
                   <TabsContent value="all" className="space-y-6">
-                    {permissionSections.map((section) => (
+                    {permissionSections
+                      .filter((section) => !(isAdminRole && section.title === 'Navigation'))
+                      .map((section) => (
                       <div key={section.title}>
                         <div className="flex items-center gap-2 mb-4">
                           <section.icon className="h-5 w-5 text-blue-600" />
@@ -508,19 +553,201 @@ export const PermissionManagementPage: React.FC = () => {
                         <p className="text-sm text-gray-600 mb-4">{section.description}</p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {section.permissions.map((permission) => (
-                            <div key={permission.key} className="flex items-center justify-between p-4 border rounded-lg">
-                              <div className="space-y-1">
-                                <Label htmlFor={permission.key} className="text-sm font-medium">
-                                  {permission.label}
-                                </Label>
-                                <p className="text-xs text-gray-500">{permission.description}</p>
-                              </div>
-                              <Switch
-                                id={permission.key}
-                                checked={getPermissionValue(permission.key)}
-                                onCheckedChange={(checked) => handlePermissionChange(permission.key, checked)}
-                                disabled={isAdminRole}
-                              />
+                            <div key={permission.key}>
+                              {permission.key === 'navbar' ? (
+                                <div className="p-4 border rounded-lg">
+                                  <div className="space-y-3">
+                                    <div>
+                                      <Label className="text-sm font-medium">
+                                        {permission.label}
+                                      </Label>
+                                      <p className="text-xs text-gray-500">{permission.description}</p>
+                                    </div>
+                                    <div className="space-y-3">
+                                      <Label className="text-sm font-medium">Available Pages:</Label>
+                                      {navbarOptions[selectedRole]?.map((option) => (
+                                        <div key={option.key} className="flex items-start space-x-3">
+                                          <Checkbox
+                                            id={`navbar-${option.key}`}
+                                            checked={navbarPages.includes(option.key)}
+                                            onCheckedChange={(checked) =>
+                                              handleNavbarChange(option.key, checked as boolean)
+                                            }
+                                            disabled={isAdminRole}
+                                          />
+                                          <div className="grid gap-1.5 leading-none">
+                                            <Label
+                                              htmlFor={`navbar-${option.key}`}
+                                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                            >
+                                              {option.label}
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                              {option.description}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    {navbarPages.length > 0 && (
+                                      <div>
+                                        <Label className="text-sm font-medium">Selected Pages:</Label>
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                          {navbarPages.map((page) => {
+                                            const option = navbarOptions[selectedRole]?.find(opt => opt.key === page);
+                                            return (
+                                              <Badge key={page} variant="secondary">
+                                                {option?.label || page}
+                                              </Badge>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="p-4 border rounded-lg space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="space-y-1">
+                                      <Label htmlFor={permission.key} className="text-sm font-medium">
+                                        {permission.label}
+                                      </Label>
+                                      <p className="text-xs text-gray-500">{permission.description}</p>
+                                    </div>
+                                    <Switch
+                                      id={permission.key}
+                                      checked={getPermissionValue(permission.key)}
+                                      onCheckedChange={(checked) => handlePermissionChange(permission.key, checked)}
+                                      disabled={isAdminRole}
+                                    />
+                                  </div>
+
+                                  {/* Show additional properties if they exist */}
+                                  {(() => {
+                                    const scope = getPermissionProperty(permission.key, 'scope');
+                                    const allowedRfpStatuses = getPermissionProperty(permission.key, 'allowed_rfp_statuses');
+                                    const allowedResponseStatuses = getPermissionProperty(permission.key, 'allowed_response_statuses');
+
+                                    return (scope || allowedRfpStatuses || allowedResponseStatuses) ? (
+                                      <div className="space-y-3 pt-3 border-t">
+                                        {scope && (
+                                          <div>
+                                            <Label className="text-xs font-medium text-gray-600">Scope:</Label>
+                                            <Select
+                                              value={scope}
+                                              onValueChange={(value) => {
+                                                const pathParts = permission.key.split('.');
+                                                const current: any = permissions;
+                                                const resourceKey = pathParts[0];
+                                                const actionKey = pathParts[1];
+
+                                                if (!current[resourceKey]) current[resourceKey] = {};
+                                                if (!current[resourceKey][actionKey]) current[resourceKey][actionKey] = {};
+                                                current[resourceKey][actionKey].scope = value || null;
+
+                                                setPermissions({ ...permissions });
+                                                setHasChanges(true);
+                                              }}
+                                              disabled={isAdminRole}
+                                            >
+                                              <SelectTrigger className="mt-1 h-8">
+                                                <SelectValue placeholder="Select scope" />
+                                              </SelectTrigger>
+                                              <SelectContent>
+                                                <SelectItem value="own">Own</SelectItem>
+                                                <SelectItem value="rfp_owner">RFP Owner</SelectItem>
+                                              </SelectContent>
+                                            </Select>
+                                          </div>
+                                        )}
+                                        {allowedRfpStatuses && (
+                                          <div>
+                                            <Label className="text-xs font-medium text-gray-600">Allowed RFP Statuses:</Label>
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                              {['Draft', 'Published', 'Closed', 'Awarded', 'Rejected'].map((status) => (
+                                                <div key={status} className="flex items-center space-x-2">
+                                                  <Checkbox
+                                                    id={`rfp-${permission.key}-${status}`}
+                                                    checked={allowedRfpStatuses.includes(status)}
+                                                    onCheckedChange={(checked) => {
+                                                      const pathParts = permission.key.split('.');
+                                                      const current: any = permissions;
+                                                      const resourceKey = pathParts[0];
+                                                      const actionKey = pathParts[1];
+
+                                                      if (!current[resourceKey]) current[resourceKey] = {};
+                                                      if (!current[resourceKey][actionKey]) current[resourceKey][actionKey] = {};
+
+                                                      let updatedStatuses = [...(allowedRfpStatuses || [])];
+                                                      if (checked) {
+                                                        if (!updatedStatuses.includes(status)) {
+                                                          updatedStatuses.push(status);
+                                                        }
+                                                      } else {
+                                                        updatedStatuses = updatedStatuses.filter(s => s !== status);
+                                                      }
+
+                                                      current[resourceKey][actionKey].allowed_rfp_statuses = updatedStatuses.length > 0 ? updatedStatuses : null;
+                                                      setPermissions({ ...permissions });
+                                                      setHasChanges(true);
+                                                    }}
+                                                    disabled={isAdminRole}
+                                                  />
+                                                  <Label htmlFor={`rfp-${permission.key}-${status}`} className="text-xs">
+                                                    {status}
+                                                  </Label>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {allowedResponseStatuses && (
+                                          <div>
+                                            <Label className="text-xs font-medium text-gray-600">Allowed Response Statuses:</Label>
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                              {['Draft', 'Submitted', 'Under Review', 'Approved', 'Rejected', 'Awarded'].map((status) => (
+                                                <div key={status} className="flex items-center space-x-2">
+                                                  <Checkbox
+                                                    id={`response-${permission.key}-${status}`}
+                                                    checked={allowedResponseStatuses.includes(status)}
+                                                    onCheckedChange={(checked) => {
+                                                      const pathParts = permission.key.split('.');
+                                                      const current: any = permissions;
+                                                      const resourceKey = pathParts[0];
+                                                      const actionKey = pathParts[1];
+
+                                                      if (!current[resourceKey]) current[resourceKey] = {};
+                                                      if (!current[resourceKey][actionKey]) current[resourceKey][actionKey] = {};
+
+                                                      let updatedStatuses = [...(allowedResponseStatuses || [])];
+                                                      if (checked) {
+                                                        if (!updatedStatuses.includes(status)) {
+                                                          updatedStatuses.push(status);
+                                                        }
+                                                      } else {
+                                                        updatedStatuses = updatedStatuses.filter(s => s !== status);
+                                                      }
+
+                                                      current[resourceKey][actionKey].allowed_response_statuses = updatedStatuses.length > 0 ? updatedStatuses : null;
+                                                      setPermissions({ ...permissions });
+                                                      setHasChanges(true);
+                                                    }}
+                                                    disabled={isAdminRole}
+                                                  />
+                                                  <Label htmlFor={`response-${permission.key}-${status}`} className="text-xs">
+                                                    {status}
+                                                  </Label>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : null;
+                                  })()}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -531,7 +758,7 @@ export const PermissionManagementPage: React.FC = () => {
 
                   <TabsContent value="rfp" className="space-y-6">
                     {permissionSections
-                      .filter(section => ['RFP Management', 'Documents'].includes(section.title))
+                      .filter(section => ['RFP Management', 'Documents'].includes(section.title) && !(isAdminRole && section.title === 'Navigation'))
                       .map((section) => (
                         <div key={section.title}>
                           <div className="flex items-center gap-2 mb-4">
@@ -541,19 +768,75 @@ export const PermissionManagementPage: React.FC = () => {
                           <p className="text-sm text-gray-600 mb-4">{section.description}</p>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {section.permissions.map((permission) => (
-                              <div key={permission.key} className="flex items-center justify-between p-4 border rounded-lg">
-                                <div className="space-y-1">
-                                  <Label htmlFor={permission.key} className="text-sm font-medium">
-                                    {permission.label}
-                                  </Label>
-                                  <p className="text-xs text-gray-500">{permission.description}</p>
-                                </div>
-                                <Switch
-                                  id={permission.key}
-                                  checked={getPermissionValue(permission.key)}
-                                  onCheckedChange={(checked) => handlePermissionChange(permission.key, checked)}
-                                  disabled={isAdminRole}
-                                />
+                              <div key={permission.key}>
+                                {permission.key === 'navbar' ? (
+                                  <div className="p-4 border rounded-lg">
+                                    <div className="space-y-3">
+                                      <div>
+                                        <Label className="text-sm font-medium">
+                                          {permission.label}
+                                        </Label>
+                                        <p className="text-xs text-gray-500">{permission.description}</p>
+                                      </div>
+                                      <div className="space-y-3">
+                                        <Label className="text-sm font-medium">Available Pages:</Label>
+                                        {navbarOptions[selectedRole]?.map((option) => (
+                                          <div key={option.key} className="flex items-start space-x-3">
+                                            <Checkbox
+                                              id={`navbar-${option.key}`}
+                                              checked={navbarPages.includes(option.key)}
+                                              onCheckedChange={(checked) =>
+                                                handleNavbarChange(option.key, checked as boolean)
+                                              }
+                                              disabled={isAdminRole}
+                                            />
+                                            <div className="grid gap-1.5 leading-none">
+                                              <Label
+                                                htmlFor={`navbar-${option.key}`}
+                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                              >
+                                                {option.label}
+                                              </Label>
+                                              <p className="text-xs text-muted-foreground">
+                                                {option.description}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      {navbarPages.length > 0 && (
+                                        <div>
+                                          <Label className="text-sm font-medium">Selected Pages:</Label>
+                                          <div className="flex flex-wrap gap-2 mt-2">
+                                            {navbarPages.map((page) => {
+                                              const option = navbarOptions[selectedRole]?.find(opt => opt.key === page);
+                                              return (
+                                                <Badge key={page} variant="secondary">
+                                                  {option?.label || page}
+                                                </Badge>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                                    <div className="space-y-1">
+                                      <Label htmlFor={permission.key} className="text-sm font-medium">
+                                        {permission.label}
+                                      </Label>
+                                      <p className="text-xs text-gray-500">{permission.description}</p>
+                                    </div>
+                                    <Switch
+                                      id={permission.key}
+                                      checked={getPermissionValue(permission.key)}
+                                      onCheckedChange={(checked) => handlePermissionChange(permission.key, checked)}
+                                      disabled={isAdminRole}
+                                    />
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -563,7 +846,7 @@ export const PermissionManagementPage: React.FC = () => {
 
                   <TabsContent value="responses" className="space-y-6">
                     {permissionSections
-                      .filter(section => ['Supplier Responses'].includes(section.title))
+                      .filter(section => ['Supplier Responses'].includes(section.title) && !(isAdminRole && section.title === 'Navigation'))
                       .map((section) => (
                         <div key={section.title}>
                           <div className="flex items-center gap-2 mb-4">
@@ -573,19 +856,75 @@ export const PermissionManagementPage: React.FC = () => {
                           <p className="text-sm text-gray-600 mb-4">{section.description}</p>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {section.permissions.map((permission) => (
-                              <div key={permission.key} className="flex items-center justify-between p-4 border rounded-lg">
-                                <div className="space-y-1">
-                                  <Label htmlFor={permission.key} className="text-sm font-medium">
-                                    {permission.label}
-                                  </Label>
-                                  <p className="text-xs text-gray-500">{permission.description}</p>
-                                </div>
-                                <Switch
-                                  id={permission.key}
-                                  checked={getPermissionValue(permission.key)}
-                                  onCheckedChange={(checked) => handlePermissionChange(permission.key, checked)}
-                                  disabled={isAdminRole}
-                                />
+                              <div key={permission.key}>
+                                {permission.key === 'navbar' ? (
+                                  <div className="p-4 border rounded-lg">
+                                    <div className="space-y-3">
+                                      <div>
+                                        <Label className="text-sm font-medium">
+                                          {permission.label}
+                                        </Label>
+                                        <p className="text-xs text-gray-500">{permission.description}</p>
+                                      </div>
+                                      <div className="space-y-3">
+                                        <Label className="text-sm font-medium">Available Pages:</Label>
+                                        {navbarOptions[selectedRole]?.map((option) => (
+                                          <div key={option.key} className="flex items-start space-x-3">
+                                            <Checkbox
+                                              id={`navbar-${option.key}`}
+                                              checked={navbarPages.includes(option.key)}
+                                              onCheckedChange={(checked) =>
+                                                handleNavbarChange(option.key, checked as boolean)
+                                              }
+                                              disabled={isAdminRole}
+                                            />
+                                            <div className="grid gap-1.5 leading-none">
+                                              <Label
+                                                htmlFor={`navbar-${option.key}`}
+                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                              >
+                                                {option.label}
+                                              </Label>
+                                              <p className="text-xs text-muted-foreground">
+                                                {option.description}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      {navbarPages.length > 0 && (
+                                        <div>
+                                          <Label className="text-sm font-medium">Selected Pages:</Label>
+                                          <div className="flex flex-wrap gap-2 mt-2">
+                                            {navbarPages.map((page) => {
+                                              const option = navbarOptions[selectedRole]?.find(opt => opt.key === page);
+                                              return (
+                                                <Badge key={page} variant="secondary">
+                                                  {option?.label || page}
+                                                </Badge>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                                    <div className="space-y-1">
+                                      <Label htmlFor={permission.key} className="text-sm font-medium">
+                                        {permission.label}
+                                      </Label>
+                                      <p className="text-xs text-gray-500">{permission.description}</p>
+                                    </div>
+                                    <Switch
+                                      id={permission.key}
+                                      checked={getPermissionValue(permission.key)}
+                                      onCheckedChange={(checked) => handlePermissionChange(permission.key, checked)}
+                                      disabled={isAdminRole}
+                                    />
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -595,7 +934,7 @@ export const PermissionManagementPage: React.FC = () => {
 
                   <TabsContent value="admin" className="space-y-6">
                     {permissionSections
-                      .filter(section => ['Admin'].includes(section.title))
+                      .filter(section => ['Admin'].includes(section.title) && !(isAdminRole && section.title === 'Navigation'))
                       .map((section) => (
                         <div key={section.title}>
                           <div className="flex items-center gap-2 mb-4">
@@ -605,19 +944,75 @@ export const PermissionManagementPage: React.FC = () => {
                           <p className="text-sm text-gray-600 mb-4">{section.description}</p>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {section.permissions.map((permission) => (
-                              <div key={permission.key} className="flex items-center justify-between p-4 border rounded-lg">
-                                <div className="space-y-1">
-                                  <Label htmlFor={permission.key} className="text-sm font-medium">
-                                    {permission.label}
-                                  </Label>
-                                  <p className="text-xs text-gray-500">{permission.description}</p>
-                                </div>
-                                <Switch
-                                  id={permission.key}
-                                  checked={getPermissionValue(permission.key)}
-                                  onCheckedChange={(checked) => handlePermissionChange(permission.key, checked)}
-                                  disabled={isAdminRole}
-                                />
+                              <div key={permission.key}>
+                                {permission.key === 'navbar' ? (
+                                  <div className="p-4 border rounded-lg">
+                                    <div className="space-y-3">
+                                      <div>
+                                        <Label className="text-sm font-medium">
+                                          {permission.label}
+                                        </Label>
+                                        <p className="text-xs text-gray-500">{permission.description}</p>
+                                      </div>
+                                      <div className="space-y-3">
+                                        <Label className="text-sm font-medium">Available Pages:</Label>
+                                        {navbarOptions[selectedRole]?.map((option) => (
+                                          <div key={option.key} className="flex items-start space-x-3">
+                                            <Checkbox
+                                              id={`navbar-${option.key}`}
+                                              checked={navbarPages.includes(option.key)}
+                                              onCheckedChange={(checked) =>
+                                                handleNavbarChange(option.key, checked as boolean)
+                                              }
+                                              disabled={isAdminRole}
+                                            />
+                                            <div className="grid gap-1.5 leading-none">
+                                              <Label
+                                                htmlFor={`navbar-${option.key}`}
+                                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                              >
+                                                {option.label}
+                                              </Label>
+                                              <p className="text-xs text-muted-foreground">
+                                                {option.description}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      {navbarPages.length > 0 && (
+                                        <div>
+                                          <Label className="text-sm font-medium">Selected Pages:</Label>
+                                          <div className="flex flex-wrap gap-2 mt-2">
+                                            {navbarPages.map((page) => {
+                                              const option = navbarOptions[selectedRole]?.find(opt => opt.key === page);
+                                              return (
+                                                <Badge key={page} variant="secondary">
+                                                  {option?.label || page}
+                                                </Badge>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                                    <div className="space-y-1">
+                                      <Label htmlFor={permission.key} className="text-sm font-medium">
+                                        {permission.label}
+                                      </Label>
+                                      <p className="text-xs text-gray-500">{permission.description}</p>
+                                    </div>
+                                    <Switch
+                                      id={permission.key}
+                                      checked={getPermissionValue(permission.key)}
+                                      onCheckedChange={(checked) => handlePermissionChange(permission.key, checked)}
+                                      disabled={isAdminRole}
+                                    />
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>

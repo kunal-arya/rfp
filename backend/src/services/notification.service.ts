@@ -214,9 +214,21 @@ export const notificationService = {
                 channel: 'BOTH'
             },
             {
+                code: 'RESPONSE_REOPENED',
+                title: 'Response Reopened for Editing',
+                message: 'Your response to RFP "{{rfp_title}}" has been reopened for editing by the buyer. You can now update your response.',
+                channel: 'BOTH'
+            },
+            {
                 code: 'RFP_AWARDED',
                 title: 'RFP Awarded',
                 message: 'The RFP "{{rfp_title}}" has been awarded to a supplier. Thank you for your participation.',
+                channel: 'BOTH'
+            },
+            {
+                code: 'PERMISSIONS_UPDATED',
+                title: 'Role Permissions Updated',
+                message: 'The permissions for role "{{roleName}}" have been updated by {{updatedBy}}.',
                 channel: 'BOTH'
             }
         ];

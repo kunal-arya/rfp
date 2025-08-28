@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import * as auditService from './audit.service';
+import { createAuditEntry } from './audit.service';
+import { notificationService } from './notification.service';
 import { USER_STATUS, AUDIT_ACTIONS } from '../utils/enum';
 
 const prisma = new PrismaClient();
@@ -72,7 +74,7 @@ export const getUser = async (id: string) => {
   return user;
 };
 
-export const updateUser = async (id: string, data: { name?: string; email?: string; role?: string }) => {
+export const updateUser = async (id: string, data: { name?: string; email?: string; role?: string; updatedBy?: string }) => {
   const user = await prisma.user.findUnique({
     where: { id },
     include: {
@@ -104,6 +106,15 @@ export const updateUser = async (id: string, data: { name?: string; email?: stri
     },
   });
 
+  // Log admin action in audit trail
+  if (data.updatedBy) {
+    await createAuditEntry(data.updatedBy, AUDIT_ACTIONS.USER_UPDATED, 'User', id, {
+      updatedUserId: id,
+      updatedUserEmail: updatedUser.email,
+      changes: { name: data.name, email: data.email, role: data.role }
+    });
+  }
+
   return updatedUser;
 };
 
@@ -124,7 +135,7 @@ export const deleteUser = async (id: string) => {
   return { message: 'User deleted successfully' };
 };
 
-export const toggleUserStatus = async (id: string, action: 'activate' | 'deactivate') => {
+export const toggleUserStatus = async (id: string, action: 'activate' | 'deactivate', updatedBy?: string) => {
   const user = await prisma.user.findUnique({
     where: { id },
     include: { role: true }
@@ -142,7 +153,16 @@ export const toggleUserStatus = async (id: string, action: 'activate' | 'deactiv
     include: { role: true }
   });
 
-  return { 
+  // Log admin action in audit trail
+  if (updatedBy) {
+    await createAuditEntry(updatedBy, AUDIT_ACTIONS.USER_STATUS_CHANGED, 'User', id, {
+      targetUserId: id,
+      action: action,
+      newStatus: newStatus
+    });
+  }
+
+  return {
     message: `User ${action}d successfully`,
     user: updatedUser
   };
@@ -258,6 +278,7 @@ export const createUser = async (data: {
   email: string;
   password: string;
   roleName: string;
+  createdBy?: string;
 }) => {
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
@@ -294,6 +315,15 @@ export const createUser = async (data: {
       role: true
     }
   });
+
+  // Log admin action in audit trail
+  if (data.createdBy) {
+    await createAuditEntry(data.createdBy, AUDIT_ACTIONS.USER_CREATED, 'User', user.id, {
+      createdUserId: user.id,
+      createdUserEmail: user.email,
+      roleName: data.roleName
+    });
+  }
 
   return user;
 };
@@ -406,7 +436,7 @@ export const getRolePermissions = async (roleName: string) => {
   return role.permissions;
 };
 
-export const updateRolePermissions = async (roleName: string, permissions: any) => {
+export const updateRolePermissions = async (roleName: string, permissions: any, updatedBy?: string) => {
   // Validate that the role exists
   const existingRole = await prisma.role.findUnique({
     where: { name: roleName }
@@ -427,6 +457,22 @@ export const updateRolePermissions = async (roleName: string, permissions: any) 
     data: { permissions },
     select: { permissions: true }
   });
+
+  // Log admin action in audit trail
+  if (updatedBy) {
+    await createAuditEntry(updatedBy, AUDIT_ACTIONS.PERMISSIONS_UPDATED, 'Role', roleName, {
+      roleName,
+      updatedBy
+    });
+  }
+
+  // Send notification to admin users
+  if (updatedBy) {
+    await notificationService.createNotificationForRole('Admin', 'PERMISSIONS_UPDATED', {
+      roleName,
+      updatedBy
+    });
+  }
 
   return updatedRole.permissions;
 };

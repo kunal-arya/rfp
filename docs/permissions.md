@@ -11,7 +11,9 @@ The permissions object is organized by **resource** (e.g., `rfp`, `supplier_resp
   "resource_name": {
     "action_name": {
       "allowed": boolean,
-      "...other_rules": "value"
+      "scope": "string",
+      "allowed_rfp_statuses": ["array"],
+      "allowed_response_statuses": ["array"]
     }
   }
 }
@@ -39,7 +41,6 @@ The following rules can be combined to create fine-grained access control.
         -   For an `rfp`, the `buyer_id` must match the user's ID.
         -   For a `supplier_response`, the `supplier_id` must match the user's ID.
     -   `"rfp_owner"`: The user must be the owner of the parent RFP. This is used for actions on a `supplier_response` where the user is the buyer.
-    -   `"published"`: The resource (specifically an `rfp`) must have a status of "Published".
 
 ### `allowed_rfp_statuses`
 
@@ -53,17 +54,11 @@ The following rules can be combined to create fine-grained access control.
 -   **Description:** The action is only allowed if the target supplier response's status is one of the statuses in the array.
 -   **Example:** A supplier can only edit or submit a response that is in `Draft` status.
 
-### `allowed_transitions`
+### `navbar`
 
--   **Type:** `object`
--   **Description:** Defines a state machine for status changes. The keys are the "from" statuses, and the values are arrays of allowed "to" statuses.
--   **Example:**
-    ```json
-    "allowed_transitions": {
-      "Under_Review": ["Approved", "Rejected"]
-    }
-    ```
-    This rule allows changing the status of a resource from `Under_Review` to either `Approved` or `Rejected`.
+-   **Type:** `string`
+-   **Description:** Defines which navigation items should be visible to users with this role.
+-   **Format:** Comma-separated list of navigation keys (e.g., "dashboard,users,analytics,audit,rfps,responses,permissions")
 
 ---
 
@@ -73,44 +68,115 @@ The following rules can be combined to create fine-grained access control.
 
 ```json
 {
-  "dashboard": { 
-    "view": { "allowed": true } 
+  "dashboard": {
+    "view": {
+      "allowed": true
+    }
   },
   "rfp": {
-    "create": { "allowed": true },
-    "view": { "allowed": true, "scope": "own" },
-    "edit": { "allowed": true, "scope": "own", "allowed_rfp_statuses": ["Draft"] },
-    "publish": { "allowed": true, "scope": "own", "allowed_rfp_statuses": ["Draft"] },
-    "close": { "allowed": true, "scope": "own", "allowed_rfp_statuses": ["Published"] },
-    "cancel": { "allowed": true, "scope": "own", "allowed_rfp_statuses": ["Draft", "Published"] },
-    "award": { "allowed": true, "scope": "own", "allowed_rfp_statuses": ["Published", "Closed"] },
-    "review_responses": { "allowed": true, "scope": "own" },
-    "read_responses": { "allowed": true, "scope": "own" },
-    "manage_documents": { "allowed": true, "scope": "own" }
+    "create": {
+      "allowed": true
+    },
+    "view": {
+      "allowed": true,
+      "scope": "own"
+    },
+    "edit": {
+      "allowed": true,
+      "scope": "own",
+      "allowed_rfp_statuses": ["Draft"]
+    },
+    "publish": {
+      "allowed": true,
+      "scope": "own",
+      "allowed_rfp_statuses": ["Draft"]
+    },
+    "close": {
+      "allowed": true,
+      "scope": "own",
+      "allowed_rfp_statuses": ["Published"]
+    },
+    "cancel": {
+      "allowed": true,
+      "scope": "own",
+      "allowed_rfp_statuses": ["Draft", "Published"]
+    },
+    "award": {
+      "allowed": true,
+      "scope": "own",
+      "allowed_rfp_statuses": ["Published", "Closed"]
+    },
+    "review_responses": {
+      "allowed": true,
+      "scope": "own"
+    },
+    "read_responses": {
+      "allowed": true,
+      "scope": "own"
+    },
+    "manage_documents": {
+      "allowed": true,
+      "scope": "own"
+    }
   },
   "supplier_response": {
-    "submit": { "allowed": false },
-    "view": { "allowed": true, "scope": "rfp_owner" },
-    "edit": { "allowed": false },
-    "create": { "allowed": false },
-    "manage_documents": { "allowed": false },
-    "review": { "allowed": true, "scope": "rfp_owner" },
-    "approve": { "allowed": true, "scope": "rfp_owner", "allowed_response_statuses": ["Under Review"] },
-    "reject": { "allowed": true, "scope": "rfp_owner", "allowed_response_statuses": ["Under Review"] },
-    "award": { "allowed": true, "scope": "rfp_owner", "allowed_response_statuses": ["Approved"] }
+    "submit": {
+      "allowed": false
+    },
+    "view": {
+      "allowed": true,
+      "scope": "rfp_owner"
+    },
+    "edit": {
+      "allowed": false
+    },
+    "create": {
+      "allowed": false
+    },
+    "manage_documents": {
+      "allowed": false
+    },
+    "review": {
+      "allowed": true,
+      "scope": "rfp_owner"
+    },
+    "approve": {
+      "allowed": true,
+      "scope": "rfp_owner",
+      "allowed_response_statuses": ["Under Review"]
+    },
+    "reject": {
+      "allowed": true,
+      "scope": "rfp_owner",
+      "allowed_response_statuses": ["Under Review"]
+    },
+    "award": {
+      "allowed": true,
+      "scope": "rfp_owner",
+      "allowed_response_statuses": ["Approved"]
+    },
+    "reopen": {
+      "allowed": true,
+      "scope": "rfp_owner",
+      "allowed_response_statuses": ["Rejected"]
+    }
   },
   "documents": {
-    "upload_for_rfp": { "allowed": true, "scope": "own" },
-    "upload_for_response": { "allowed": false }
+    "upload_for_rfp": {
+      "allowed": true,
+      "scope": "own"
+    },
+    "upload_for_response": {
+      "allowed": false
+    }
   },
-  "search": { "allowed": true },
-  "audit": { 
-    "view": { "allowed": true, "scope": "own" } 
+  "audit": {
+    "view": {
+      "allowed": true,
+      "scope": "own"
+    }
   },
-  "admin": { 
-    "manage_users": { "allowed": false }, 
-    "manage_roles": { "allowed": false } 
-  }
+  "navbar": "dashboard,my_rfps,create_rfp,browse_rfps,audit"
 }
 ```
 
@@ -118,43 +184,186 @@ The following rules can be combined to create fine-grained access control.
 
 ```json
 {
-  "dashboard": { 
-    "view": { "allowed": true } 
+  "dashboard": {
+    "view": {
+      "allowed": true
+    }
   },
   "rfp": {
-    "create": { "allowed": false },
-    "view": { "allowed": true, "allowed_rfp_statuses": ["Published", "Awarded", "Rejected"] },
-    "edit": { "allowed": false },
-    "publish": { "allowed": false },
-    "close": { "allowed": false },
-    "cancel": { "allowed": false },
-    "award": { "allowed": false },
-    "review_responses": { "allowed": false },
-    "read_responses": { "allowed": true },
-    "manage_documents": { "allowed": false }
+    "create": {
+      "allowed": false
+    },
+    "view": {
+      "allowed": true,
+      "allowed_rfp_statuses": ["Published", "Awarded", "Rejected"]
+    },
+    "edit": {
+      "allowed": false
+    },
+    "publish": {
+      "allowed": false
+    },
+    "close": {
+      "allowed": false
+    },
+    "cancel": {
+      "allowed": false
+    },
+    "award": {
+      "allowed": false
+    },
+    "review_responses": {
+      "allowed": false
+    },
+    "read_responses": {
+      "allowed": true
+    },
+    "manage_documents": {
+      "allowed": false
+    }
   },
   "supplier_response": {
-    "create": { "allowed": true, "allowed_rfp_statuses": ["Published"] },
-    "submit": { "allowed": true, "scope": "own", "allowed_response_statuses": ["Draft"] },
-    "view": { "allowed": true, "scope": "own" },
-    "edit": { "allowed": true, "scope": "own", "allowed_response_statuses": ["Draft"] },
-    "manage_documents": { "allowed": true, "scope": "own" },
-    "approve": { "allowed": false },
-    "reject": { "allowed": false },
-    "award": { "allowed": false }
+    "create": {
+      "allowed": true,
+      "allowed_rfp_statuses": ["Published"]
+    },
+    "submit": {
+      "allowed": true,
+      "scope": "own",
+      "allowed_response_statuses": ["Draft"]
+    },
+    "view": {
+      "allowed": true,
+      "scope": "own"
+    },
+    "edit": {
+      "allowed": true,
+      "scope": "own",
+      "allowed_response_statuses": ["Draft"]
+    },
+    "manage_documents": {
+      "allowed": true,
+      "scope": "own"
+    },
+    "approve": {
+      "allowed": false
+    },
+    "reject": {
+      "allowed": false
+    },
+    "award": {
+      "allowed": false
+    },
+    "reopen": {
+      "allowed": false
+    }
   },
   "documents": {
-    "upload_for_rfp": { "allowed": false },
-    "upload_for_response": { "allowed": true, "scope": "own" }
+    "upload_for_rfp": {
+      "allowed": false
+    },
+    "upload_for_response": {
+      "allowed": true,
+      "scope": "own"
+    }
   },
-  "search": { "allowed": true },
-  "audit": { 
-    "view": { "allowed": true, "scope": "own" } 
+  "audit": {
+    "view": {
+      "allowed": true,
+      "scope": "own"
+    }
   },
-  "admin": {
-    "manage_users": { "allowed": false },
-    "manage_roles": { "allowed": false }
-  }
+  "navbar": "dashboard,browse_rfps,my_responses,audit"
+}
+```
+
+### Admin Role Permissions
+
+```json
+{
+  "dashboard": {
+    "view": {
+      "allowed": true
+    }
+  },
+  "rfp": {
+    "create": {
+      "allowed": true
+    },
+    "view": {
+      "allowed": true
+    },
+    "edit": {
+      "allowed": true
+    },
+    "publish": {
+      "allowed": true
+    },
+    "close": {
+      "allowed": true
+    },
+    "cancel": {
+      "allowed": true
+    },
+    "award": {
+      "allowed": true
+    },
+    "review_responses": {
+      "allowed": true
+    },
+    "read_responses": {
+      "allowed": true
+    },
+    "manage_documents": {
+      "allowed": true
+    }
+  },
+  "supplier_response": {
+    "create": {
+      "allowed": true
+    },
+    "submit": {
+      "allowed": true
+    },
+    "view": {
+      "allowed": true
+    },
+    "edit": {
+      "allowed": true
+    },
+    "manage_documents": {
+      "allowed": true
+    },
+    "review": {
+      "allowed": true
+    },
+    "approve": {
+      "allowed": true
+    },
+    "reject": {
+      "allowed": true
+    },
+    "award": {
+      "allowed": true
+    },
+    "reopen": {
+      "allowed": true
+    }
+  },
+  "documents": {
+    "upload_for_rfp": {
+      "allowed": true
+    },
+    "upload_for_response": {
+      "allowed": true
+    }
+  },
+  "audit": {
+    "view": {
+      "allowed": true
+    }
+  },
+  "navbar": "dashboard,users,analytics,audit,rfps,responses,permissions"
 }
 ```
 

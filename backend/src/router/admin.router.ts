@@ -4,42 +4,6 @@ import { hasPermission, protect } from '../middleware/auth.middleware';
 
 const router = Router();
 
-/**
- * @swagger
- * /admin/database/stats:
- *   get:
- *     summary: Get database statistics
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Database statistics retrieved successfully
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin permissions
- */
-router.get('/database/stats', protect, hasPermission('admin', 'system_config'), adminController.getDatabaseStats);
-
-/**
- * @swagger
- * /admin/database/test:
- *   post:
- *     summary: Test database connection
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Database connection test completed
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden - requires admin permissions
- */
-router.post('/database/test', protect, hasPermission('admin', 'system_config'), adminController.testDatabaseConnection);
-
 // Response Management Routes
 /**
  * @swagger

@@ -5,11 +5,6 @@ import { User, UserStats } from './types';
 export const getSystemConfig = () => apiClient.get('/admin/config');
 export const updateSystemConfig = (config: any) => apiClient.put('/admin/config', config);
 
-// Database APIs
-export const getDatabaseStats = () => apiClient.get('/admin/database/stats');
-export const testDatabaseConnection = () => apiClient.post('/admin/database/test');
-export const createBackup = () => apiClient.post('/admin/database/backup');
-
 // Export APIs
 export const exportUsers = (options: any) => apiClient.post('/admin/export/users', options);
 export const exportRfps = (options: any) => apiClient.post('/admin/export/rfps', options);
